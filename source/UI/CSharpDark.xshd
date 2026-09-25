@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SyntaxDefinition name="C# Dark" extensions=".cs" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+
+  <Color name="Comment"     foreground="#6A9955" />
+  <Color name="String"      foreground="#CE9178" />
+  <Color name="Char"        foreground="#CE9178" />
+  <Color name="Preprocessor" foreground="#C586C0" />
+  <Color name="Number"      foreground="#B5CEA8" />
+  <Color name="Keyword"     foreground="#569CD6" />
+  <Color name="ControlFlow" foreground="#C586C0" />
+  <Color name="ValueType"   foreground="#4EC9B0" />
+  <Color name="RevitType"   foreground="#4EC9B0" fontWeight="normal" />
+  <Color name="MethodCall"  foreground="#DCDCAA" />
+  <Color name="Punctuation" foreground="#D4D4D4" />
+
+  <RuleSet ignoreCase="false">
+
+    <Span color="Preprocessor">
+      <Begin>\#</Begin>
+    </Span>
+
+    <Span color="Comment" begin="//" />
+    <Span color="Comment" multiline="true" begin="/\*" end="\*/" />
+
+    <Span color="String" multiline="true">
+      <Begin>\$?@"</Begin>
+      <End>"</End>
+      <RuleSet>
+        <Span begin='""' end="" />
+      </RuleSet>
+    </Span>
+
+    <Span color="String">
+      <Begin>\$?"</Begin>
+      <End>"</End>
+      <RuleSet>
+        <Span begin="\\" end="." />
+      </RuleSet>
+    </Span>
+
+    <Span color="Char">
+      <Begin>'</Begin>
+      <End>'</End>
+      <RuleSet>
+        <Span begin="\\" end="." />
+      </RuleSet>
+    </Span>
+
+    <Keywords color="ControlFlow">
+      <Word>if</Word><Word>else</Word><Word>switch</Word><Word>case</Word><Word>default</Word>
+      <Word>for</Word><Word>foreach</Word><Word>while</Word><Word>do</Word><Word>in</Word>
+      <Word>break</Word><Word>continue</Word><Word>return</Word><Word>goto</Word><Word>yield</Word>
+      <Word>try</Word><Word>catch</Word><Word>finally</Word><Word>throw</Word>
+      <Word>await</Word><Word>async</Word>
+    </Keywords>
+
+    <Keywords color="Keyword">
+      <Word>abstract</Word><Word>as</Word><Word>base</Word><Word>checked</Word><Word>class</Word>
+      <Word>const</Word><Word>delegate</Word><Word>enum</Word><Word>event</Word><Word>explicit</Word>
+      <Word>extern</Word><Word>false</Word><Word>fixed</Word><Word>implicit</Word><Word>interface</Word>
+      <Word>internal</Word><Word>is</Word><Word>lock</Word><Word>namespace</Word><Word>new</Word>
+      <Word>null</Word><Word>operator</Word><Word>out</Word><Word>override</Word><Word>params</Word>
+      <Word>private</Word><Word>protected</Word><Word>public</Word><Word>readonly</Word><Word>ref</Word>
+      <Word>sealed</Word><Word>sizeof</Word><Word>stackalloc</Word><Word>static</Word><Word>struct</Word>
+      <Word>this</Word><Word>true</Word><Word>typeof</Word><Word>unchecked</Word><Word>unsafe</Word>
+      <Word>using</Word><Word>var</Word><Word>virtual</Word><Word>volatile</Word><Word>where</Word>
+      <Word>partial</Word><Word>record</Word><Word>nameof</Word><Word>global</Word>
+    </Keywords>
+
+    <Keywords color="ValueType">
+      <Word>bool</Word><Word>byte</Word><Word>char</Word><Word>decimal</Word><Word>double</Word>
+      <Word>float</Word><Word>int</Word><Word>long</Word><Word>object</Word><Word>sbyte</Word>
+      <Word>short</Word><Word>string</Word><Word>uint</Word><Word>ulong</Word><Word>ushort</Word>
+      <Word>void</Word><Word>dynamic</Word>
+    </Keywords>
+
+    <Keywords color="RevitType">
+      <Word>Document</Word><Word>UIDocument</Word><Word>UIApplication</Word><Word>Element</Word>
+      <Word>ElementId</Word><Word>Transaction</Word><Word>TransactionGroup</Word>
+      <Word>FilteredElementCollector</Word><Word>BuiltInCategory</Word><Word>BuiltInParameter</Word>
+      <Word>Parameter</Word><Word>FamilyInstance</Word><Word>FamilySymbol</Word><Word>Wall</Word>
+      <Word>Floor</Word><Word>Level</Word><Word>View</Word><Word>XYZ</Word><Word>Line</Word>
+      <Word>Curve</Word><Word>Solid</Word><Word>Options</Word><Word>TaskDialog</Word>
+      <Word>Result</Word><Word>IExternalCommand</Word><Word>ScriptBase</Word>
+    </Keywords>
+
+    <!-- числа -->
+    <Rule color="Number">
+      \b0[xX][0-9a-fA-F]+
+      |
+      (\b\d+(\.[0-9]+)?|\.[0-9]+)([eE][+-]?[0-9]+)?[fFdDmMuUlL]*
+    </Rule>
+
+    <!-- вызовы методов -->
+    <Rule color="MethodCall">
+      \b[\d\w_]+(?=\s*\()
+    </Rule>
+
+  </RuleSet>
+</SyntaxDefinition>

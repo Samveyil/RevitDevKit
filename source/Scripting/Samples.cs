@@ -1,0 +1,192 @@
+using System.Collections.Generic;
+
+namespace RevitScriptRunner.Scripting
+{
+    public sealed class Sample
+    {
+        public string Title { get; set; }
+        public string Code { get; set; }
+    }
+
+    /// <summary>
+    /// Готовые примеры — они же документация по доступному API.
+    /// </summary>
+    public static class Samples
+    {
+        public const string Starter =
+@"// Короткий фрагмент: плагин сам обернёт его в класс.
+// Доступны Doc, UIDoc, UIApp, App, а также Print / Tx / All / Instances / Dump.
+// Запуск — F5 или Ctrl+Enter.
+
+Print(""Документ: "" + Doc.Title);
+Print(""Путь: "" + (Doc.PathName == """" ? ""<не сохранён>"" : Doc.PathName));
+
+var walls = All<Wall>();
+Print($""Стен в модели: {walls.Count}"");
+";
+
+        private static readonly Sample[] _all =
+        {
+            new Sample
+            {
+                Title = "1. Привет, Revit",
+                Code =
+@"Print(""Revit "" + App.VersionNumber + "" сборка "" + App.VersionBuild);
+Print(""Документ: "" + Doc.Title);
+Print(""Пользователь: "" + App.Username);
+"
+            },
+
+            new Sample
+            {
+                Title = "2. Console.WriteLine и уровни вывода",
+                Code =
+@"// Обычный Console.WriteLine тоже попадает в консоль плагина —
+// поэтому чужие библиотеки логируются сюда же без переделок.
+Console.WriteLine(""Это обычный Console.WriteLine"");
+System.Diagnostics.Debug.WriteLine(""Это Debug.WriteLine (серый)"");
+
+Ok(""Успех — зелёный"");
+Warn(""Предупреждение — жёлтое"");
+Fail(""Ошибка — красная"");
+
+for (int i = 1; i <= 5; i++)
+    Console.WriteLine($""строка {i} из 5"");
+"
+            },
+
+            new Sample
+            {
+                Title = "3. Обход элементов и таблица",
+                Code =
+@"var walls = All<Wall>();
+Print($""Найдено стен: {walls.Count}"");
+
+Table(walls,
+    w => w.Id,
+    w => w.Name,
+    w => Math.Round(w.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH).AsDouble(), 2));
+"
+            },
+
+            new Sample
+            {
+                Title = "4. Изменение модели в транзакции",
+                Code =
+@"// Транзакцию открываем сами — галочку «Автотранзакция» держите выключенной.
+var walls = All<Wall>();
+if (walls.Count == 0) { Warn(""В модели нет стен.""); return; }
+
+Tx(""Пометить стены комментарием"", () =>
+{
+    foreach (var wall in walls)
+    {
+        var p = wall.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS);
+        if (p != null && !p.IsReadOnly) p.Set(""проверено скриптом"");
+    }
+});
+
+Ok($""Обновлено стен: {walls.Count}"");
+"
+            },
+
+            new Sample
+            {
+                Title = "5. Параметры выбранного элемента",
+                Code =
+@"if (Selection.Count == 0) { Warn(""Ничего не выбрано в модели.""); return; }
+
+foreach (var element in Selection)
+    Dump(element);
+"
+            },
+
+            new Sample
+            {
+                Title = "6. Полноценный IExternalCommand",
+                Code =
+@"// Если в коде есть объявление класса, плагин компилирует файл как есть.
+using System;
+using Autodesk.Revit.Attributes;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+
+[Transaction(TransactionMode.Manual)]
+public class MyCommand : IExternalCommand
+{
+    public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
+    {
+        var doc = commandData.Application.ActiveUIDocument.Document;
+
+        Console.WriteLine(""Команда запущена так же, как это делает Revit."");
+        Console.WriteLine(""Документ: "" + doc.Title);
+
+        using (var t = new Transaction(doc, ""Демо""))
+        {
+            t.Start();
+            // ... изменения модели ...
+            t.Commit();
+        }
+
+        return Result.Succeeded;
+    }
+}
+"
+            },
+
+            new Sample
+            {
+                Title = "7. Свой класс с методом Main",
+                Code =
+@"using System;
+using System.Linq;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+
+// Параметры метода подставляются по типу: UIApplication, UIDocument,
+// Document, Application, ExternalCommandData.
+public class Report
+{
+    public void Main(Document doc, UIApplication uiapp)
+    {
+        Console.WriteLine(""Документ: "" + doc.Title);
+        Console.WriteLine(""Версия: "" + uiapp.Application.VersionNumber);
+
+        var categories = new FilteredElementCollector(doc)
+            .WhereElementIsNotElementType()
+            .Where(e => e.Category != null)
+            .GroupBy(e => e.Category.Name)
+            .OrderByDescending(g => g.Count());
+
+        foreach (var group in categories.Take(15))
+            Console.WriteLine(group.Key.PadRight(40) + group.Count());
+    }
+}
+"
+            },
+
+            new Sample
+            {
+                Title = "8. Подключение внешней библиотеки через #r",
+                Code =
+@"// Директива #r добавляет ссылку на сборку: по имени или по полному пути.
+#r ""System.Xml""
+#r ""System.Xml.Linq""
+
+using System.Xml.Linq;
+
+var xml = new XElement(""model"",
+    new XElement(""title"", Doc.Title),
+    new XElement(""walls"", All<Wall>().Count));
+
+Print(xml.ToString());
+"
+            }
+        };
+
+        public static IReadOnlyList<Sample> All
+        {
+            get { return _all; }
+        }
+    }
+}
