@@ -19,9 +19,19 @@
         </ResourceDictionary>
     </Window.Resources>
 
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding RunCommand}"/>
+        <KeyBinding Key="Enter" Modifiers="Control" Command="{Binding RunCommand}"/>
+        <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewTabCommand}"/>
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenFileCommand}"/>
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveFileCommand}"/>
+        <KeyBinding Key="W" Modifiers="Control" Command="{Binding CloseTabCommand}"/>
+        <KeyBinding Key="L" Modifiers="Control" Command="{Binding ClearConsoleCommand}"/>
+    </Window.InputBindings>
+
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5">
-            <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25"
+            <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding RunCommand}"
                     ToolTip="Скомпилировать и выполнить (F5 или Ctrl+Enter)" >
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="Play" Width="20" Height="20" Foreground="#f88518"
@@ -69,8 +79,11 @@
         </StackPanel>
 
         <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem DockPanel.Dock="Right">
+                <TextBlock Text="{Binding ContextText}"/>
+            </StatusBarItem>
             <StatusBarItem>
-                <TextBlock Text="Готово"/>
+                <TextBlock Text="{Binding TxtStatus}"/>
             </StatusBarItem>
         </StatusBar>
 
@@ -81,7 +94,7 @@
                 <RowDefinition Height="240" MinHeight="80"/>
             </Grid.RowDefinitions>
 
-            <TabControl Grid.Row="0" Margin="5 0" ItemsSource="{Binding TabItems}" SelectedItem="{Binding SelectedTab}"
+            <TabControl Grid.Row="0" Margin="5 0" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
                         Style="{StaticResource MaterialDesignTabControl}" materialDesign:TabAssist.HasUniformTabWidth="False">
 
                 <TabControl.ItemContainerStyle>
@@ -114,13 +127,24 @@
                         <Setter Property="HeaderTemplate">
                             <Setter.Value>
                                 <DataTemplate>
-                                    <Grid>
+                                    <!-- ContextMenu не в визуальном дереве: VM окна передаём ему через Tag. -->
+                                    <Grid Background="Transparent"
+                                          Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TabControl}}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
 
-                                        <TextBlock Text="{Binding}" FontSize="14" FontWeight="DemiBold" HorizontalAlignment="Center"
+                                        <Grid.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Закрыть вкладку" CommandParameter="{Binding}"
+                                                          Command="{Binding PlacementTarget.Tag.CloseTabCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
+                                                          Command="{Binding PlacementTarget.Tag.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            </ContextMenu>
+                                        </Grid.ContextMenu>
+
+                                        <TextBlock Text="{Binding Header}" ToolTip="{Binding FilePath}" FontSize="14" FontWeight="DemiBold" HorizontalAlignment="Center"
                                                    VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
 
                                         <Button Grid.Column="1" Style="{StaticResource MaterialDesignToolButton}"
@@ -135,6 +159,12 @@
                         </Setter>
                     </Style>
                 </TabControl.ItemContainerStyle>
+
+                <TabControl.ContentTemplate>
+                    <DataTemplate>
+                        <local:ScriptEditorHost Tab="{Binding}"/>
+                    </DataTemplate>
+                </TabControl.ContentTemplate>
             </TabControl>
 
             <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
@@ -143,12 +173,12 @@
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
                     <TextBlock Text="Консоль" VerticalAlignment="Center"/>
 
-                    <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0"
+                    <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding ClearConsoleCommand}"
                             Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Очистить консоль (Ctrl+L)">
                         <materialDesign:PackIcon Kind="Broom" Width="25" Height="25" Foreground="#CC000000"/>
                     </Button>
 
-                    <Button Width="22" Height="22" Margin="10 0" Padding="0" VerticalAlignment="Center"
+                    <Button Width="22" Height="22" Margin="10 0" Padding="0" VerticalAlignment="Center" Click="OnCopyConsole"
                             Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Скопировать весь вывод в буфер обмена">
                         <materialDesign:PackIcon Kind="ContentCopy" Width="22" Height="22" Foreground="#CC000000"/>
                     </Button>

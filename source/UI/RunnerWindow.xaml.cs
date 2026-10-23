@@ -1,55 +1,50 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
-using Autodesk.Revit.UI;
-using BIMPlugins.ExtStorage;
-using ICSharpCode.AvalonEdit;
 using RevitScriptRunner.Core;
-using RevitScriptRunner.Scripting;
 
 namespace RevitScriptRunner.UI
 {
+    /// <summary>
+    /// Логика окна — в RunnerVM. Здесь остались жизненный цикл окна и отрисовка
+    /// консоли: вывод идёт в FlowDocument пачками, и это чисто забота View.
+    /// </summary>
     public partial class RunnerWindow : Window
     {
         private static RunnerWindow _instance;
 
-        private readonly List<ScriptTab> _tabs = new List<ScriptTab>();
+        private readonly RunnerVM _vm;
         private readonly Queue<LogChunkEventArgs> _pending = new Queue<LogChunkEventArgs>();
         private readonly object _pendingSync = new object();
 
         private DispatcherTimer _flushTimer;
         private Paragraph _consoleParagraph;
         private bool _atLineStart = true;
-        private int _untitledCounter;
 
         // ------------------------------------------------------------------
         //  Жизненный цикл окна
         // ------------------------------------------------------------------
 
-        public RunnerWindow(RunnerVM vM)
+        public RunnerWindow(RunnerVM vm)
         {
             InitializeComponent();
-            DataContext = vM;
+
+            _vm = vm;
+            DataContext = vm;
 
             SetupConsole();
 
-            // Подписываемся до создания первой вкладки: редактор при инициализации
-            // пишет в консоль диагностику по версии AvalonEdit.
+            // Подписываемся до показа окна: редактор первой вкладки создаётся при
+            // загрузке и пишет в консоль диагностику по версии AvalonEdit.
             ConsoleOutput.ChunkWritten += OnChunkWritten;
             ConsoleOutput.Cleared += OnConsoleCleared;
 
-
-            PreviewKeyDown += OnWindowKeyDown;
             Closed += OnWindowClosed;
         }
 
@@ -58,7 +53,7 @@ namespace RevitScriptRunner.UI
         {
             if (_instance != null)
             {
-                _instance.RefreshContext();
+                _instance._vm.RefreshContext();
                 if (_instance.WindowState == WindowState.Minimized) _instance.WindowState = WindowState.Normal;
                 _instance.Activate();
                 return;
@@ -77,7 +72,7 @@ namespace RevitScriptRunner.UI
                 // не критично
             }
 
-            _instance.RefreshContext();
+            _instance._vm.RefreshContext();
             _instance.Show();
         }
 
@@ -95,21 +90,6 @@ namespace RevitScriptRunner.UI
             if (_flushTimer != null) _flushTimer.Stop();
             _instance = null;
         }
-
-        private void RefreshContext()
-        {
-            try
-            {
-                var doc = RevitAPI.Document;
-            }
-            catch (Exception ex)
-            {
-                ConsoleOutput.Debug("Не удалось прочитать контекст Revit: " + ex.Message);
-            }
-        }
-
-
-       
 
         // ------------------------------------------------------------------
         //  Консоль
@@ -160,18 +140,18 @@ namespace RevitScriptRunner.UI
                 _pending.Clear();
             }
 
-            //var showDebug = ChkShowDebug.IsChecked == true;
-            //var showTime = ChkTimestamps.IsChecked == true;
+            var showDebug = _vm.IsShowDebug;
+            var showTime = _vm.IsTimestamps;
 
-            //foreach (var chunk in batch)
-            //{
-            //    if (chunk.Level == LogLevel.Debug && !showDebug) continue;
-            //    Append(chunk, showTime);
-            //}
+            foreach (var chunk in batch)
+            {
+                if (chunk.Level == LogLevel.Debug && !showDebug) continue;
+                Append(chunk, showTime);
+            }
 
-            //TrimConsole();
+            TrimConsole();
 
-            //if (ChkAutoScroll.IsChecked == true) Console.ScrollToEnd();
+            if (_vm.IsAutoScroll) Console.ScrollToEnd();
         }
 
         private void Append(LogChunkEventArgs chunk, bool showTime)
@@ -239,81 +219,18 @@ namespace RevitScriptRunner.UI
             }
         }
 
-        private void OnClearConsole(object sender, RoutedEventArgs e)
-        {
-            ConsoleOutput.Clear();
-        }
-
+        /// <summary>Текст консоли есть только во View, поэтому копирование — здесь.</summary>
         private void OnCopyConsole(object sender, RoutedEventArgs e)
         {
             var range = new TextRange(Console.Document.ContentStart, Console.Document.ContentEnd);
             try
             {
                 Clipboard.SetText(range.Text);
-                Status("Вывод скопирован в буфер обмена");
+                _vm.TxtStatus = "Вывод скопирован в буфер обмена";
             }
             catch (Exception ex)
             {
                 ConsoleOutput.Exception(ex, "Буфер обмена занят:");
-            }
-        }
-
-        private void Status(string text)
-        {
-            //TxtStatus.Text = text;
-        }
-
-        // ------------------------------------------------------------------
-        //  Горячие клавиши
-        // ------------------------------------------------------------------
-
-        private void OnWindowKeyDown(object sender, KeyEventArgs e)
-        {
-            var ctrl = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
-
-            if (e.Key == Key.F5 || (ctrl && e.Key == Key.Enter))
-            {
-                //RunCurrentScript();
-                e.Handled = true;
-            }
-            else if (ctrl && e.Key == Key.S)
-            {
-                //OnSaveFile(sender, e);
-                e.Handled = true;
-            }
-            else if (ctrl && e.Key == Key.O)
-            {
-                //OnOpenFile(sender, e);
-                e.Handled = true;
-            }
-            else if (ctrl && e.Key == Key.N)
-            {
-                //OnNewTab(sender, e);
-                e.Handled = true;
-            }
-            else if (ctrl && e.Key == Key.L)
-            {
-                ConsoleOutput.Clear();
-                e.Handled = true;
-            }
-            else if (ctrl && e.Key == Key.W)
-            {
-                //CloseTab(Current);
-                e.Handled = true;
-            }
-        }
-
-        private sealed class ScriptTab
-        {
-            public TabItem Item;
-            public TextEditor Editor;
-            public string FilePath;
-            public string Title;
-            public bool Dirty;
-
-            public string Header
-            {
-                get { return Dirty ? Title + " *" : Title; }
             }
         }
     }
