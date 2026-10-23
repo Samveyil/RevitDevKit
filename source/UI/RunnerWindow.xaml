@@ -97,9 +97,9 @@
             <TabControl Grid.Row="0" Margin="5 0" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}">
 
                 <!-- Рамка вокруг редактора, «вырастающая» из выбранной вкладки.
-                     Заголовки лежат поверх рамки и заходят на неё на 1 px (Margin -1):
-                     выбранная вкладка своим фоном закрывает верхнюю линию рамки под собой,
-                     остальные стоят на 1 px выше и линию не трогают. -->
+                     Контур выбранной вкладки и рамки рисует TabFrame одной линией,
+                     поэтому скругления совпадают. Margin -2 у панели выравнивает
+                     крайние вкладки по краям рамки. -->
                 <TabControl.Template>
                     <ControlTemplate TargetType="TabControl">
                         <Grid KeyboardNavigation.TabNavigation="Local">
@@ -108,11 +108,11 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
-                            <UniformGrid Grid.Row="0" Rows="1" IsItemsHost="True" Panel.ZIndex="1" Margin="0 0 0 -1"/>
+                            <UniformGrid Grid.Row="0" Rows="1" IsItemsHost="True" Margin="-2 0"/>
 
-                            <Border Grid.Row="1" BorderThickness="1" BorderBrush="#f88518">
-                                <ContentPresenter x:Name="PART_SelectedContentHost" ContentSource="SelectedContent"/>
-                            </Border>
+                            <ContentPresenter Grid.Row="1" x:Name="PART_SelectedContentHost" ContentSource="SelectedContent" Margin="1"/>
+
+                            <local:TabFrame Grid.RowSpan="2" Stroke="#f88518" Radius="4"/>
                         </Grid>
                     </ControlTemplate>
                 </TabControl.Template>
@@ -131,13 +131,10 @@
                                     </Border>
 
                                     <ControlTemplate.Triggers>
+                                        <!-- Контур выбранной вкладки рисует TabFrame; толщину оставляем,
+                                             чтобы заголовок не сдвигался при выборе. -->
                                         <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="TabBorder" Property="BorderBrush" Value="#f88518"/>
-                                            <Setter TargetName="TabBorder" Property="BorderThickness" Value="1 1 1 0"/>
-                                            <Setter TargetName="TabBorder" Property="CornerRadius" Value="4 4 0 0"/>
-                                            <!-- Фон окна: закрывает верхнюю линию рамки под вкладкой. -->
-                                            <Setter TargetName="TabBorder" Property="Background"
-                                                    Value="{Binding Background, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                            <Setter TargetName="TabBorder" Property="BorderBrush" Value="Transparent"/>
                                         </Trigger>
                                         <MultiTrigger>
                                             <MultiTrigger.Conditions>
@@ -186,7 +183,8 @@
                         </Setter>
 
                         <Style.Triggers>
-                            <!-- Выбранная вкладка опускается на 1 px и встаёт на рамку. -->
+                            <!-- Выбранная вкладка опускается на 1 px и встаёт на рамку,
+                                 остальные стоят над её верхней линией. -->
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter Property="Margin" Value="2 4 2 0"/>
                             </Trigger>
