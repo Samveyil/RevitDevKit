@@ -94,12 +94,32 @@
                 <RowDefinition Height="240" MinHeight="80"/>
             </Grid.RowDefinitions>
 
-            <TabControl Grid.Row="0" Margin="5 0" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
-                        Style="{StaticResource MaterialDesignTabControl}" materialDesign:TabAssist.HasUniformTabWidth="False">
+            <TabControl Grid.Row="0" Margin="5 0" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}">
+
+                <!-- Рамка вокруг редактора, «вырастающая» из выбранной вкладки.
+                     Заголовки лежат поверх рамки и заходят на неё на 1 px (Margin -1):
+                     выбранная вкладка своим фоном закрывает верхнюю линию рамки под собой,
+                     остальные стоят на 1 px выше и линию не трогают. -->
+                <TabControl.Template>
+                    <ControlTemplate TargetType="TabControl">
+                        <Grid KeyboardNavigation.TabNavigation="Local">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <UniformGrid Grid.Row="0" Rows="1" IsItemsHost="True" Panel.ZIndex="1" Margin="0 0 0 -1"/>
+
+                            <Border Grid.Row="1" BorderThickness="1" BorderBrush="#f88518">
+                                <ContentPresenter x:Name="PART_SelectedContentHost" ContentSource="SelectedContent"/>
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </TabControl.Template>
 
                 <TabControl.ItemContainerStyle>
                     <Style TargetType="TabItem">
-                        <Setter Property="Margin" Value="2 4"/>
+                        <Setter Property="Margin" Value="2 4 2 1"/>
                         <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
                         <Setter Property="Cursor" Value="Hand"/>
 
@@ -115,10 +135,17 @@
                                             <Setter TargetName="TabBorder" Property="BorderBrush" Value="#f88518"/>
                                             <Setter TargetName="TabBorder" Property="BorderThickness" Value="1 1 1 0"/>
                                             <Setter TargetName="TabBorder" Property="CornerRadius" Value="4 4 0 0"/>
+                                            <!-- Фон окна: закрывает верхнюю линию рамки под вкладкой. -->
+                                            <Setter TargetName="TabBorder" Property="Background"
+                                                    Value="{Binding Background, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                         </Trigger>
-                                        <Trigger Property="IsMouseOver" Value="True">
+                                        <MultiTrigger>
+                                            <MultiTrigger.Conditions>
+                                                <Condition Property="IsMouseOver" Value="True"/>
+                                                <Condition Property="IsSelected" Value="False"/>
+                                            </MultiTrigger.Conditions>
                                             <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource MaterialDesignSelection}"/>
-                                        </Trigger>
+                                        </MultiTrigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
                             </Setter.Value>
@@ -157,6 +184,13 @@
                                 </DataTemplate>
                             </Setter.Value>
                         </Setter>
+
+                        <Style.Triggers>
+                            <!-- Выбранная вкладка опускается на 1 px и встаёт на рамку. -->
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Margin" Value="2 4 2 0"/>
+                            </Trigger>
+                        </Style.Triggers>
                     </Style>
                 </TabControl.ItemContainerStyle>
 
