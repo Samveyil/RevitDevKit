@@ -24,7 +24,6 @@ namespace RevitScriptRunner.UI
         private static RunnerWindow _instance;
 
         private readonly List<ScriptTab> _tabs = new List<ScriptTab>();
-        private readonly List<LoadedAssembly> _assemblies = new List<LoadedAssembly>();
         private readonly Queue<LogChunkEventArgs> _pending = new Queue<LogChunkEventArgs>();
         private readonly object _pendingSync = new object();
 
@@ -32,15 +31,15 @@ namespace RevitScriptRunner.UI
         private Paragraph _consoleParagraph;
         private bool _atLineStart = true;
         private int _untitledCounter;
-        private bool _running;
 
         // ------------------------------------------------------------------
         //  Жизненный цикл окна
         // ------------------------------------------------------------------
 
-        public RunnerWindow()
+        public RunnerWindow(RunnerVM vM)
         {
             InitializeComponent();
+            DataContext = vM;
 
             SetupConsole();
 
@@ -49,10 +48,6 @@ namespace RevitScriptRunner.UI
             ConsoleOutput.ChunkWritten += OnChunkWritten;
             ConsoleOutput.Cleared += OnConsoleCleared;
 
-            SetupSamples();
-            UpdateUnloadHint();
-
-            NewTab(Samples.Starter, "Новый скрипт");
 
             PreviewKeyDown += OnWindowKeyDown;
             Closed += OnWindowClosed;
@@ -69,7 +64,7 @@ namespace RevitScriptRunner.UI
                 return;
             }
 
-            _instance = new RunnerWindow();
+            _instance = new RunnerWindow(new RunnerVM());
 
             // Привязываем к главному окну Revit, чтобы не терялось за ним.
             try
@@ -106,457 +101,15 @@ namespace RevitScriptRunner.UI
             try
             {
                 var doc = RevitAPI.Document;
-                TxtContext.Text = doc == null ? "Документ не открыт" : "Документ: " + doc.Title;
             }
             catch (Exception ex)
             {
-                TxtContext.Text = "Контекст недоступен";
                 ConsoleOutput.Debug("Не удалось прочитать контекст Revit: " + ex.Message);
             }
         }
 
-        // ------------------------------------------------------------------
-        //  Вкладки со скриптами
-        // ------------------------------------------------------------------
 
-        private ScriptTab Current
-        {
-            get { return ScriptTabs.SelectedItem is TabItem item ? _tabs.FirstOrDefault(t => t.Item == item) : null; }
-        }
-
-        private ScriptTab NewTab(string code, string title, string filePath = null)
-        {
-            _untitledCounter++;
-
-            var editor = EditorFactory.Create();
-            editor.Text = code ?? string.Empty;
-
-            var item = new TabItem { Content = editor };
-            var tab = new ScriptTab { Item = item, Editor = editor, FilePath = filePath, Title = title };
-
-            item.Header = tab.Header;
-            item.ContextMenu = BuildTabMenu(tab);
-
-            editor.TextChanged += (s, e) =>
-            {
-                if (tab.Dirty) return;
-                tab.Dirty = true;
-                item.Header = tab.Header;
-            };
-
-            _tabs.Add(tab);
-            ScriptTabs.Items.Add(item);
-            ScriptTabs.SelectedItem = item;
-            editor.Focus();
-
-            return tab;
-        }
-
-        private ContextMenu BuildTabMenu(ScriptTab tab)
-        {
-            var menu = new ContextMenu();
-
-            var close = new MenuItem { Header = "Закрыть вкладку" };
-            close.Click += (s, e) => CloseTab(tab);
-            menu.Items.Add(close);
-
-            var reveal = new MenuItem { Header = "Показать в проводнике" };
-            reveal.Click += (s, e) =>
-            {
-                if (string.IsNullOrEmpty(tab.FilePath) || !File.Exists(tab.FilePath)) return;
-                Process.Start("explorer.exe", "/select,\"" + tab.FilePath + "\"");
-            };
-            menu.Items.Add(reveal);
-
-            return menu;
-        }
-
-        private void CloseTab(ScriptTab tab)
-        {
-            if (tab == null) return;
-
-            if (tab.Dirty)
-            {
-                var answer = MessageBox.Show(this,
-                    "Во вкладке «" + tab.Title + "» есть несохранённые изменения. Закрыть?",
-                    "Script Runner", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                if (answer != MessageBoxResult.Yes) return;
-            }
-
-            _tabs.Remove(tab);
-            ScriptTabs.Items.Remove(tab.Item);
-
-            if (_tabs.Count == 0) NewTab(Samples.Starter, "Новый скрипт");
-        }
-
-        private void OnNewTab(object sender, RoutedEventArgs e)
-        {
-            NewTab(Samples.Starter, "Скрипт " + (_untitledCounter + 1));
-        }
-
-        private void OnOpenFile(object sender, RoutedEventArgs e)
-        {
-            var dialog = new Microsoft.Win32.OpenFileDialog
-            {
-                Filter = "C# файлы (*.cs;*.csx)|*.cs;*.csx|Все файлы (*.*)|*.*",
-                InitialDirectory = ScriptsFolder()
-            };
-
-            if (dialog.ShowDialog(this) != true) return;
-
-            try
-            {
-                var text = File.ReadAllText(dialog.FileName);
-                var tab = NewTab(text, Path.GetFileName(dialog.FileName), dialog.FileName);
-                tab.Dirty = false;
-                tab.Item.Header = tab.Header;
-                Status("Открыт " + dialog.FileName);
-            }
-            catch (Exception ex)
-            {
-                ConsoleOutput.Exception(ex, "Не удалось открыть файл:");
-            }
-        }
-
-        private void OnSaveFile(object sender, RoutedEventArgs e)
-        {
-            var tab = Current;
-            if (tab == null) return;
-
-            var path = tab.FilePath;
-            if (string.IsNullOrEmpty(path))
-            {
-                var dialog = new Microsoft.Win32.SaveFileDialog
-                {
-                    Filter = "C# файлы (*.cs)|*.cs|Все файлы (*.*)|*.*",
-                    InitialDirectory = ScriptsFolder(),
-                    FileName = tab.Title.TrimEnd('*', ' ') + ".cs"
-                };
-                if (dialog.ShowDialog(this) != true) return;
-                path = dialog.FileName;
-            }
-
-            try
-            {
-                File.WriteAllText(path, tab.Editor.Text);
-                tab.FilePath = path;
-                tab.Title = Path.GetFileName(path);
-                tab.Dirty = false;
-                tab.Item.Header = tab.Header;
-                Status("Сохранено: " + path);
-            }
-            catch (Exception ex)
-            {
-                ConsoleOutput.Exception(ex, "Не удалось сохранить файл:");
-            }
-        }
-
-        private static string ScriptsFolder()
-        {
-            var dir = Path.Combine(App.DataDirectory, "Scripts");
-            Directory.CreateDirectory(dir);
-            return dir;
-        }
-
-        private void SetupSamples()
-        {
-            CmbSamples.ItemsSource = Samples.All.Select(s => s.Title).ToList();
-            CmbSamples.SelectedIndex = -1;
-        }
-
-        private void OnSampleSelected(object sender, SelectionChangedEventArgs e)
-        {
-            if (CmbSamples.SelectedIndex < 0) return;
-
-            var sample = Samples.All[CmbSamples.SelectedIndex];
-            NewTab(sample.Code, sample.Title);
-            CmbSamples.SelectedIndex = -1;
-        }
-
-        // ------------------------------------------------------------------
-        //  Запуск скрипта
-        // ------------------------------------------------------------------
-
-        private void OnRun(object sender, RoutedEventArgs e)
-        {
-            RunCurrentScript();
-        }
-
-        private void RunCurrentScript()
-        {
-            if (_running) return;
-
-            var tab = Current;
-            if (tab == null) return;
-
-            var code = tab.Editor.Text;
-            if (string.IsNullOrWhiteSpace(code))
-            {
-                Status("Пустой скрипт");
-                return;
-            }
-
-            if (ChkClearOnRun.IsChecked == true) ConsoleOutput.Clear();
-
-            SetRunning(true);
-            Status("Компиляция…");
-
-            var autoTransaction = ChkAutoTransaction.IsChecked == true;
-            var title = tab.Title;
-
-            Task.Run(() => ScriptCompiler.Compile(code))
-                .ContinueWith(task => OnCompiled(task, title, autoTransaction),
-                    TaskScheduler.FromCurrentSynchronizationContext());
-        }
-
-        private void OnCompiled(Task<CompileResult> task, string title, bool autoTransaction)
-        {
-            if (task.IsFaulted)
-            {
-                ConsoleOutput.Exception(task.Exception, "Сбой компилятора:");
-                SetRunning(false);
-                Status("Ошибка компиляции");
-                return;
-            }
-
-            var result = task.Result;
-
-            foreach (var message in result.Messages)
-            {
-                var level = message.IsError ? LogLevel.Error : LogLevel.Warning;
-                ConsoleOutput.WriteLine(message.ToString(), level);
-            }
-
-            if (!result.Success)
-            {
-                var count = result.Errors.Count();
-                ConsoleOutput.Error("Компиляция не удалась: " + count + (count == 1 ? " ошибка." : " ошибок."));
-                SetRunning(false);
-                Status("Ошибка компиляции");
-                GoToFirstError(result);
-                return;
-            }
-
-            var target = EntryPointResolver.ResolveScriptEntry(result.Assembly);
-            if (target == null)
-            {
-                ConsoleOutput.Error("В коде не нашлось точки входа: нужен класс с IExternalCommand либо метод Main / Run / Execute.");
-                SetRunning(false);
-                Status("Нет точки входа");
-                return;
-            }
-
-            ConsoleOutput.Debug("Скомпилировано за " + result.ElapsedMs + " мс → " + target.Details);
-            Status("Выполнение…");
-
-            var request = new RunRequest
-            {
-                Title = title,
-                AutoTransaction = autoTransaction,
-                TransactionName = "Script Runner: " + title,
-                Body = () => target.Invoke(),
-                Completed = error => Dispatcher.Invoke(() =>
-                {
-                    SetRunning(false);
-                    Status(error == null ? "Готово" : "Завершено с ошибкой");
-                    RefreshContext();
-                })
-            };
-
-            RevitTaskRunner.Run(request, target.Kind == RunTargetKind.ExternalCommand);
-        }
-
-        private void GoToFirstError(CompileResult result)
-        {
-            var first = result.Errors.FirstOrDefault(m => m.Line > 0);
-            var tab = Current;
-            if (first == null || tab == null) return;
-
-            try
-            {
-                var line = Math.Min(first.Line, tab.Editor.Document.LineCount);
-                tab.Editor.TextArea.Caret.Line = line;
-                tab.Editor.TextArea.Caret.Column = Math.Max(1, first.Column);
-                tab.Editor.ScrollToLine(line);
-                tab.Editor.Focus();
-            }
-            catch
-            {
-                // позиция не сошлась — не беда
-            }
-        }
-
-        private void SetRunning(bool running)
-        {
-            _running = running;
-            BtnRun.IsEnabled = !running;
-        }
-
-        // ------------------------------------------------------------------
-        //  Внешние сборки
-        // ------------------------------------------------------------------
-
-        private void OnAddAssembly(object sender, RoutedEventArgs e)
-        {
-            var dialog = new Microsoft.Win32.OpenFileDialog
-            {
-                Filter = "Сборки .NET (*.dll)|*.dll|Все файлы (*.*)|*.*",
-                Multiselect = true
-            };
-
-            if (dialog.ShowDialog(this) != true) return;
-
-            foreach (var file in dialog.FileNames) AddAssembly(file);
-        }
-
-        private void AddAssembly(string path)
-        {
-            try
-            {
-                var loaded = ScriptAssemblyLoader.LoadFromFile(path);
-                _assemblies.RemoveAll(a => string.Equals(a.OriginalPath, loaded.OriginalPath, StringComparison.OrdinalIgnoreCase));
-                _assemblies.Add(loaded);
-
-                var targets = EntryPointResolver.FindAll(loaded.Assembly);
-                ConsoleOutput.Success("Загружено: " + loaded.DisplayName + " — точек входа: " + targets.Count);
-
-                RebuildAssemblyTree();
-            }
-            catch (Exception ex)
-            {
-                ConsoleOutput.Exception(ex, "Не удалось загрузить " + path + ":");
-            }
-        }
-
-        private void OnReloadAssembly(object sender, RoutedEventArgs e)
-        {
-            var loaded = SelectedAssembly();
-            if (loaded == null)
-            {
-                Status("Выберите сборку в списке");
-                return;
-            }
-
-            var path = loaded.OriginalPath;
-            if (ScriptAssemblyLoader.TryUnload(loaded))
-                ConsoleOutput.Debug("Предыдущая версия выгружена.");
-            else
-                ConsoleOutput.Warning("На .NET Framework выгрузка невозможна: старая версия останется в памяти до перезапуска Revit.");
-
-            _assemblies.Remove(loaded);
-            AddAssembly(path);
-        }
-
-        private void OnRemoveAssembly(object sender, RoutedEventArgs e)
-        {
-            var loaded = SelectedAssembly();
-            if (loaded == null) return;
-
-            ScriptAssemblyLoader.TryUnload(loaded);
-            _assemblies.Remove(loaded);
-            RebuildAssemblyTree();
-            Status("Убрано: " + loaded.DisplayName);
-        }
-
-        private void OnTreeDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            if (SelectedTarget() != null) OnRunTarget(sender, e);
-        }
-
-        private void OnRunTarget(object sender, RoutedEventArgs e)
-        {
-            if (_running) return;
-
-            var target = SelectedTarget();
-            if (target == null)
-            {
-                Status("Выберите команду или метод в дереве");
-                return;
-            }
-
-            if (ChkClearOnRun.IsChecked == true) ConsoleOutput.Clear();
-
-            SetRunning(true);
-            Status("Выполнение " + target.DisplayName + "…");
-
-            var request = new RunRequest
-            {
-                Title = target.DisplayName,
-                AutoTransaction = target.Kind == RunTargetKind.Method && ChkAutoTransaction.IsChecked == true,
-                TransactionName = "Script Runner: " + target.Type.Name,
-                Body = () => target.Invoke(),
-                Completed = error => Dispatcher.Invoke(() =>
-                {
-                    SetRunning(false);
-                    Status(error == null ? "Готово" : "Завершено с ошибкой");
-                })
-            };
-
-            RevitTaskRunner.Run(request, target.Kind == RunTargetKind.ExternalCommand);
-        }
-
-        private LoadedAssembly SelectedAssembly()
-        {
-            var item = AssemblyTree.SelectedItem as TreeViewItem;
-            while (item != null)
-            {
-                if (item.Tag is LoadedAssembly loaded) return loaded;
-                item = ItemsControl.ItemsControlFromItemContainer(item) as TreeViewItem;
-            }
-            return null;
-        }
-
-        private RunTarget SelectedTarget()
-        {
-            var item = AssemblyTree.SelectedItem as TreeViewItem;
-            return item == null ? null : item.Tag as RunTarget;
-        }
-
-        private void RebuildAssemblyTree()
-        {
-            AssemblyTree.Items.Clear();
-
-            foreach (var loaded in _assemblies)
-            {
-                var root = new TreeViewItem
-                {
-                    Header = loaded.DisplayName + "   —   " + loaded.LoadedAt.ToString("HH:mm:ss"),
-                    Tag = loaded,
-                    IsExpanded = true,
-                    ToolTip = loaded.OriginalPath
-                };
-
-                var targets = EntryPointResolver.FindAll(loaded.Assembly);
-                if (targets.Count == 0)
-                {
-                    root.Items.Add(new TreeViewItem
-                    {
-                        Header = "— нечего запускать —",
-                        Foreground = Brushes.Gray
-                    });
-                }
-
-                foreach (var target in targets)
-                {
-                    // Тип точки входа виден из DisplayName, цветом не выделяем.
-                    root.Items.Add(new TreeViewItem
-                    {
-                        Header = target.DisplayName,
-                        Tag = target,
-                        ToolTip = target.Details
-                    });
-                }
-
-                AssemblyTree.Items.Add(root);
-            }
-        }
-
-        private void UpdateUnloadHint()
-        {
-            TxtUnloadHint.Text = ScriptAssemblyLoader.SupportsUnload
-                ? "Выгрузка сборок поддерживается (.NET 8)"
-                : "Выгрузка сборок недоступна (.NET Framework)";
-        }
+       
 
         // ------------------------------------------------------------------
         //  Консоль
@@ -607,18 +160,18 @@ namespace RevitScriptRunner.UI
                 _pending.Clear();
             }
 
-            var showDebug = ChkShowDebug.IsChecked == true;
-            var showTime = ChkTimestamps.IsChecked == true;
+            //var showDebug = ChkShowDebug.IsChecked == true;
+            //var showTime = ChkTimestamps.IsChecked == true;
 
-            foreach (var chunk in batch)
-            {
-                if (chunk.Level == LogLevel.Debug && !showDebug) continue;
-                Append(chunk, showTime);
-            }
+            //foreach (var chunk in batch)
+            //{
+            //    if (chunk.Level == LogLevel.Debug && !showDebug) continue;
+            //    Append(chunk, showTime);
+            //}
 
-            TrimConsole();
+            //TrimConsole();
 
-            if (ChkAutoScroll.IsChecked == true) Console.ScrollToEnd();
+            //if (ChkAutoScroll.IsChecked == true) Console.ScrollToEnd();
         }
 
         private void Append(LogChunkEventArgs chunk, bool showTime)
@@ -707,7 +260,7 @@ namespace RevitScriptRunner.UI
 
         private void Status(string text)
         {
-            TxtStatus.Text = text;
+            //TxtStatus.Text = text;
         }
 
         // ------------------------------------------------------------------
@@ -720,22 +273,22 @@ namespace RevitScriptRunner.UI
 
             if (e.Key == Key.F5 || (ctrl && e.Key == Key.Enter))
             {
-                RunCurrentScript();
+                //RunCurrentScript();
                 e.Handled = true;
             }
             else if (ctrl && e.Key == Key.S)
             {
-                OnSaveFile(sender, e);
+                //OnSaveFile(sender, e);
                 e.Handled = true;
             }
             else if (ctrl && e.Key == Key.O)
             {
-                OnOpenFile(sender, e);
+                //OnOpenFile(sender, e);
                 e.Handled = true;
             }
             else if (ctrl && e.Key == Key.N)
             {
-                OnNewTab(sender, e);
+                //OnNewTab(sender, e);
                 e.Handled = true;
             }
             else if (ctrl && e.Key == Key.L)
@@ -745,7 +298,7 @@ namespace RevitScriptRunner.UI
             }
             else if (ctrl && e.Key == Key.W)
             {
-                CloseTab(Current);
+                //CloseTab(Current);
                 e.Handled = true;
             }
         }

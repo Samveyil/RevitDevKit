@@ -1,51 +1,79 @@
 <Window x:Class="RevitScriptRunner.UI.RunnerWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Revit Script Runner"
-        Height="800" Width="1200"
-        MinHeight="480" MinWidth="820"
-        WindowStartupLocation="CenterScreen">
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:local="clr-namespace:RevitScriptRunner.UI"
+        d:DataContext="{d:DesignInstance local:RunnerVM}"
+        mc:Ignorable="d"
+        Title="Script Runner" WindowStartupLocation="CenterScreen"
+        Height="800" Width="1200" MinHeight="480" MinWidth="820">
 
-    <!--
-        Оформления здесь намеренно нет: ни стилей, ни шаблонов, ни цветов.
-        Всё на стандартных контролах WPF. Тему добавим отдельно.
-    -->
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <materialDesign:CustomColorTheme BaseTheme="Light" PrimaryColor="#f88518" SecondaryColor="#FF0052A5" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
 
     <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5">
+            <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25"
+                    ToolTip="Скомпилировать и выполнить (F5 или Ctrl+Enter)" >
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Play" Width="20" Height="20" Foreground="#f88518"
+                                             VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
+                    <TextBlock Text="Запустить (F5)" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
 
-        <!-- ================= панель инструментов ================= -->
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4">
-            <Button x:Name="BtnRun" Click="OnRun" Padding="10,3" Margin="0,0,8,0"
-                    ToolTip="Скомпилировать и выполнить (F5 или Ctrl+Enter)">Запустить (F5)</Button>
+            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding NewTabCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Новая вкладка (Ctrl+N)">
+                <materialDesign:PackIcon Kind="FileCodeOutline" Width="25" Height="25" Foreground="#CC000000"/>
+            </Button>
 
-            <Button Click="OnNewTab"   Padding="8,3" Margin="0,0,2,0" ToolTip="Новая вкладка (Ctrl+N)">Новый</Button>
-            <Button Click="OnOpenFile" Padding="8,3" Margin="0,0,2,0" ToolTip="Открыть .cs (Ctrl+O)">Открыть…</Button>
-            <Button Click="OnSaveFile" Padding="8,3" Margin="0,0,8,0" ToolTip="Сохранить (Ctrl+S)">Сохранить</Button>
+            <Button Width="25" Height="25" Margin="10 0" Padding="0" Command="{Binding OpenFileCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Открыть .cs (Ctrl+O)">
+                <materialDesign:PackIcon Kind="FolderOpenOutline" Width="25" Height="25" Foreground="#CC000000"/>
+            </Button>
 
-            <TextBlock Text="Примеры:" VerticalAlignment="Center" Margin="0,0,4,0"/>
-            <ComboBox x:Name="CmbSamples" Width="220" VerticalAlignment="Center" Margin="0,0,8,0"
-                      SelectionChanged="OnSampleSelected" ToolTip="Вставить готовый пример в новую вкладку"/>
+            <Button Width="25" Height="25" Padding="0" Command="{Binding SaveFileCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить (Ctrl+S)">
+                <materialDesign:PackIcon Kind="ContentSaveOutline" Width="25" Height="25" Foreground="#CC000000"/>
+            </Button>
 
-            <CheckBox x:Name="ChkAutoTransaction" VerticalAlignment="Center" Margin="0,0,8,0"
-                      ToolTip="Обернуть выполнение в транзакцию. Выключите, если скрипт открывает транзакции сам.">
-                Автотранзакция
-            </CheckBox>
+            <Border BorderThickness="1" BorderBrush="#f88518" CornerRadius="3" Margin="20 0">
+                <materialDesign:PopupBox ToolTip="Вставить готовый пример в новую вкладку">
+                    <materialDesign:PopupBox.ToggleContent>
+                        <TextBlock Text="Примеры ▾" Margin="10 0 5 0" />
+                    </materialDesign:PopupBox.ToggleContent>
+                    <ItemsControl ItemsSource="{Binding CodeSamples}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding}" Command="{Binding DataContext.SampleSelectedCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </materialDesign:PopupBox>
+            </Border>
 
-            <CheckBox x:Name="ChkClearOnRun" IsChecked="True" VerticalAlignment="Center"
-                      ToolTip="Очищать консоль перед каждым запуском">Чистить консоль</CheckBox>
+            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Автотранзакция" IsChecked="{Binding IsAutoTransaction}"
+                      ToolTip="Обернуть выполнение в транзакцию. Выключите, если скрипт открывает транзакции сам."/>
+
+            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Чистить консоль" Margin="8 0" IsChecked="{Binding IsClearOnRun}"
+                      ToolTip="Очищать консоль перед каждым запуском"/>
         </StackPanel>
 
-        <!-- ================= строка состояния ================= -->
         <StatusBar DockPanel.Dock="Bottom">
             <StatusBarItem>
-                <TextBlock x:Name="TxtStatus" Text="Готово"/>
-            </StatusBarItem>
-            <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock x:Name="TxtContext"/>
+                <TextBlock Text="Готово"/>
             </StatusBarItem>
         </StatusBar>
 
-        <!-- ================= рабочая область + консоль ================= -->
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" MinHeight="120"/>
@@ -53,55 +81,85 @@
                 <RowDefinition Height="240" MinHeight="80"/>
             </Grid.RowDefinitions>
 
-            <TabControl Grid.Row="0" Margin="4,0,4,0">
+            <TabControl Grid.Row="0" Margin="5 0" ItemsSource="{Binding TabItems}" SelectedItem="{Binding SelectedTab}"
+                        Style="{StaticResource MaterialDesignTabControl}" materialDesign:TabAssist.HasUniformTabWidth="False">
 
-                <TabItem Header="C# скрипт">
-                    <TabControl x:Name="ScriptTabs"/>
-                </TabItem>
+                <TabControl.ItemContainerStyle>
+                    <Style TargetType="TabItem">
+                        <Setter Property="Margin" Value="2 4"/>
+                        <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                        <Setter Property="Cursor" Value="Hand"/>
 
-                <TabItem Header="Внешние DLL">
-                    <DockPanel>
-                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4">
-                            <Button Click="OnAddAssembly" Padding="8,3" Margin="0,0,2,0"
-                                    ToolTip="Выбрать .dll и показать всё, что в ней можно запустить">Добавить DLL…</Button>
-                            <Button Click="OnReloadAssembly" Padding="8,3" Margin="0,0,2,0"
-                                    ToolTip="Перечитать DLL с диска после пересборки">Перезагрузить</Button>
-                            <Button Click="OnRemoveAssembly" Padding="8,3" Margin="0,0,8,0"
-                                    ToolTip="Убрать из списка">Убрать</Button>
-                            <Button Click="OnRunTarget" Padding="10,3"
-                                    ToolTip="Выполнить выбранную команду или метод">Выполнить выбранное</Button>
-                        </StackPanel>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="TabItem">
+                                    <Border x:Name="TabBorder" BorderThickness="1" CornerRadius="4" Padding="5" BorderBrush="{DynamicResource MaterialDesignDivider}">
+                                        <ContentPresenter ContentSource="Header" HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+                                    </Border>
 
-                        <TextBlock DockPanel.Dock="Bottom" Margin="4" TextWrapping="Wrap"
-                                   Text="DLL грузится теневой копией — исходный файл не блокируется, его можно пересобирать. После пересборки нажмите «Перезагрузить»."/>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="TabBorder" Property="BorderBrush" Value="#f88518"/>
+                                            <Setter TargetName="TabBorder" Property="BorderThickness" Value="1 1 1 0"/>
+                                            <Setter TargetName="TabBorder" Property="CornerRadius" Value="4 4 0 0"/>
+                                        </Trigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource MaterialDesignSelection}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
 
-                        <TextBlock DockPanel.Dock="Bottom" x:Name="TxtUnloadHint" Margin="4,0"/>
+                        <Setter Property="HeaderTemplate">
+                            <Setter.Value>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
 
-                        <TreeView x:Name="AssemblyTree" Margin="4,0,4,4"
-                                  MouseDoubleClick="OnTreeDoubleClick"/>
-                    </DockPanel>
-                </TabItem>
+                                        <TextBlock Text="{Binding}" FontSize="14" FontWeight="DemiBold" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+
+                                        <Button Grid.Column="1" Style="{StaticResource MaterialDesignToolButton}"
+                                                Padding="0" Margin="6 0 0 0" Width="14" Height="14" VerticalAlignment="Center" ToolTip="Закрыть"
+                                                Command="{Binding DataContext.CloseTabCommand, RelativeSource={RelativeSource AncestorType=TabControl}}"
+                                                CommandParameter="{Binding}">
+                                            <materialDesign:PackIcon Kind="Close" Width="12" Height="12"/>
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </TabControl.ItemContainerStyle>
             </TabControl>
 
-            <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch"
-                          ResizeBehavior="PreviousAndNext"/>
+            <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
 
-            <DockPanel Grid.Row="2" Margin="4,0,4,0">
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,2">
-                    <TextBlock Text="Консоль" VerticalAlignment="Center" Margin="0,0,12,0"/>
+            <DockPanel Grid.Row="2" Margin="5">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                    <TextBlock Text="Консоль" VerticalAlignment="Center"/>
 
-                    <Button Click="OnClearConsole" Padding="8,2" Margin="0,0,2,0"
-                            ToolTip="Очистить консоль (Ctrl+L)">Очистить</Button>
-                    <Button Click="OnCopyConsole" Padding="8,2" Margin="0,0,12,0"
-                            ToolTip="Скопировать весь вывод в буфер обмена">Копировать</Button>
+                    <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0"
+                            Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Очистить консоль (Ctrl+L)">
+                        <materialDesign:PackIcon Kind="Broom" Width="25" Height="25" Foreground="#CC000000"/>
+                    </Button>
 
-                    <CheckBox x:Name="ChkAutoScroll" IsChecked="True" VerticalAlignment="Center" Margin="0,0,10,0">Автопрокрутка</CheckBox>
-                    <CheckBox x:Name="ChkTimestamps" VerticalAlignment="Center" Margin="0,0,10,0">Время</CheckBox>
-                    <CheckBox x:Name="ChkShowDebug" IsChecked="True" VerticalAlignment="Center">Стек вызовов</CheckBox>
+                    <Button Width="22" Height="22" Margin="10 0" Padding="0" VerticalAlignment="Center"
+                            Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Скопировать весь вывод в буфер обмена">
+                        <materialDesign:PackIcon Kind="ContentCopy" Width="22" Height="22" Foreground="#CC000000"/>
+                    </Button>
+
+                    <CheckBox Content="Автопрокрутка" VerticalAlignment="Center" Margin="15 0 0 0" Padding="2 0" IsChecked="{Binding IsAutoScroll}"/>
+                    <CheckBox Content="Время" VerticalAlignment="Center" Margin="10 0" Padding="2 0" IsChecked="{Binding IsTimestamps}"/>
+                    <CheckBox Content="Стек вызовов" VerticalAlignment="Center" Padding="2 0" IsChecked="{Binding IsShowDebug}"/>
                 </StackPanel>
 
-                <RichTextBox x:Name="Console" IsReadOnly="True" IsDocumentEnabled="True"
-                             FontFamily="Consolas" Margin="0,0,0,4"
+                <RichTextBox x:Name="Console" IsReadOnly="True" IsDocumentEnabled="True" FontFamily="Consolas" Margin="0 2 0 0"
+                             Style="{StaticResource MaterialDesignOutlinedRichTextBox}"
                              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
             </DockPanel>
         </Grid>
