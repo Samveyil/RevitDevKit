@@ -29,7 +29,7 @@ namespace RevitScriptRunner.UI
 
         [ObservableProperty] private bool _isAutoScroll = true;
         [ObservableProperty] private bool _isTimestamps = false;
-        [ObservableProperty] private bool _isShowDebug = false;
+        [ObservableProperty] private bool _isShowDebug = true;
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(RunCommand))]

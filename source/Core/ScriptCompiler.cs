@@ -65,9 +65,12 @@ namespace RevitScriptRunner.Core
             // в процессе Revit окажется другая (свою несут Dynamo и часть надстроек),
             // получим MissingMethodException. With*-методы принимают по одному аргументу
             // и живут между версиями без изменений.
+            // DEBUG и TRACE нужны, иначе компилятор выбросит вызовы Debug.* и Trace.*
+            // целиком: они помечены [Conditional].
             var parseOptions = CSharpParseOptions.Default
                 .WithLanguageVersion(LanguageVersion.Latest)
-                .WithDocumentationMode(DocumentationMode.None);
+                .WithDocumentationMode(DocumentationMode.None)
+                .WithPreprocessorSymbols("DEBUG", "TRACE");
 
             var syntaxTree = CSharpSyntaxTree.ParseText(prepared.Code, parseOptions, assemblyName + ".cs", Encoding.UTF8);
 
