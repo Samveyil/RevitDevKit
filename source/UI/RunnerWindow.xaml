@@ -130,6 +130,8 @@
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsSelected" Value="True">
                                             <Setter TargetName="TabBorder" Property="BorderBrush" Value="Transparent"/>
+                                            <Setter TargetName="TabBorder" Property="CornerRadius" Value="4 4 0 0"/>
+                                            <Setter TargetName="TabBorder" Property="Background" Value="#0F000000"/>
                                         </Trigger>
                                         <MultiTrigger>
                                             <MultiTrigger.Conditions>
@@ -213,7 +215,7 @@
                 </StackPanel>
 
                 <RichTextBox x:Name="Console" IsReadOnly="True" IsDocumentEnabled="True" FontFamily="Consolas" Margin="0 2 0 0"
-                             Style="{StaticResource MaterialDesignOutlinedRichTextBox}"
+                             Style="{StaticResource MaterialDesignOutlinedRichTextBox}" VerticalContentAlignment="Top" Padding="6 4" BorderBrush="#f88518"
                              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
             </DockPanel>
         </Grid>
