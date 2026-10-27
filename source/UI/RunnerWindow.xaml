@@ -60,6 +60,7 @@
                     <materialDesign:PopupBox.ToggleContent>
                         <TextBlock Text="Примеры ▾" Margin="10 0 5 0" />
                     </materialDesign:PopupBox.ToggleContent>
+
                     <ItemsControl ItemsSource="{Binding CodeSamples}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -94,12 +95,8 @@
                 <RowDefinition Height="240" MinHeight="80"/>
             </Grid.RowDefinitions>
 
-            <TabControl Grid.Row="0" Margin="5 0" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}">
+            <TabControl Grid.Row="0" Margin="5 0 5 5" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}">
 
-                <!-- Рамка вокруг редактора, «вырастающая» из выбранной вкладки.
-                     Контур выбранной вкладки и рамки рисует TabFrame одной линией,
-                     поэтому скругления совпадают. Margin -2 у панели выравнивает
-                     крайние вкладки по краям рамки. -->
                 <TabControl.Template>
                     <ControlTemplate TargetType="TabControl">
                         <Grid KeyboardNavigation.TabNavigation="Local">
@@ -131,8 +128,6 @@
                                     </Border>
 
                                     <ControlTemplate.Triggers>
-                                        <!-- Контур выбранной вкладки рисует TabFrame; толщину оставляем,
-                                             чтобы заголовок не сдвигался при выборе. -->
                                         <Trigger Property="IsSelected" Value="True">
                                             <Setter TargetName="TabBorder" Property="BorderBrush" Value="Transparent"/>
                                         </Trigger>
@@ -151,7 +146,6 @@
                         <Setter Property="HeaderTemplate">
                             <Setter.Value>
                                 <DataTemplate>
-                                    <!-- ContextMenu не в визуальном дереве: VM окна передаём ему через Tag. -->
                                     <Grid Background="Transparent"
                                           Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TabControl}}">
                                         <Grid.ColumnDefinitions>
@@ -183,8 +177,6 @@
                         </Setter>
 
                         <Style.Triggers>
-                            <!-- Выбранная вкладка опускается на 1 px и встаёт на рамку,
-                                 остальные стоят над её верхней линией. -->
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter Property="Margin" Value="2 4 2 0"/>
                             </Trigger>
