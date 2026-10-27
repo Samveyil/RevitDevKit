@@ -86,8 +86,6 @@ namespace RevitScriptRunner.Core
             {
                 Assembly = assembly,
                 OriginalPath = original,
-                ShadowPath = shadowPath,
-                LoadedAt = DateTime.Now,
                 Owner = owner
             };
         }
@@ -107,18 +105,6 @@ namespace RevitScriptRunner.Core
             GC.WaitForPendingFinalizers();
             return true;
 #endif
-        }
-
-        public static bool SupportsUnload
-        {
-            get
-            {
-#if NETFRAMEWORK
-                return false;
-#else
-                return true;
-#endif
-            }
         }
 
         private static void CopyWithSiblings(string sourceDir, string targetDir)
@@ -179,8 +165,6 @@ namespace RevitScriptRunner.Core
     {
         public Assembly Assembly { get; set; }
         public string OriginalPath { get; set; }
-        public string ShadowPath { get; set; }
-        public DateTime LoadedAt { get; set; }
         internal IDisposable Owner { get; set; }
 
         public string DisplayName => System.IO.Path.GetFileName(OriginalPath);

@@ -43,6 +43,7 @@ namespace RevitScriptRunner
                 RevitTaskRunner.Initialize();
 
                 BuildRibbon(application);
+                RegisterConsolePane(application);
 
                 ConsoleOutput.System("Script Runner загружен. Revit " +
                                      application.ControlledApplication.VersionNumber + ".");
@@ -58,6 +59,7 @@ namespace RevitScriptRunner
         public Result OnShutdown(UIControlledApplication application)
         {
             UI.RunnerWindow.CloseIfOpen();
+            UI.AssemblyRunnerWindow.CloseIfOpen();
             ConsoleOutput.Uninstall();
             AppDomain.CurrentDomain.AssemblyResolve -= ResolveFromPluginFolder;
             return Result.Succeeded;
@@ -77,14 +79,41 @@ namespace RevitScriptRunner
                 assemblyPath,
                 typeof(Commands.OpenRunnerCommand).FullName)
             {
-                ToolTip = "Редактор C#-скриптов и загрузчик внешних DLL",
+                ToolTip = "Редактор C#-скриптов",
                 LongDescription =
-                    "Пишите код прямо в Revit и запускайте его без пересборки надстройки, " +
-                    "либо подключайте готовую DLL и вызывайте из неё команды. " +
+                    "Пишите код прямо в Revit и запускайте его без пересборки надстройки. " +
                     "Весь вывод — Console.WriteLine, Debug, исключения — попадает в консоль плагина."
             };
 
             SetIcon(panel.AddItem(openButton) as PushButton, "runner");
+
+            var assembliesButton = new PushButtonData(
+                "RsrAssemblies",
+                "Запуск\nDLL",
+                assemblyPath,
+                typeof(Commands.OpenAssemblyRunnerCommand).FullName)
+            {
+                ToolTip = "Загрузка внешних DLL и запуск их команд",
+                LongDescription =
+                    "Подключите собранную DLL и запустите из неё IExternalCommand. " +
+                    "Команда берётся из актуальной DLL на диске: после пересборки достаточно запустить её снова."
+            };
+
+            SetIcon(panel.AddItem(assembliesButton) as PushButton, "assemblies");
+
+            var consoleButton = new PushButtonData(
+                "RsrConsole",
+                "Консоль",
+                assemblyPath,
+                typeof(Commands.ShowConsolePaneCommand).FullName)
+            {
+                ToolTip = "Показать панель с консолью плагина",
+                LongDescription =
+                    "Сюда попадает вывод запущенных команд: Console.WriteLine, Debug, исключения. " +
+                    "Панель можно прикрепить к любому краю окна Revit."
+            };
+
+            SetIcon(panel.AddItem(consoleButton) as PushButton, "console");
 
             // Эта кнопка нужна не только пользователю: без места на ленте у команды
             // нет идентификатора, который принимает UIApplication.PostCommand, —
@@ -102,6 +131,19 @@ namespace RevitScriptRunner
             };
 
             SetIcon(panel.AddItem(runAgainButton) as PushButton, "run");
+        }
+
+        private static void RegisterConsolePane(UIControlledApplication application)
+        {
+            try
+            {
+                UI.ConsolePane.Register(application);
+            }
+            catch (Exception ex)
+            {
+                // Без панели плагин работает: вывод виден в консоли окна скриптов.
+                ConsoleOutput.Exception(ex, "Не удалось зарегистрировать панель консоли:");
+            }
         }
 
         private static void SetIcon(PushButton button, string name)
