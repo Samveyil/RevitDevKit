@@ -17,7 +17,6 @@ namespace RevitScriptRunner.UI
 {
     public partial class RunnerVM : ObservableObject
     {
-        // VM создаётся в потоке окна; Completed у RunRequest приходит из Revit.
         private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
 
         [ObservableProperty] private bool _isAutoTransaction = false;
