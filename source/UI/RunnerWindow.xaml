@@ -19,9 +19,19 @@
         </ResourceDictionary>
     </Window.Resources>
 
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding RunCommand}"/>
+        <KeyBinding Key="Enter" Modifiers="Control" Command="{Binding RunCommand}"/>
+        <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewTabCommand}"/>
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenFileCommand}"/>
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveFileCommand}"/>
+        <KeyBinding Key="W" Modifiers="Control" Command="{Binding CloseTabCommand}"/>
+        <KeyBinding Key="L" Modifiers="Control" Command="{Binding ClearConsoleCommand}"/>
+    </Window.InputBindings>
+
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5">
-            <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25"
+            <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding RunCommand}"
                     ToolTip="Скомпилировать и выполнить (F5 или Ctrl+Enter)" >
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="Play" Width="20" Height="20" Foreground="#f88518"
@@ -50,6 +60,7 @@
                     <materialDesign:PopupBox.ToggleContent>
                         <TextBlock Text="Примеры ▾" Margin="10 0 5 0" />
                     </materialDesign:PopupBox.ToggleContent>
+
                     <ItemsControl ItemsSource="{Binding CodeSamples}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -69,8 +80,11 @@
         </StackPanel>
 
         <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem DockPanel.Dock="Right">
+                <TextBlock Text="{Binding ContextText}"/>
+            </StatusBarItem>
             <StatusBarItem>
-                <TextBlock Text="Готово"/>
+                <TextBlock Text="{Binding TxtStatus}"/>
             </StatusBarItem>
         </StatusBar>
 
@@ -81,12 +95,28 @@
                 <RowDefinition Height="240" MinHeight="80"/>
             </Grid.RowDefinitions>
 
-            <TabControl Grid.Row="0" Margin="5 0" ItemsSource="{Binding TabItems}" SelectedItem="{Binding SelectedTab}"
-                        Style="{StaticResource MaterialDesignTabControl}" materialDesign:TabAssist.HasUniformTabWidth="False">
+            <TabControl Grid.Row="0" Margin="5 0 5 5" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}">
+
+                <TabControl.Template>
+                    <ControlTemplate TargetType="TabControl">
+                        <Grid KeyboardNavigation.TabNavigation="Local">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <UniformGrid Grid.Row="0" Rows="1" IsItemsHost="True" Margin="-2 0"/>
+
+                            <ContentPresenter Grid.Row="1" x:Name="PART_SelectedContentHost" ContentSource="SelectedContent" Margin="1"/>
+
+                            <local:TabFrame Grid.RowSpan="2" Stroke="#f88518" Radius="4"/>
+                        </Grid>
+                    </ControlTemplate>
+                </TabControl.Template>
 
                 <TabControl.ItemContainerStyle>
                     <Style TargetType="TabItem">
-                        <Setter Property="Margin" Value="2 4"/>
+                        <Setter Property="Margin" Value="2 4 2 1"/>
                         <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
                         <Setter Property="Cursor" Value="Hand"/>
 
@@ -99,13 +129,17 @@
 
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="TabBorder" Property="BorderBrush" Value="#f88518"/>
-                                            <Setter TargetName="TabBorder" Property="BorderThickness" Value="1 1 1 0"/>
+                                            <Setter TargetName="TabBorder" Property="BorderBrush" Value="Transparent"/>
                                             <Setter TargetName="TabBorder" Property="CornerRadius" Value="4 4 0 0"/>
+                                            <Setter TargetName="TabBorder" Property="Background" Value="#0F000000"/>
                                         </Trigger>
-                                        <Trigger Property="IsMouseOver" Value="True">
+                                        <MultiTrigger>
+                                            <MultiTrigger.Conditions>
+                                                <Condition Property="IsMouseOver" Value="True"/>
+                                                <Condition Property="IsSelected" Value="False"/>
+                                            </MultiTrigger.Conditions>
                                             <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource MaterialDesignSelection}"/>
-                                        </Trigger>
+                                        </MultiTrigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
                             </Setter.Value>
@@ -114,13 +148,23 @@
                         <Setter Property="HeaderTemplate">
                             <Setter.Value>
                                 <DataTemplate>
-                                    <Grid>
+                                    <Grid Background="Transparent"
+                                          Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TabControl}}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
 
-                                        <TextBlock Text="{Binding}" FontSize="14" FontWeight="DemiBold" HorizontalAlignment="Center"
+                                        <Grid.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Закрыть вкладку" CommandParameter="{Binding}"
+                                                          Command="{Binding PlacementTarget.Tag.CloseTabCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
+                                                          Command="{Binding PlacementTarget.Tag.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            </ContextMenu>
+                                        </Grid.ContextMenu>
+
+                                        <TextBlock Text="{Binding Header}" ToolTip="{Binding FilePath}" FontSize="14" FontWeight="DemiBold" HorizontalAlignment="Center"
                                                    VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
 
                                         <Button Grid.Column="1" Style="{StaticResource MaterialDesignToolButton}"
@@ -133,8 +177,20 @@
                                 </DataTemplate>
                             </Setter.Value>
                         </Setter>
+
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Margin" Value="2 4 2 0"/>
+                            </Trigger>
+                        </Style.Triggers>
                     </Style>
                 </TabControl.ItemContainerStyle>
+
+                <TabControl.ContentTemplate>
+                    <DataTemplate>
+                        <local:ScriptEditorHost Tab="{Binding}"/>
+                    </DataTemplate>
+                </TabControl.ContentTemplate>
             </TabControl>
 
             <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
@@ -143,12 +199,12 @@
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
                     <TextBlock Text="Консоль" VerticalAlignment="Center"/>
 
-                    <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0"
+                    <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding ClearConsoleCommand}"
                             Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Очистить консоль (Ctrl+L)">
                         <materialDesign:PackIcon Kind="Broom" Width="25" Height="25" Foreground="#CC000000"/>
                     </Button>
 
-                    <Button Width="22" Height="22" Margin="10 0" Padding="0" VerticalAlignment="Center"
+                    <Button Width="22" Height="22" Margin="10 0" Padding="0" VerticalAlignment="Center" Click="OnCopyConsole"
                             Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Скопировать весь вывод в буфер обмена">
                         <materialDesign:PackIcon Kind="ContentCopy" Width="22" Height="22" Foreground="#CC000000"/>
                     </Button>
@@ -159,7 +215,7 @@
                 </StackPanel>
 
                 <RichTextBox x:Name="Console" IsReadOnly="True" IsDocumentEnabled="True" FontFamily="Consolas" Margin="0 2 0 0"
-                             Style="{StaticResource MaterialDesignOutlinedRichTextBox}"
+                             Style="{StaticResource MaterialDesignOutlinedRichTextBox}" VerticalContentAlignment="Top" Padding="6 4" BorderBrush="#f88518"
                              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
             </DockPanel>
         </Grid>
