@@ -39,7 +39,6 @@ namespace RevitScriptRunner.UI
         public static void ShowSingleton()
         {
             _vm ??= new AssemblyRunnerVM();
-            _vm.RefreshContext();
 
             if (_instance != null)
             {
