@@ -58,11 +58,6 @@ namespace RevitScriptRunner.Core
             _event = ExternalEvent.Create(_instance);
         }
 
-        public static bool IsReady
-        {
-            get { return _event != null; }
-        }
-
         /// <summary>Ставит задание в очередь и просит Revit выполнить его.</summary>
         public static void Enqueue(RunRequest request)
         {

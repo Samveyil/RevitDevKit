@@ -33,6 +33,54 @@ namespace RevitScriptRunner.Commands
     }
 
     /// <summary>
+    /// Открывает окно загрузки внешних DLL.
+    /// </summary>
+    [Transaction(TransactionMode.Manual)]
+    [Regeneration(RegenerationOption.Manual)]
+    public class OpenAssemblyRunnerCommand : IExternalCommand
+    {
+        public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
+        {
+            ConsoleOutput.Install();
+            RevitTaskRunner.Initialize();
+
+            try
+            {
+                UI.AssemblyRunnerWindow.ShowSingleton();
+                return Result.Succeeded;
+            }
+            catch (Exception ex)
+            {
+                message = ex.Message;
+                ConsoleOutput.Exception(ex, "Не удалось открыть окно загрузки DLL:");
+                return Result.Failed;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Показывает прикрепляемую панель с консолью плагина.
+    /// </summary>
+    [Transaction(TransactionMode.Manual)]
+    [Regeneration(RegenerationOption.Manual)]
+    public class ShowConsolePaneCommand : IExternalCommand
+    {
+        public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
+        {
+            try
+            {
+                UI.ConsolePane.Show(commandData.Application);
+                return Result.Succeeded;
+            }
+            catch (Exception ex)
+            {
+                message = "Панель консоли недоступна: " + ex.Message;
+                return Result.Failed;
+            }
+        }
+    }
+
+    /// <summary>
     /// Выполняет отложенное задание внутри настоящей команды Revit.
     ///
     /// Окно плагина немодальное, а ExternalCommandData действителен только на время
@@ -66,12 +114,6 @@ namespace RevitScriptRunner.Commands
         {
             if (request == null) return;
             lock (Sync) _last = request;
-        }
-
-        /// <summary>Есть ли что повторить по кнопке на ленте.</summary>
-        internal static bool HasLast
-        {
-            get { lock (Sync) return _last != null; }
         }
 
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)

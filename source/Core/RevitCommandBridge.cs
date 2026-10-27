@@ -24,12 +24,6 @@ namespace RevitScriptRunner.Core
         private static RevitCommandId _commandId;
         private static bool _resolved;
 
-        /// <summary>Доступен ли запуск в контексте настоящей команды Revit.</summary>
-        public static bool IsAvailable
-        {
-            get { return Resolve() != null; }
-        }
-
         private static RevitCommandId Resolve()
         {
             if (_resolved) return _commandId;

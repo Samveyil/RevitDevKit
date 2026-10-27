@@ -27,10 +27,6 @@ namespace RevitScriptRunner.UI
         [ObservableProperty] private string _txtStatus = "Готово";
         [ObservableProperty] private string _contextText;
 
-        [ObservableProperty] private bool _isAutoScroll = true;
-        [ObservableProperty] private bool _isTimestamps = false;
-        [ObservableProperty] private bool _isShowDebug = true;
-
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(RunCommand))]
         private bool _isRunning;
@@ -41,8 +37,11 @@ namespace RevitScriptRunner.UI
 
         public List<string> CodeSamples { get; } = Samples.All.Select(s => s.Title).ToList();
 
+        public ConsoleVM Output { get; } = new ConsoleVM();
+
         public RunnerVM()
         {
+            Output.StatusReported += text => TxtStatus = text;
             NewTab(Samples.Starter, "Новый скрипт");
         }
 
@@ -290,29 +289,6 @@ namespace RevitScriptRunner.UI
         {
             IsRunning = false;
             TxtStatus = status;
-        }
-
-        // ------------------------------------------------------------------
-        //  Консоль
-        // ------------------------------------------------------------------
-
-        [RelayCommand]
-        private void ClearConsole() => ConsoleOutput.Clear();
-
-        public event EventHandler CloseRequest;
-        public void RaiseCloseRequest()
-        {
-            CloseRequest?.Invoke(this, EventArgs.Empty);
-        }
-        public event EventHandler HideRequest;
-        public void RaiseHideRequest()
-        {
-            HideRequest?.Invoke(this, EventArgs.Empty);
-        }
-        public event EventHandler ShowRequest;
-        public void RaiseShowRequest()
-        {
-            ShowRequest?.Invoke(this, EventArgs.Empty);
         }
     }
 }

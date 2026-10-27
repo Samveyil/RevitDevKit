@@ -1,0 +1,135 @@
+<Window x:Class="RevitScriptRunner.UI.AssemblyRunnerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:local="clr-namespace:RevitScriptRunner.UI"
+        d:DataContext="{d:DesignInstance local:AssemblyRunnerVM}"
+        mc:Ignorable="d"
+        Title="Script Runner — DLL" WindowStartupLocation="CenterScreen"
+        Height="520" Width="720" MinHeight="320" MinWidth="520">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <materialDesign:CustomColorTheme BaseTheme="Light" PrimaryColor="#f88518" SecondaryColor="#FF0052A5" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding RunCommand}"/>
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding AddAssemblyCommand}"/>
+        <KeyBinding Key="R" Modifiers="Control" Command="{Binding ReloadAssemblyCommand}"/>
+    </Window.InputBindings>
+
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5">
+            <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding RunCommand}"
+                    ToolTip="Выполнить выбранную команду (F5 или двойной щелчок)">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Play" Width="20" Height="20" Foreground="#f88518"
+                                             VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
+                    <TextBlock Text="Выполнить (F5)" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding AddAssemblyCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Добавить DLL (Ctrl+O)">
+                <materialDesign:PackIcon Kind="FolderOpenOutline" Width="25" Height="25" Foreground="#CC000000"/>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding ReloadAssemblyCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Обновить список команд из DLL на диске (Ctrl+R)">
+                <materialDesign:PackIcon Kind="Refresh" Width="25" Height="25" Foreground="#CC000000"/>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RevealInExplorerCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать DLL в проводнике">
+                <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="#CC000000"/>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RemoveAssemblyCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Убрать из списка">
+                <materialDesign:PackIcon Kind="DeleteOutline" Width="25" Height="25" Foreground="#CC000000"/>
+            </Button>
+
+            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Чистить консоль" Margin="20 0 0 0" IsChecked="{Binding IsClearOnRun}"
+                      ToolTip="Очищать консоль перед каждым запуском"/>
+        </StackPanel>
+
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem DockPanel.Dock="Right">
+                <TextBlock Text="{Binding ContextText}"/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="{Binding TxtStatus}"/>
+            </StatusBarItem>
+        </StatusBar>
+
+        <TextBlock DockPanel.Dock="Bottom" Margin="7 0 7 5" Foreground="Gray" TextWrapping="Wrap"
+                   Text="Команда запускается из актуальной DLL на диске: после пересборки просто запустите её снова. Обновлять список нужно, только когда появились новые команды."/>
+
+        <Border Margin="5 0 5 5" BorderThickness="1" BorderBrush="#f88518" CornerRadius="4">
+            <Grid>
+                <TreeView ItemsSource="{Binding Assemblies}" Margin="2">
+                    <TreeView.InputBindings>
+                        <MouseBinding Gesture="LeftDoubleClick" Command="{Binding RunCommand}"/>
+                    </TreeView.InputBindings>
+
+                    <TreeView.Resources>
+                        <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                        </Style>
+
+                        <HierarchicalDataTemplate DataType="{x:Type local:AssemblyNodeVM}" ItemsSource="{Binding Targets}">
+                            <StackPanel Orientation="Horizontal" ToolTip="{Binding FilePath}">
+                                <materialDesign:PackIcon Kind="PackageVariantClosed" Width="18" Height="18" Foreground="#f88518"
+                                                         VerticalAlignment="Center" Margin="0 0 6 0"/>
+                                <TextBlock Text="{Binding DisplayName}" FontWeight="DemiBold" VerticalAlignment="Center"/>
+                                <TextBlock Text="   — нет IExternalCommand" Foreground="Gray" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasTargets}" Value="False">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+
+                        <DataTemplate DataType="{x:Type local:TargetNodeVM}">
+                            <StackPanel Orientation="Horizontal" ToolTip="{Binding Details}">
+                                <materialDesign:PackIcon Kind="ConsoleLine" Width="16" Height="16" Foreground="#CC000000"
+                                                         VerticalAlignment="Center" Margin="0 0 6 0"/>
+                                <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Namespace, StringFormat='{}   {0}'}" Foreground="Gray" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </TreeView.Resources>
+                </TreeView>
+
+                <TextBlock Text="Добавьте DLL кнопкой с папкой или Ctrl+O" Foreground="Gray"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Assemblies.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
+        </Border>
+    </DockPanel>
+</Window>
