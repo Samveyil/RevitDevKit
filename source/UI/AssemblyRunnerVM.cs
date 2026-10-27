@@ -19,8 +19,8 @@ namespace RevitScriptRunner.UI
 
         [ObservableProperty] private bool _isClearOnRun = true;
 
-        [ObservableProperty] private string _txtStatus = "Готово";
-        [ObservableProperty] private string _contextText;
+        [ObservableProperty] private string _searchText = string.Empty;
+        [ObservableProperty] private bool _isNothingFound;
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(RunCommand))]
@@ -43,21 +43,15 @@ namespace RevitScriptRunner.UI
             Restore();
         }
 
-        private AssemblyNodeVM SelectedAssembly => SelectedNode as AssemblyNodeVM ?? (SelectedNode as TargetNodeVM)?.Owner;
+        partial void OnSearchTextChanged(string value) => ApplySearch();
 
-        public void RefreshContext()
+        private AssemblyNodeVM SelectedAssembly => SelectedNode switch
         {
-            try
-            {
-                var doc = RevitAPI.Document;
-                ContextText = doc == null ? "Документ не открыт" : "Документ: " + doc.Title;
-            }
-            catch (Exception ex)
-            {
-                ContextText = "Контекст недоступен";
-                ConsoleOutput.Debug("Не удалось прочитать контекст Revit: " + ex.Message);
-            }
-        }
+            AssemblyNodeVM assembly => assembly,
+            NamespaceNodeVM ns => ns.Owner,
+            TargetNodeVM target => target.Owner,
+            _ => null
+        };
 
         // ------------------------------------------------------------------
         //  Список DLL
@@ -99,8 +93,7 @@ namespace RevitScriptRunner.UI
             Assemblies.Remove(node);
             SelectedNode = null;
             Save();
-
-            TxtStatus = "Убрано: " + node.DisplayName;
+            ApplySearch();
         }
 
         [RelayCommand(CanExecute = nameof(HasAssembly))]
@@ -128,18 +121,49 @@ namespace RevitScriptRunner.UI
 
                 node.IsSelected = true;
                 Save();
-
-                TxtStatus = loaded.DisplayName + ": команд — " + node.Targets.Count;
+                ApplySearch();
             }
             catch (Exception ex)
             {
                 ConsoleOutput.Exception(ex, "Не удалось загрузить " + path + ":");
-                TxtStatus = "Ошибка загрузки";
             }
         }
 
         private AssemblyNodeVM FindAssembly(string path) =>
             Assemblies.FirstOrDefault(a => string.Equals(a.FilePath, path, StringComparison.OrdinalIgnoreCase));
+
+        // ------------------------------------------------------------------
+        //  Поиск и сворачивание
+        // ------------------------------------------------------------------
+
+        /// <summary>Сворачивает дерево до списка DLL.</summary>
+        [RelayCommand]
+        private void CollapseAll()
+        {
+            foreach (var assembly in Assemblies)
+            {
+                assembly.IsExpanded = false;
+                foreach (var folder in assembly.Children.OfType<NamespaceNodeVM>())
+                    folder.IsExpanded = false;
+            }
+        }
+
+        private void ApplySearch()
+        {
+            var query = SearchText?.Trim() ?? string.Empty;
+
+            foreach (var assembly in Assemblies)
+                assembly.Filter(query);
+
+            IsNothingFound = query.Length > 0 && Assemblies.Count > 0 && !Assemblies.Any(a => a.IsVisible);
+
+            // Скрытую поиском команду не должно быть можно запустить по F5.
+            if (SelectedNode != null && !SelectedNode.IsVisible)
+            {
+                SelectedNode.IsSelected = false;
+                SelectedNode = null;
+            }
+        }
 
         // ------------------------------------------------------------------
         //  Запуск
@@ -166,21 +190,18 @@ namespace RevitScriptRunner.UI
             catch (Exception ex)
             {
                 ConsoleOutput.Exception(ex, "Не удалось загрузить " + node.Owner.FilePath + ":");
-                TxtStatus = "Ошибка загрузки";
                 return;
             }
 
             if (target == null)
             {
                 ConsoleOutput.Error("В актуальной " + node.Owner.DisplayName + " нет команды " + node.TypeName + ". Обновите список команд.");
-                TxtStatus = "Команда не найдена";
                 return;
             }
 
             if (IsClearOnRun) ConsoleOutput.Clear();
 
             IsRunning = true;
-            TxtStatus = "Выполнение " + node.DisplayName + "…";
 
             var request = new RunRequest
             {
@@ -193,11 +214,7 @@ namespace RevitScriptRunner.UI
                     ConsolePane.TryShow(RevitAPI.UIApplication);
                     return target.Invoke();
                 },
-                Completed = error => _dispatcher.Invoke(() =>
-                {
-                    Finish(error == null ? "Готово" : "Завершено с ошибкой");
-                    RefreshContext();
-                })
+                Completed = error => _dispatcher.Invoke(() => IsRunning = false)
             };
 
             try
@@ -208,14 +225,8 @@ namespace RevitScriptRunner.UI
             catch (Exception ex)
             {
                 ConsoleOutput.Exception(ex, "Не удалось передать запуск в Revit:");
-                Finish("Ошибка запуска");
+                IsRunning = false;
             }
-        }
-
-        private void Finish(string status)
-        {
-            IsRunning = false;
-            TxtStatus = status;
         }
 
         // ------------------------------------------------------------------

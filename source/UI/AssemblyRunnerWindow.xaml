@@ -60,76 +60,106 @@
                       ToolTip="Очищать консоль перед каждым запуском"/>
         </StackPanel>
 
-        <StatusBar DockPanel.Dock="Bottom">
-            <StatusBarItem DockPanel.Dock="Right">
-                <TextBlock Text="{Binding ContextText}"/>
-            </StatusBarItem>
-            <StatusBarItem>
-                <TextBlock Text="{Binding TxtStatus}"/>
-            </StatusBarItem>
-        </StatusBar>
-
-        <TextBlock DockPanel.Dock="Bottom" Margin="7 0 7 5" Foreground="Gray" TextWrapping="Wrap"
-                   Text="Команда запускается из актуальной DLL на диске: после пересборки просто запустите её снова. Обновлять список нужно, только когда появились новые команды."/>
-
         <Border Margin="5 0 5 5" BorderThickness="1" BorderBrush="#f88518" CornerRadius="4">
-            <Grid>
-                <TreeView ItemsSource="{Binding Assemblies}" Margin="2">
-                    <TreeView.InputBindings>
-                        <MouseBinding Gesture="LeftDoubleClick" Command="{Binding RunCommand}"/>
-                    </TreeView.InputBindings>
+            <DockPanel>
+                <DockPanel DockPanel.Dock="Top" Margin="8 2 4 2">
+                    <Button DockPanel.Dock="Right" Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding CollapseAllCommand}"
+                            Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Свернуть всё">
+                        <materialDesign:PackIcon Kind="ArrowExpand" Width="22" Height="22" Foreground="#CC000000"/>
+                    </Button>
 
-                    <TreeView.Resources>
-                        <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
-                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
-                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
-                        </Style>
+                    <materialDesign:PackIcon DockPanel.Dock="Left" Kind="Magnify" Width="18" Height="18" Foreground="Gray"
+                                             VerticalAlignment="Center" Margin="0 0 6 0"/>
 
-                        <HierarchicalDataTemplate DataType="{x:Type local:AssemblyNodeVM}" ItemsSource="{Binding Targets}">
-                            <StackPanel Orientation="Horizontal" ToolTip="{Binding FilePath}">
-                                <materialDesign:PackIcon Kind="PackageVariantClosed" Width="18" Height="18" Foreground="#f88518"
-                                                         VerticalAlignment="Center" Margin="0 0 6 0"/>
-                                <TextBlock Text="{Binding DisplayName}" FontWeight="DemiBold" VerticalAlignment="Center"/>
-                                <TextBlock Text="   — нет IExternalCommand" Foreground="Gray" VerticalAlignment="Center">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding HasTargets}" Value="False">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </StackPanel>
-                        </HierarchicalDataTemplate>
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"
+                             materialDesign:HintAssist.Hint="Поиск команды, пространства имён или DLL"
+                             materialDesign:TextFieldAssist.HasClearButton="True"/>
+                </DockPanel>
 
-                        <DataTemplate DataType="{x:Type local:TargetNodeVM}">
-                            <StackPanel Orientation="Horizontal" ToolTip="{Binding Details}">
-                                <materialDesign:PackIcon Kind="ConsoleLine" Width="16" Height="16" Foreground="#CC000000"
-                                                         VerticalAlignment="Center" Margin="0 0 6 0"/>
-                                <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding Namespace, StringFormat='{}   {0}'}" Foreground="Gray" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </TreeView.Resources>
-                </TreeView>
+                <Grid>
+                    <TreeView ItemsSource="{Binding Assemblies}" Margin="2">
+                        <TreeView.InputBindings>
+                            <MouseBinding Gesture="LeftDoubleClick" Command="{Binding RunCommand}"/>
+                        </TreeView.InputBindings>
 
-                <TextBlock Text="Добавьте DLL кнопкой с папкой или Ctrl+O" Foreground="Gray"
-                           HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Assemblies.Count}" Value="0">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-            </Grid>
+                        <TreeView.Resources>
+                            <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+
+                            <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+                                <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}"/>
+                                <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                                <Setter Property="Padding" Value="4 1"/>
+                                <Setter Property="MinHeight" Value="0"/>
+                            </Style>
+
+                            <HierarchicalDataTemplate DataType="{x:Type local:AssemblyNodeVM}" ItemsSource="{Binding Children}">
+                                <StackPanel Orientation="Horizontal" ToolTip="{Binding FilePath}">
+                                    <materialDesign:PackIcon Kind="PackageVariantClosed" Width="18" Height="18" Foreground="#f88518"
+                                                             VerticalAlignment="Center" Margin="0 0 6 0"/>
+                                    <TextBlock Text="{Binding DisplayName}" FontWeight="DemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock Text="   — нет IExternalCommand" Foreground="Gray" VerticalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasTargets}" Value="False">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </HierarchicalDataTemplate>
+
+                            <HierarchicalDataTemplate DataType="{x:Type local:NamespaceNodeVM}" ItemsSource="{Binding Targets}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="FolderOutline" Width="16" Height="16" Foreground="#CC000000"
+                                                             VerticalAlignment="Center" Margin="0 0 6 0"/>
+                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </HierarchicalDataTemplate>
+
+                            <DataTemplate DataType="{x:Type local:TargetNodeVM}">
+                                <StackPanel Orientation="Horizontal" ToolTip="{Binding TypeName}">
+                                    <materialDesign:PackIcon Kind="LanguageCsharp" Width="16" Height="16" Foreground="#CC000000"
+                                                             VerticalAlignment="Center" Margin="0 0 6 0"/>
+                                    <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </TreeView.Resources>
+                    </TreeView>
+
+                    <TextBlock Text="Добавьте DLL кнопкой с папкой или Ctrl+O" Foreground="Gray"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Assemblies.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <TextBlock Text="Ничего не найдено" Foreground="Gray"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsNothingFound}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+            </DockPanel>
         </Border>
     </DockPanel>
 </Window>
