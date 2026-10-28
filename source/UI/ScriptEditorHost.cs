@@ -7,13 +7,8 @@ using ICSharpCode.AvalonEdit;
 
 namespace RevitDevKit.UI
 {
-    /// <summary>
-    /// Показывает редактор для вкладки из VM.
-    ///
-    /// TabControl с ItemsSource держит один ContentPresenter на все вкладки, поэтому
-    /// редактор на каждую вкладку создаётся один раз и запоминается: так у каждой
-    /// остаются свои каретка и прокрутка. Редактор живёт, пока жива вкладка.
-    /// </summary>
+    // TabControl reuses one ContentPresenter for all tabs. Keep one editor per tab
+    // so caret, scroll and undo survive tab switches; it lives as long as the tab VM.
     public sealed class ScriptEditorHost : ContentControl
     {
         private static readonly ConditionalWeakTable<ScriptTabVM, TextEditor> Editors =
@@ -39,7 +34,6 @@ namespace RevitDevKit.UI
 
             var editor = Editors.GetValue(tab, CreateEditor);
 
-            // Если TabControl пересоздал шаблон, редактор ещё числится за старым хостом.
             if (editor.Parent is ContentControl owner && owner != this)
                 owner.Content = null;
 
@@ -61,7 +55,7 @@ namespace RevitDevKit.UI
                     editor.ScrollToLine(line);
                     editor.Focus();
                 }
-                catch {}
+                catch { } // line/column out of range after an edit
             };
 
             return editor;

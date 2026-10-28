@@ -9,23 +9,11 @@ using System.Runtime.Loader;
 
 namespace RevitDevKit.Core
 {
-    /// <summary>
-    /// Загрузка скомпилированных и внешних сборок в процесс Revit.
-    ///
-    /// .NET 8 (Revit 2025+): каждая сборка получает собственный collectible
-    /// AssemblyLoadContext, поэтому её можно выгрузить и пересобрать DLL на диске
-    /// без перезапуска Revit.
-    ///
-    /// .NET Framework (Revit ≤ 2024): выгрузка невозможна в принципе, поэтому
-    /// грузим байтами / из теневой копии — файл на диске остаётся свободным,
-    /// но старые версии остаются в памяти до перезапуска Revit.
-    /// </summary>
     public static class ScriptAssemblyLoader
     {
         private static readonly List<IDisposable> Contexts = new List<IDisposable>();
         private static readonly object Sync = new object();
 
-        /// <summary>Загружает сборку из байтов (результат компиляции скрипта).</summary>
         public static Assembly Load(string name, byte[] peBytes, byte[] pdbBytes)
         {
 #if NETFRAMEWORK
@@ -44,10 +32,8 @@ namespace RevitDevKit.Core
 #endif
         }
 
-        /// <summary>
-        /// Загружает внешнюю DLL. Исходный файл не блокируется: делается теневая
-        /// копия во временной папке, зависимости ищутся рядом с оригиналом.
-        /// </summary>
+        // Loads from a shadow copy so the original DLL stays unlocked and can be rebuilt.
+        // .NET Framework (Revit 2024 and older) cannot unload it; .NET 8 uses a collectible context.
         public static LoadedAssembly LoadFromFile(string path)
         {
             if (!File.Exists(path))
@@ -90,7 +76,6 @@ namespace RevitDevKit.Core
             };
         }
 
-        /// <summary>Пытается выгрузить сборку (работает только на .NET 8+).</summary>
         public static bool TryUnload(LoadedAssembly loaded)
         {
 #if NETFRAMEWORK
@@ -124,7 +109,7 @@ namespace RevitDevKit.Core
                 {
                     File.Copy(file, Path.Combine(targetDir, Path.GetFileName(file)), true);
                 }
-                catch {}
+                catch { } // a locked sibling file is not fatal
             }
         }
 
@@ -145,8 +130,6 @@ namespace RevitDevKit.Core
 
             protected override Assembly Load(AssemblyName assemblyName)
             {
-                // null => отдаём загрузку в Default: RevitAPI, сам плагин и платформа
-                // должны оставаться одними и теми же типами.
                 if (_resolver == null) return null;
 
                 var path = _resolver.ResolveAssemblyToPath(assemblyName);
@@ -155,18 +138,9 @@ namespace RevitDevKit.Core
 
             public void Dispose()
             {
-                try { Unload(); } catch { /* уже выгружен */ }
+                try { Unload(); } catch { }
             }
         }
 #endif
-    }
-
-    public sealed class LoadedAssembly
-    {
-        public Assembly Assembly { get; set; }
-        public string OriginalPath { get; set; }
-        internal IDisposable Owner { get; set; }
-
-        public string DisplayName => System.IO.Path.GetFileName(OriginalPath);
     }
 }

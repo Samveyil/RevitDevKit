@@ -7,30 +7,6 @@ using System.Text;
 
 namespace RevitDevKit.Core
 {
-    public enum LogLevel
-    {
-        Info,
-        Success,
-        Warning,
-        Error,
-        Debug,
-        System
-    }
-
-    public sealed class LogChunkEventArgs : EventArgs
-    {
-        public LogChunkEventArgs(string text, LogLevel level)
-        {
-            Text = text;
-            Level = level;
-            Timestamp = DateTime.Now;
-        }
-
-        public string Text { get; }
-        public LogLevel Level { get; }
-        public DateTime Timestamp { get; }
-    }
-
     public static class ConsoleOutput
     {
         private static readonly object Sync = new object();
@@ -39,10 +15,8 @@ namespace RevitDevKit.Core
         private static ConsoleTraceListener _traceListener;
         private static bool _installed;
 
-        /// <summary>Очередной кусок текста готов к показу.</summary>
         public static event EventHandler<LogChunkEventArgs> ChunkWritten;
 
-        /// <summary>Запрошена очистка консоли.</summary>
         public static event EventHandler Cleared;
 
         public static void Install()
@@ -68,11 +42,8 @@ namespace RevitDevKit.Core
             }
         }
 
-        /// <summary>
-        /// Возвращает перехват Debug / Trace, если его убрали. Trace.Listeners общий на
-        /// весь процесс Revit, и другие надстройки могут очистить его после нашего
-        /// старта — тогда Debug.WriteLine молча перестаёт доходить до консоли.
-        /// </summary>
+        // Trace.Listeners is process-wide and other add-ins may clear it after start-up;
+        // without our listener Debug.WriteLine silently stops reaching the console.
         public static void EnsureTraceListener()
         {
             lock (Sync)
@@ -100,7 +71,6 @@ namespace RevitDevKit.Core
             }
         }
 
-        /// <summary>Пишет текст как есть, без перевода строки.</summary>
         public static void Write(string text, LogLevel level = LogLevel.Info)
         {
             if (text.IsNullOrEmpty())
@@ -166,7 +136,6 @@ namespace RevitDevKit.Core
             Cleared?.Invoke(null, EventArgs.Empty);
         }
 
-
         public static string Format(object value)
         {
             if (value == null)
@@ -229,7 +198,7 @@ namespace RevitDevKit.Core
                     if (_passthrough != null)
                         _passthrough.Write(value);
                 }
-                catch { }
+                catch { } // the original stream is best effort
             }
 
             public override void WriteLine(string value)

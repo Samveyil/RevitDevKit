@@ -11,12 +11,7 @@
         Height="720" Width="520" MinHeight="320" MinWidth="520">
 
     <Window.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <materialDesign:CustomColorTheme BaseTheme="Light" PrimaryColor="#f88518" SecondaryColor="#FF0052A5" />
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
+        <ResourceDictionary Source="pack://application:,,,/RevitDevKit;component/UI/Theme.xaml" />
     </Window.Resources>
 
     <Window.InputBindings>
@@ -30,7 +25,7 @@
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding RunCommand}"
                     ToolTip="Выполнить выбранную команду (F5 или двойной щелчок)">
                 <StackPanel Orientation="Horizontal">
-                    <materialDesign:PackIcon Kind="Play" Width="20" Height="20" Foreground="#f88518"
+                    <materialDesign:PackIcon Kind="Play" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
                                              VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
                     <TextBlock Text="Выполнить (F5)" VerticalAlignment="Center"/>
                 </StackPanel>
@@ -38,34 +33,34 @@
 
             <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding AddAssemblyCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Добавить DLL (Ctrl+O)">
-                <materialDesign:PackIcon Kind="FolderOpenOutline" Width="25" Height="25" Foreground="#CC000000"/>
+                <materialDesign:PackIcon Kind="FolderOpenOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
             <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding ReloadAssemblyCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Обновить список команд DLL (Ctrl+R). Для любой DLL — правой кнопкой по ней">
-                <materialDesign:PackIcon Kind="Refresh" Width="25" Height="25" Foreground="#CC000000"/>
+                <materialDesign:PackIcon Kind="Refresh" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
             <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RevealInExplorerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике DLL">
-                <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="#CC000000"/>
+                <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
             <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RemoveAssemblyCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Убрать из списка DLL">
-                <materialDesign:PackIcon Kind="DeleteOutline" Width="25" Height="25" Foreground="#CC000000"/>
+                <materialDesign:PackIcon Kind="DeleteOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
             <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Чистить консоль" Margin="20 0 0 0" IsChecked="{Binding IsClearOnRun}"
                       ToolTip="Очищать консоль перед каждым запуском"/>
         </StackPanel>
 
-        <Border Margin="5 0 5 5" BorderThickness="1" BorderBrush="#f88518" CornerRadius="4">
+        <Border Margin="5 0 5 5" BorderThickness="1" BorderBrush="{StaticResource AccentBrush}" CornerRadius="4">
             <DockPanel>
                 <DockPanel DockPanel.Dock="Top" Margin="4 2">
                     <Button DockPanel.Dock="Right" Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding CollapseAllCommand}"
                             Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Свернуть всё">
-                        <materialDesign:PackIcon Kind="ArrowExpand" Width="22" Height="22" Foreground="#CC000000"/>
+                        <materialDesign:PackIcon Kind="ArrowExpand" Width="22" Height="22" Foreground="{StaticResource IconBrush}"/>
                     </Button>
 
                     <materialDesign:PackIcon DockPanel.Dock="Left" Kind="Magnify" Width="20" Height="20" Foreground="Gray"
@@ -104,7 +99,7 @@
                                         </ContextMenu>
                                     </StackPanel.ContextMenu>
 
-                                    <materialDesign:PackIcon Kind="PackageVariantClosed" Width="18" Height="18" Foreground="#f88518"
+                                    <materialDesign:PackIcon Kind="PackageVariantClosed" Width="18" Height="18" Foreground="{StaticResource AccentBrush}"
                                                              VerticalAlignment="Center" Margin="0 0 6 0"/>
                                     <TextBlock Text="{Binding DisplayName}" FontWeight="DemiBold" VerticalAlignment="Center"/>
                                     <TextBlock Text="   — нет IExternalCommand" Foreground="Gray" VerticalAlignment="Center">
@@ -124,7 +119,7 @@
 
                             <HierarchicalDataTemplate DataType="{x:Type local:NamespaceNodeVM}" ItemsSource="{Binding Targets}">
                                 <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="FolderOutline" Width="16" Height="16" Foreground="#CC000000"
+                                    <materialDesign:PackIcon Kind="FolderOutline" Width="16" Height="16" Foreground="{StaticResource IconBrush}"
                                                              VerticalAlignment="Center" Margin="0 0 6 0"/>
                                     <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
                                 </StackPanel>
@@ -137,7 +132,7 @@
                                                       Command="{Binding DataContext.RunCommand, RelativeSource={RelativeSource AncestorType=TreeView}}"/>
                                     </StackPanel.InputBindings>
 
-                                    <materialDesign:PackIcon Kind="LanguageCsharp" Width="16" Height="16" Foreground="#CC000000"
+                                    <materialDesign:PackIcon Kind="LanguageCsharp" Width="16" Height="16" Foreground="{StaticResource IconBrush}"
                                                              VerticalAlignment="Center" Margin="0 0 6 0"/>
                                     <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"/>
                                 </StackPanel>

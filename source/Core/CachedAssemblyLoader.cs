@@ -4,14 +4,8 @@ using System.IO;
 
 namespace RevitDevKit.Core
 {
-    /// <summary>
-    /// Отдаёт актуальную версию внешней DLL: если файл на диске изменился с прошлой
-    /// загрузки, грузит его заново теневой копией, иначе возвращает уже загруженный.
-    ///
-    /// Так пересобранная команда подхватывается при следующем запуске, а повторные
-    /// запуски без пересборки не плодят копии сборки в памяти (на .NET Framework их
-    /// не выгрузить до перезапуска Revit).
-    /// </summary>
+    // Reloads a DLL only when the file on disk changed. On .NET Framework assemblies cannot be
+    // unloaded, so reusing an unchanged one avoids leaking a copy into memory on every run.
     public static class CachedAssemblyLoader
     {
         private static readonly Dictionary<string, Entry> Cache =
@@ -45,7 +39,6 @@ namespace RevitDevKit.Core
             }
         }
 
-        /// <summary>Забывает DLL и выгружает её, где это возможно.</summary>
         public static void Forget(string path)
         {
             var key = Path.GetFullPath(path);

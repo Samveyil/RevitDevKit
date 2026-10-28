@@ -6,40 +6,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 
 namespace RevitDevKit.Core
 {
-    public sealed class CompileMessage
-    {
-        public bool IsError { get; set; }
-        public string Id { get; set; }
-        public string Message { get; set; }
-        public int Line { get; set; }
-        public int Column { get; set; }
-
-        public override string ToString()
-        {
-            var where = Line > 0 ? "(" + Line + "," + Column + ") " : string.Empty;
-            return where + (IsError ? "ошибка " : "предупреждение ") + Id + ": " + Message;
-        }
-    }
-
-    public sealed class CompileResult
-    {
-        public bool Success { get; set; }
-        public Assembly Assembly { get; set; }
-        public IList<CompileMessage> Messages { get; set; }
-        public long ElapsedMs { get; set; }
-
-        public IEnumerable<CompileMessage> Errors { get => Messages.Where(m => m.IsError); }
-    }
-
-    /// <summary>
-    /// Компилирует C#-код в сборку в памяти и загружает её в процесс Revit.
-    /// </summary>
     public static class ScriptCompiler
     {
         private static readonly Dictionary<string, MetadataReference> ReferenceCache =
@@ -55,16 +26,9 @@ namespace RevitDevKit.Core
             var prepared = ScriptSource.Prepare(userCode);
             var assemblyName = "RevitScript_" + Guid.NewGuid().ToString("N");
 
-            // Настройки собираются через Default и With*-методы, а не через конструкторы.
-            //
-            // У CSharpCompilationOptions и CSharpParseOptions конструкторы с двумя
-            // десятками необязательных параметров. C# подставляет значения по умолчанию
-            // в точке вызова, поэтому такой вызов жёстко привязан к версии Roslyn: если
-            // в процессе Revit окажется другая (свою несут Dynamo и часть надстроек),
-            // получим MissingMethodException. With*-методы принимают по одному аргументу
-            // и живут между версиями без изменений.
-            // DEBUG и TRACE нужны, иначе компилятор выбросит вызовы Debug.* и Trace.*
-            // целиком: они помечены [Conditional].
+            // Build options via Default + With* rather than constructors: Revit may load another
+            // Roslyn version, and constructors with many optional parameters break across versions.
+            // DEBUG/TRACE are required, otherwise [Conditional] Debug.* and Trace.* calls are removed.
             var parseOptions = CSharpParseOptions.Default
                 .WithLanguageVersion(LanguageVersion.Latest)
                 .WithDocumentationMode(DocumentationMode.None)
@@ -89,11 +53,6 @@ namespace RevitDevKit.Core
                 EmitResult emitResult;
                 try
                 {
-                    // EmitOptions.Default в Roslyn объявлен internal, поэтому здесь
-                    // конструктор. Обходить его смысла нет: сам compilation.Emit тоже
-                    // объявлен с десятком необязательных параметров, так что вызов всё
-                    // равно привязан к версии Roslyn. Её и фиксируем в csproj (4.9.2) —
-                    // вперёд совместимость Roslyn держит, назад нет.
                     emitResult = compilation.Emit(
                         peStream,
                         pdbStream,
@@ -103,10 +62,6 @@ namespace RevitDevKit.Core
                 {
                     sw.Stop();
 
-                    // Здесь оказываются не ошибки в коде пользователя, а поломка самого
-                    // Roslyn — обычно несовпадение версий базовых библиотек в процессе
-                    // Revit. Одного ex.Message для разбора не хватает, поэтому печатаем
-                    // всю цепочку исключений и состав загруженных сборок.
                     ConsoleOutput.Exception(ex, "Компилятор упал:");
                     RuntimeDiagnostics.DumpCompilerEnvironment();
 
@@ -189,7 +144,7 @@ namespace RevitDevKit.Core
                 line = span.StartLinePosition.Line + 1 - lineOffset;
                 column = span.StartLinePosition.Character + 1;
                 if (line < 1)
-                    line = 0; // ошибка попала в служебную обёртку
+                    line = 0;
             }
 
             return new CompileMessage
@@ -202,14 +157,9 @@ namespace RevitDevKit.Core
             };
         }
 
-        /// <summary>
-        /// Собирает набор ссылок: всё, что уже загружено в процесс Revit
-        /// (включая RevitAPI, RevitAPIUI и сам плагин), плюс базовые сборки
-        /// платформы, плюс то, что запрошено через #r.
-        /// </summary>
         private static List<MetadataReference> BuildReferences(IList<string> extra, List<CompileMessage> messages)
         {
-            var paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase); // имя файла -> путь
+            var paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             void Add(string path)
             {
@@ -223,7 +173,6 @@ namespace RevitDevKit.Core
                     paths[key] = path;
             }
 
-            // 1. Всё, что Revit уже держит в памяти.
             foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
             {
                 try
@@ -236,14 +185,12 @@ namespace RevitDevKit.Core
 
                     Add(location);
                 }
-                catch { }
+                catch { } // dynamic or unloaded assemblies have no usable location
             }
 
-            // 2. Базовые сборки платформы, которые могли ещё не загрузиться.
             foreach (var path in PlatformAssemblies())
                 Add(path);
 
-            // 3. Директивы #r.
             if (extra != null)
             {
                 foreach (var item in extra)
@@ -282,13 +229,11 @@ namespace RevitDevKit.Core
             string hit;
             if (known.TryGetValue(fileName, out hit)) return hit;
 
-            // Рядом с самим плагином
             var pluginDir = Path.GetDirectoryName(typeof(ScriptCompiler).Assembly.Location);
             var candidate = Path.Combine(pluginDir ?? ".", fileName);
             if (File.Exists(candidate))
                 return candidate;
 
-            // Папка установки Revit
             var revitDir = Path.GetDirectoryName(typeof(Autodesk.Revit.DB.Document).Assembly.Location);
             candidate = Path.Combine(revitDir ?? ".", fileName);
 
@@ -321,7 +266,7 @@ namespace RevitDevKit.Core
                 }
                 catch
                 {
-                    cached = null; // не сборка или файл занят
+                    cached = null;
                 }
 
                 ReferenceCache[path] = cached;
@@ -342,7 +287,6 @@ namespace RevitDevKit.Core
                 yield return Path.Combine(dir, name);
             }
 
-            // Фасад netstandard нужен, чтобы подключались современные библиотеки.
             foreach (var searchDir in PlatformSearchDirectories())
             {
                 if (string.IsNullOrEmpty(searchDir))

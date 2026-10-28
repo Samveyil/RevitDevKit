@@ -6,10 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace RevitDevKit.UI
 {
-    /// <summary>
-    /// Узел дерева DLL. TreeView не даёт привязать SelectedItem,
-    /// поэтому выбор приходит через IsSelected каждого узла.
-    /// </summary>
+    // TreeView.SelectedItem is read-only, so selection is tracked via IsSelected on each node.
     public abstract partial class AssemblyTreeNodeVM : ObservableObject
     {
         private readonly Action<AssemblyTreeNodeVM> _onSelected;
@@ -18,7 +15,6 @@ namespace RevitDevKit.UI
         [ObservableProperty] private bool _isExpanded = true;
         [ObservableProperty] private bool _isVisible = true;
 
-        /// <summary>Выделить можно только команду; DLL и папки только раскрываются, у DLL есть контекстное меню.</summary>
         public virtual bool IsSelectable => false;
 
         protected AssemblyTreeNodeVM(Action<AssemblyTreeNodeVM> onSelected)
@@ -34,13 +30,8 @@ namespace RevitDevKit.UI
         protected static bool Matches(string text, string query) =>
             text.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
 
-        /// <summary>
-        /// Показывает узел, если он сам подходит под запрос, подошёл его родитель или
-        /// кто-то из детей. Совпавший родитель показывается целиком. При поиске узел
-        /// раскрыт, только если внутри него есть совпадение по имени, — так дерево
-        /// открывается до найденной команды, даже когда совпала и папка над ней.
-        /// </summary>
-        /// <returns>true, если совпал сам узел или кто-то внутри него.</returns>
+        // A matching parent shows all its children; while searching, nodes expand only along
+        // the paths that lead to a name match.
         protected bool ApplyFilter(string ownName, IEnumerable<AssemblyTreeNodeVM> children, string query, bool parentMatched)
         {
             var ownMatch = query.Length > 0 && Matches(ownName, query);
@@ -61,15 +52,9 @@ namespace RevitDevKit.UI
             return ownMatch || matchInside;
         }
 
-        /// <summary>Применяет поиск к узлу и его детям; пустой запрос показывает всё.</summary>
         public abstract bool Filter(string query, bool parentMatched = false);
     }
 
-    /// <summary>
-    /// DLL и имена её команд: сначала папки пространств имён, затем команды без
-    /// пространства имён. Сама сборка здесь не хранится: при запуске команда
-    /// берётся из актуального файла на диске.
-    /// </summary>
     public sealed class AssemblyNodeVM : AssemblyTreeNodeVM
     {
         public string FilePath { get; }
@@ -102,7 +87,6 @@ namespace RevitDevKit.UI
             ApplyFilter(DisplayName, Children, query ?? string.Empty, parentMatched || string.IsNullOrEmpty(query));
     }
 
-    /// <summary>Пространство имён внутри DLL и его команды. Изначально свёрнуто: DLL открыта до папок.</summary>
     public sealed class NamespaceNodeVM : AssemblyTreeNodeVM
     {
         public AssemblyNodeVM Owner { get; }
@@ -122,7 +106,6 @@ namespace RevitDevKit.UI
             ApplyFilter(Name, Targets, query, parentMatched);
     }
 
-    /// <summary>Команда — полное имя класса с IExternalCommand.</summary>
     public sealed class TargetNodeVM : AssemblyTreeNodeVM
     {
         public AssemblyNodeVM Owner { get; }

@@ -9,16 +9,6 @@ using RevitDevKit.Core;
 
 namespace RevitDevKit.Scripting
 {
-    /// <summary>
-    /// Базовый класс, в который «заворачивается» короткий скрипт.
-    /// Даёт доступ к контексту Revit и к консоли без лишних церемоний.
-    /// Полноценные классы пользователя могут наследоваться от него явно.
-    ///
-    /// Контекст здесь не хранится и никем не заполняется — он берётся из
-    /// <see cref="RevitAPI"/> в момент обращения. Поэтому свойства всегда отражают
-    /// текущее состояние Revit, даже если пользователь переключил документ, пока
-    /// скрипт выполнялся.
-    /// </summary>
     public abstract class ScriptBase
     {
         public UIApplication UIApp { get => RevitAPI.UIApplication; }
@@ -28,8 +18,6 @@ namespace RevitDevKit.Scripting
         public View ActiveView { get => RevitAPI.ActiveView; }
         public ExternalCommandData CommandData { get => RevitTaskRunner.CurrentCommandData; }
 
-
-        // ---------- консоль ----------
         public void Print(object value) => ConsoleOutput.WriteObject(value);
         public void Print(string format, params object[] args)
         {
@@ -41,7 +29,6 @@ namespace RevitDevKit.Scripting
         public void Fail(string text) => ConsoleOutput.Error(text);
         public void Clear() => ConsoleOutput.Clear();
 
-        /// <summary>Печатает таблицу по коллекции: заголовок + строки.</summary>
         public void Table<T>(IEnumerable<T> items, params Func<T, object>[] columns)
         {
             if (items == null)
@@ -66,15 +53,11 @@ namespace RevitDevKit.Scripting
             }
         }
 
-        // ---------- транзакции ----------
-
-        /// <summary>Выполняет действие внутри транзакции и коммитит её.</summary>
         public void Tx(string name, Action action)
         {
             if (action == null)
                 throw new ArgumentNullException("action");
 
-            // Берём документ один раз: свойство каждый раз спрашивает Revit заново.
             var doc = Doc;
             if (doc == null)
                 throw new InvalidOperationException("Нет активного документа — транзакцию открыть не в чем.");
@@ -103,51 +86,30 @@ namespace RevitDevKit.Scripting
             return result;
         }
 
-        // ---------- частые выборки ----------
-
-
-        /// <summary>Все экземпляры указанной категории в текущем документе.</summary>
         public IList<Element> Instances(BuiltInCategory category) => Doc.ToElements(category);
 
-        /// <summary>Все экземпляры указанной категории в текущем документе.</summary>
         public IList<Element> Instances(ElementId viewId, BuiltInCategory category) => Doc.ToElements(viewId, category);
 
-        /// <summary>Все экземпляры указанной категории в текущем документе.</summary>
         public IList<Element> Types(BuiltInCategory category) => Doc.ToElements(category, true);
 
-        /// <summary>Все экземпляры указанной категории в текущем документе.</summary>
         public IList<Element> Types(ElementId viewId, BuiltInCategory category) => Doc.ToElements(viewId, category, true);
 
-        /// <summary>Все элементы указанного типа Revit API в текущем документе.</summary>
         public IList<T> All<T>() where T : Element => Doc.ToElements<T>();
 
-        /// <summary>Все элементы указанного типа Revit API в текущем документе.</summary>
         public IList<T> All<T>(ElementId viewId) where T : Element => Doc.ToElements<T>(viewId);
 
-        /// <summary>Все элементы указанного типа Revit API и категории в текущем документе.</summary>
         public IList<T> All<T>(BuiltInCategory category) where T : Element => Doc.ToElements<T>(category);
 
-        /// <summary>Все элементы указанного типа Revit API и категории в текущем документе.</summary>
         public IList<T> All<T>(ElementId viewId, BuiltInCategory category) where T : Element => Doc.ToElements<T>(viewId, category);
 
-
-        /// <summary>Выбранные в модели элементы.</summary>
         public ICollection<Element> Selection { get => UIDoc.ToSelectedElements(); }
 
-        /// <summary>Первый выбранный элемент или null, если ничего не выбрано.</summary>
         public Element S0 { get => S(0); }
 
-        /// <summary>Первый выбранный элемент или null, если ничего не выбрано.</summary>
         public Element S1 { get => S(1); }
 
-        /// <summary>Первый выбранный элемент или null, если ничего не выбрано.</summary>
         public Element S2 { get => S(2); }
 
-
-        /// <summary>
-        /// Выбранный элемент по номеру или null, если столько не выбрано.
-        /// Создаёт только запрошенный элемент, а не весь список.
-        /// </summary>
         public Element S(int index)
         {
             if (index < 0) return null;
@@ -155,17 +117,11 @@ namespace RevitDevKit.Scripting
             return Selection.Skip(index).FirstOrDefault();
         }
 
-        /// <summary>
-        /// То же, но сразу приведённый к типу. Возвращает null, если столько не
-        /// выбрано или тип не совпал, — избавляет от ручного приведения.
-        /// </summary>
         public T S<T>(int index) where T : Element
         {
             return S(index) as T;
         }
 
-
-        /// <summary>Печатает все параметры элемента — быстрый способ «заглянуть внутрь».</summary>
         public void Dump(Element element, bool useType=false)
         {
             if (element == null)

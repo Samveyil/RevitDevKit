@@ -59,10 +59,6 @@ namespace RevitDevKit.UI
             }
         }
 
-        // ------------------------------------------------------------------
-        //  Вкладки и файлы
-        // ------------------------------------------------------------------
-
         [RelayCommand]
         private void NewTab() => NewTab(Samples.Starter, "Скрипт " + (_untitledCounter + 1));
 
@@ -143,7 +139,6 @@ namespace RevitDevKit.UI
                 SelectedTab = tab;
         }
 
-        /// <summary>Без параметра (Ctrl+W) закрывает текущую вкладку.</summary>
         [RelayCommand]
         private void CloseTab(ScriptTabVM tab)
         {
@@ -193,10 +188,6 @@ namespace RevitDevKit.UI
             return dir;
         }
 
-        // ------------------------------------------------------------------
-        //  Запуск скрипта
-        // ------------------------------------------------------------------
-
         private bool CanRun() => !IsRunning;
 
         [RelayCommand(CanExecute = nameof(CanRun))]
@@ -220,7 +211,7 @@ namespace RevitDevKit.UI
             var title = tab.Title;
             var autoTransaction = IsAutoTransaction;
 
-            // Исключение из async-команды ушло бы в диспетчер Revit, поэтому ловим всё здесь.
+            // An exception escaping an async command would reach Revit's dispatcher - catch it here.
             CompileResult result;
             try
             {

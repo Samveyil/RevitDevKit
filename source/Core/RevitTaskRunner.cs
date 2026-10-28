@@ -7,32 +7,8 @@ using System.Diagnostics;
 
 namespace RevitDevKit.Core
 {
-    /// <summary>
-    /// Задание на выполнение в контексте Revit API.
-    /// Контекст заданию не передаётся — код берёт его из RevitAPI.
-    /// </summary>
-    public sealed class RunRequest
-    {
-        public string Title { get; set; }
-        public Func<object> Body { get; set; }
-
-        /// <summary>Открыть транзакцию вокруг выполнения (для IExternalCommand — не нужно).</summary>
-        public bool AutoTransaction { get; set; }
-
-        public string TransactionName { get; set; }
-
-        /// <summary>Вызывается в UI-потоке после завершения (успех / исключение).</summary>
-        public Action<Exception> Completed { get; set; }
-    }
-
-    /// <summary>
-    /// Мост между модальным-без-модальности окном плагина и главным потоком Revit.
-    ///
-    /// Revit API можно трогать только из его собственного потока и только в валидном
-    /// контексте. Окно живёт отдельно, поэтому любой запуск проходит через
-    /// ExternalEvent: кладём задание в очередь, дёргаем событие, Revit вызывает нас
-    /// сам, когда ему удобно.
-    /// </summary>
+    // The Revit API may only be called on Revit's thread in a valid context, so every run
+    // from the modeless windows goes through ExternalEvent (or PostCommand, see RevitCommandBridge).
     public sealed class RevitTaskRunner : IExternalEventHandler
     {
         private static RevitTaskRunner _instance;
@@ -40,17 +16,8 @@ namespace RevitDevKit.Core
 
         private readonly ConcurrentQueue<RunRequest> _queue = new ConcurrentQueue<RunRequest>();
 
-        /// <summary>
-        /// ExternalCommandData текущего запуска — единственная часть контекста, которую
-        /// нельзя получить из RevitAPI: её выдаёт сам Revit при вызове команды.
-        ///
-        /// Заполняется только на время одного запуска и сразу же обнуляется. Хранить
-        /// её дольше нельзя: объект оборачивает нативный указатель, действительный
-        /// лишь внутри IExternalCommand.Execute.
-        /// </summary>
         internal static ExternalCommandData CurrentCommandData { get; private set; }
 
-        /// <summary>Создаётся один раз при старте Revit — ExternalEvent требует контекста надстройки.</summary>
         public static void Initialize()
         {
             if (_instance != null) return;
@@ -58,7 +25,6 @@ namespace RevitDevKit.Core
             _event = ExternalEvent.Create(_instance);
         }
 
-        /// <summary>Ставит задание в очередь и просит Revit выполнить его.</summary>
         public static void Enqueue(RunRequest request)
         {
             if (request == null) throw new ArgumentNullException("request");
@@ -76,18 +42,8 @@ namespace RevitDevKit.Core
                 ConsoleOutput.Warning("Revit отложил запуск (" + state + "). Закройте активные диалоги и попробуйте ещё раз.");
         }
 
-        /// <summary>
-        /// Единая точка запуска из окна плагина.
-        ///
-        /// Обычный скрипт идёт через ExternalEvent. Чужой IExternalCommand требует
-        /// живой ExternalCommandData — его может дать только сам Revit, поэтому
-        /// просим его выполнить нашу команду; если не вышло, честно предупреждаем
-        /// и всё равно пробуем через событие.
-        /// </summary>
         public static void Run(RunRequest request, bool needsCommandContext)
         {
-            // Кнопка «Ещё раз» повторяет последний запуск независимо от того,
-            // каким путём он пошёл.
             Commands.ExecutePendingCmd.Remember(request);
 
             if (needsCommandContext)
@@ -114,11 +70,6 @@ namespace RevitDevKit.Core
                 RunOne(request, null);
         }
 
-        /// <summary>
-        /// Выполняет задание прямо здесь и сейчас — контекст Revit API уже валиден.
-        /// Вызывается из обработчика ExternalEvent (commandData = null) и из команды
-        /// ленты, которая приносит свежий ExternalCommandData.
-        /// </summary>
         internal static void RunOne(RunRequest request, ExternalCommandData commandData)
         {
             CurrentCommandData = commandData;
@@ -164,7 +115,6 @@ namespace RevitDevKit.Core
                     ConsoleOutput.Warning("Транзакция откачена.");
                 }
 
-                // Reflection заворачивает исключение скрипта — показываем настоящее.
                 var real = ex is System.Reflection.TargetInvocationException && ex.InnerException != null
                     ? ex.InnerException
                     : ex;
@@ -173,8 +123,6 @@ namespace RevitDevKit.Core
             }
             finally
             {
-                // Держать ExternalCommandData дольше запуска нельзя — он протухает
-                // вместе с вызовом команды, которая его принесла.
                 CurrentCommandData = null;
 
                 if (transaction != null) transaction.Dispose();

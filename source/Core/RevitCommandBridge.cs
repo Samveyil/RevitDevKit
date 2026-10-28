@@ -6,18 +6,9 @@ using System.Collections.Generic;
 
 namespace RevitDevKit.Core
 {
-    /// <summary>
-    /// Запуск задания через настоящую команду Revit.
-    ///
-    /// Зачем это нужно. Окно плагина немодальное, а ExternalCommandData живёт только
-    /// внутри вызова IExternalCommand.Execute — держать его между запусками нельзя.
-    /// Поэтому для чужих IExternalCommand мы просим Revit выполнить нашу собственную
-    /// команду (PostCommand) и получаем свежий, честный ExternalCommandData.
-    ///
-    /// Идентификатор кнопки на ленте Revit формирует сам, по схеме
-    /// CustomCtrl_%CustomCtrl_%{вкладка}%{панель}%{имя кнопки}. Схема недокументирована,
-    /// поэтому пробуем несколько вариантов и молча откатываемся на ExternalEvent.
-    /// </summary>
+    // ExternalCommandData exists only inside IExternalCommand.Execute, so a modeless window
+    // cannot keep it. To run a foreign IExternalCommand we PostCommand our own ribbon
+    // button (Run Again) and execute the pending request inside it.
     internal static class RevitCommandBridge
     {
         private static RevitCommandId _commandId;
@@ -41,7 +32,7 @@ namespace RevitDevKit.Core
                 }
                 catch
                 {
-                    // неверный формат идентификатора — пробуем следующий
+                    // invalid id format - try the next candidate
                 }
             }
 
@@ -49,6 +40,8 @@ namespace RevitDevKit.Core
             return null;
         }
 
+        // Ribbon command ids are undocumented: CustomCtrl_%...%{tab}%{panel}%{pulldown}%{button},
+        // where every segment is the internal Name, not the caption.
         private static IEnumerable<string> Candidates()
         {
             var btnName = typeof(ExecutePendingCmd).Name;
@@ -57,10 +50,6 @@ namespace RevitDevKit.Core
             yield return $"CustomCtrl_%CustomCtrl_%Add-Ins%{App.PanelName}%{App.PanelName}%{btnName}";
         }
 
-        /// <summary>
-        /// Пытается выполнить задание внутри настоящей команды Revit.
-        /// Возвращает false, если это невозможно — тогда зовите RevitTaskRunner.Enqueue.
-        /// </summary>
         public static bool TryPost(RunRequest request)
         {
             if (request == null) return false;
