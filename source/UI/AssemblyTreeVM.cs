@@ -18,6 +18,9 @@ namespace RevitScriptRunner.UI
         [ObservableProperty] private bool _isExpanded = true;
         [ObservableProperty] private bool _isVisible = true;
 
+        /// <summary>Выделить можно только команду; DLL и папки только раскрываются, у DLL есть контекстное меню.</summary>
+        public virtual bool IsSelectable => false;
+
         protected AssemblyTreeNodeVM(Action<AssemblyTreeNodeVM> onSelected)
         {
             _onSelected = onSelected;
@@ -25,7 +28,7 @@ namespace RevitScriptRunner.UI
 
         partial void OnIsSelectedChanged(bool value)
         {
-            if (value) _onSelected?.Invoke(this);
+            if (value && IsSelectable) _onSelected?.Invoke(this);
         }
 
         protected static bool Matches(string text, string query) =>
@@ -123,6 +126,8 @@ namespace RevitScriptRunner.UI
     {
         public AssemblyNodeVM Owner { get; }
         public string TypeName { get; }
+
+        public override bool IsSelectable => true;
 
         public string DisplayName => TypeName.Substring(TypeName.LastIndexOf('.') + 1);
         public string Namespace => TypeName.LastIndexOf('.') < 0 ? string.Empty : TypeName.Substring(0, TypeName.LastIndexOf('.'));

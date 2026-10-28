@@ -45,13 +45,11 @@ namespace RevitScriptRunner.UI
 
         partial void OnSearchTextChanged(string value) => ApplySearch();
 
-        private AssemblyNodeVM SelectedAssembly => SelectedNode switch
-        {
-            AssemblyNodeVM assembly => assembly,
-            NamespaceNodeVM ns => ns.Owner,
-            TargetNodeVM target => target.Owner,
-            _ => null
-        };
+        /// <summary>
+        /// DLL, к которой относится действие: переданная явно (контекстное меню DLL)
+        /// или та, где лежит выделенная команда (кнопки и горячие клавиши).
+        /// </summary>
+        private AssemblyNodeVM TargetAssembly(AssemblyNodeVM node) => node ?? (SelectedNode as TargetNodeVM)?.Owner;
 
         // ------------------------------------------------------------------
         //  Список DLL
@@ -73,33 +71,33 @@ namespace RevitScriptRunner.UI
                 Refresh(file);
         }
 
-        private bool HasAssembly() => SelectedAssembly != null;
+        private bool HasAssembly(AssemblyNodeVM node) => TargetAssembly(node) != null;
 
         /// <summary>Перечитывает список команд из DLL на диске.</summary>
         [RelayCommand(CanExecute = nameof(HasAssembly))]
-        private void ReloadAssembly()
+        private void ReloadAssembly(AssemblyNodeVM node)
         {
-            var node = SelectedAssembly;
+            node = TargetAssembly(node);
             if (node != null) Refresh(node.FilePath);
         }
 
         [RelayCommand(CanExecute = nameof(HasAssembly))]
-        private void RemoveAssembly()
+        private void RemoveAssembly(AssemblyNodeVM node)
         {
-            var node = SelectedAssembly;
+            node = TargetAssembly(node);
             if (node == null) return;
 
             CachedAssemblyLoader.Forget(node.FilePath);
             Assemblies.Remove(node);
-            SelectedNode = null;
+            if ((SelectedNode as TargetNodeVM)?.Owner == node) SelectedNode = null;
             Save();
             ApplySearch();
         }
 
         [RelayCommand(CanExecute = nameof(HasAssembly))]
-        private void RevealInExplorer()
+        private void RevealInExplorer(AssemblyNodeVM node)
         {
-            var node = SelectedAssembly;
+            node = TargetAssembly(node);
             if (node == null || !File.Exists(node.FilePath)) return;
             Process.Start("explorer.exe", "/select,\"" + node.FilePath + "\"");
         }
@@ -114,12 +112,21 @@ namespace RevitScriptRunner.UI
                 var node = new AssemblyNodeVM(loaded.OriginalPath, commands, n => SelectedNode = n);
 
                 var previous = FindAssembly(loaded.OriginalPath);
+                var selected = SelectedNode as TargetNodeVM;
+
                 if (previous == null)
                     Assemblies.Add(node);
                 else
                     Assemblies[Assemblies.IndexOf(previous)] = node;
 
-                node.IsSelected = true;
+                // Выделенная команда этой DLL остаётся выделенной, если она ещё есть.
+                if (selected != null && selected.Owner == previous)
+                {
+                    var again = node.Targets.FirstOrDefault(t => t.TypeName == selected.TypeName);
+                    if (again != null) again.IsSelected = true;
+                    else SelectedNode = null;
+                }
+
                 Save();
                 ApplySearch();
             }
@@ -187,16 +194,17 @@ namespace RevitScriptRunner.UI
         //  Запуск
         // ------------------------------------------------------------------
 
-        private bool CanRun() => SelectedNode is TargetNodeVM && !IsRunning;
+        private bool CanRun(TargetNodeVM node) => (node ?? SelectedNode as TargetNodeVM) != null && !IsRunning;
 
         /// <summary>
         /// Берёт команду из актуальной DLL на диске: после пересборки запускается новая
         /// версия класса с тем же именем, обновлять список для этого не нужно.
         /// </summary>
         [RelayCommand(CanExecute = nameof(CanRun))]
-        private void Run()
+        private void Run(TargetNodeVM node)
         {
-            if (!(SelectedNode is TargetNodeVM node)) return;
+            node ??= SelectedNode as TargetNodeVM;
+            if (node == null) return;
 
             RunTarget target;
             try
