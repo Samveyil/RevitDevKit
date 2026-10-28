@@ -5,6 +5,7 @@ using RevitDevKit.Core;
 using System;
 using System.IO;
 using System.Reflection;
+using Autodesk.Revit.DB;
 
 namespace RevitDevKit
 {
@@ -134,5 +135,10 @@ namespace RevitDevKit
                 return null;
             }
         }
+    }
+
+    public class AlwaysAvailable : IExternalCommandAvailability
+    {
+        public bool IsCommandAvailable(UIApplication applicationData, CategorySet selectedCategories) => applicationData != null;
     }
 }
