@@ -1,19 +1,14 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Windows.Media.Imaging;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BIMPlugins.UI;
 using RevitDevKit.Commands;
 using RevitDevKit.Core;
+using System;
+using System.IO;
+using System.Reflection;
 
 namespace RevitDevKit
 {
-    /// <summary>
-    /// Точка входа надстройки: лента, перехват консоли, мост в поток Revit.
-    /// </summary>
     public class App : IExternalApplication
     {
         internal const string PanelName = "DevKit";
@@ -75,9 +70,11 @@ namespace RevitDevKit
             var panel = application.CreateOrSelectPanel(PanelName);
 
             var pullBtn = panel.CreatePulldownButton(PanelName)
-                .SetToolTip("Revit DevKit — инструменты разработчика: скрипты, запуск команд из DLL, консоль.");
+                .SetLargeImage("DevKit_32.png")
+                .SetImage("DevKit_16.png")
+                .SetToolTip("DevKit — инструменты разработчика: скрипты, запуск команд из DLL, консоль.");
 
-            pullBtn.CreatePushButton<OpenScriptEditorCmd, AlwaysAvailable>("Script Editor")
+            pullBtn.CreatePushButton<OpenScriptEditorCmd>("Script Editor")
                 .SetToolTip("Редактор C#-скриптов.")
                 .SetLongDescription(
                     "Пишите код прямо в Revit и запускайте его без пересборки надстройки. " +
@@ -94,52 +91,8 @@ namespace RevitDevKit
             pullBtn.CreatePushButton<ExecutePendingCmd, AlwaysAvailable>("Run Again")
                 .SetToolTip("Повторить последний запуск в контексте настоящей команды Revit.");
 
-            pullBtn.CreatePushButton<ShowConsolePaneCmd, AlwaysAvailable>("Console")
+            pullBtn.CreatePushButton<ShowConsolePaneCmd>("Console")
                 .SetToolTip("Показать панель с консолью плагина.");
-
-            SetPulldownIcons(application);
-        }
-
-        /// <summary>
-        /// Ставит иконки выпадающей кнопке плагина. Кнопку ищем через Revit API, а картинки
-        /// берём из встроенных ресурсов сборки — так не нужны ни файлы рядом с DLL, ни pack URI.
-        /// </summary>
-        private static void SetPulldownIcons(UIControlledApplication application)
-        {
-            try
-            {
-                var pulldown = application.GetRibbonPanels(Tab.AddIns)
-                    .Where(p => p.Name == PanelName)
-                    .SelectMany(p => p.GetItems())
-                    .OfType<PulldownButton>()
-                    .FirstOrDefault(b => b.Name == PanelName);
-
-                if (pulldown == null) return;
-
-                pulldown.LargeImage = LoadIcon("DevKit_32.png");
-                pulldown.Image = LoadIcon("DevKit_16.png");
-            }
-            catch (Exception ex)
-            {
-                ConsoleOutput.Debug("Не удалось поставить иконки на ленту: " + ex.Message);
-            }
-        }
-
-        /// <summary>Иконка из Resources\Icons, встроенная в сборку (см. EmbeddedResource в .csproj).</summary>
-        internal static BitmapSource LoadIcon(string fileName)
-        {
-            using (var stream = typeof(App).Assembly.GetManifestResourceStream("Icons." + fileName))
-            {
-                if (stream == null) return null;
-
-                var image = new BitmapImage();
-                image.BeginInit();
-                image.CacheOption = BitmapCacheOption.OnLoad;
-                image.StreamSource = stream;
-                image.EndInit();
-                image.Freeze();
-                return image;
-            }
         }
 
         private static void RegisterConsolePane(UIControlledApplication application)
