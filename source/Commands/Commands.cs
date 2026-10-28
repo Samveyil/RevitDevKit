@@ -11,7 +11,7 @@ namespace RevitScriptRunner.Commands
     /// </summary>
     [Transaction(TransactionMode.Manual)]
     [Regeneration(RegenerationOption.Manual)]
-    public class OpenRunnerCommand : IExternalCommand
+    public class OpenRunnerCmd : IExternalCommand
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
@@ -37,7 +37,7 @@ namespace RevitScriptRunner.Commands
     /// </summary>
     [Transaction(TransactionMode.Manual)]
     [Regeneration(RegenerationOption.Manual)]
-    public class OpenAssemblyRunnerCommand : IExternalCommand
+    public class OpenAssemblyRunnerCmd : IExternalCommand
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
@@ -63,7 +63,7 @@ namespace RevitScriptRunner.Commands
     /// </summary>
     [Transaction(TransactionMode.Manual)]
     [Regeneration(RegenerationOption.Manual)]
-    public class ShowConsolePaneCommand : IExternalCommand
+    public class ShowConsolePaneCmd : IExternalCommand
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
@@ -92,7 +92,7 @@ namespace RevitScriptRunner.Commands
     /// </summary>
     [Transaction(TransactionMode.Manual)]
     [Regeneration(RegenerationOption.Manual)]
-    public class ExecutePendingCommand : IExternalCommand
+    public class ExecutePendingCmd : IExternalCommand
     {
         private static readonly object Sync = new object();
         private static RunRequest _pending;

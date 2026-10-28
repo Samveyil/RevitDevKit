@@ -46,6 +46,7 @@ namespace RevitScriptRunner.UI
         {
             data.FrameworkElement = new ConsolePage();
             data.InitialState = new DockablePaneState { DockPosition = DockPosition.Bottom };
+            data.VisibleByDefault = false;
         }
     }
 }
