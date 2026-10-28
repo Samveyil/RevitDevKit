@@ -148,12 +148,30 @@ namespace RevitScriptRunner.UI
             }
         }
 
+        /// <summary>Какие узлы были раскрыты до начала поиска — чтобы вернуть дерево, когда поиск очистят.</summary>
+        private Dictionary<AssemblyTreeNodeVM, bool> _expandedBeforeSearch;
+
+        private IEnumerable<AssemblyTreeNodeVM> ExpandableNodes() =>
+            Assemblies.SelectMany(a => new AssemblyTreeNodeVM[] { a }.Concat(a.Children.OfType<NamespaceNodeVM>()));
+
         private void ApplySearch()
         {
             var query = SearchText?.Trim() ?? string.Empty;
 
+            if (query.Length > 0 && _expandedBeforeSearch == null)
+                _expandedBeforeSearch = ExpandableNodes().ToDictionary(n => n, n => n.IsExpanded);
+
             foreach (var assembly in Assemblies)
                 assembly.Filter(query);
+
+            if (query.Length == 0 && _expandedBeforeSearch != null)
+            {
+                foreach (var node in ExpandableNodes())
+                    if (_expandedBeforeSearch.TryGetValue(node, out var expanded))
+                        node.IsExpanded = expanded;
+
+                _expandedBeforeSearch = null;
+            }
 
             IsNothingFound = query.Length > 0 && Assemblies.Count > 0 && !Assemblies.Any(a => a.IsVisible);
 

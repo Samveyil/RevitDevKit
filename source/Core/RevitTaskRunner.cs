@@ -126,6 +126,7 @@ namespace RevitScriptRunner.Core
             var sw = Stopwatch.StartNew();
             Exception failure = null;
 
+            ConsoleOutput.EnsureTraceListener();
             ConsoleOutput.Banner("Запуск: " + (request.Title ?? "скрипт"));
 
             Transaction transaction = null;
