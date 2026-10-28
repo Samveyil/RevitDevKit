@@ -42,17 +42,17 @@
             </Button>
 
             <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding ReloadAssemblyCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Обновить список команд из DLL на диске (Ctrl+R)">
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Обновить список команд DLL выбранной команды (Ctrl+R). Для любой DLL — правой кнопкой по ней">
                 <materialDesign:PackIcon Kind="Refresh" Width="25" Height="25" Foreground="#CC000000"/>
             </Button>
 
             <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RevealInExplorerCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать DLL в проводнике">
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике DLL выбранной команды">
                 <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="#CC000000"/>
             </Button>
 
             <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RemoveAssemblyCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Убрать из списка">
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Убрать из списка DLL выбранной команды">
                 <materialDesign:PackIcon Kind="DeleteOutline" Width="25" Height="25" Foreground="#CC000000"/>
             </Button>
 
@@ -78,10 +78,6 @@
 
                 <Grid>
                     <TreeView ItemsSource="{Binding Assemblies}" Margin="2">
-                        <TreeView.InputBindings>
-                            <MouseBinding Gesture="LeftDoubleClick" Command="{Binding RunCommand}"/>
-                        </TreeView.InputBindings>
-
                         <TreeView.Resources>
                             <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
 
@@ -89,12 +85,25 @@
                                 <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}"/>
                                 <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
                                 <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                                <Setter Property="Focusable" Value="{Binding IsSelectable}"/>
                                 <Setter Property="Padding" Value="4 1"/>
                                 <Setter Property="MinHeight" Value="0"/>
                             </Style>
 
                             <HierarchicalDataTemplate DataType="{x:Type local:AssemblyNodeVM}" ItemsSource="{Binding Children}">
-                                <StackPanel Orientation="Horizontal" ToolTip="{Binding FilePath}">
+                                <StackPanel Orientation="Horizontal" ToolTip="{Binding FilePath}" Background="Transparent"
+                                            Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TreeView}}">
+                                    <StackPanel.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Обновить список команд" CommandParameter="{Binding}"
+                                                      Command="{Binding PlacementTarget.Tag.ReloadAssemblyCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
+                                                      Command="{Binding PlacementTarget.Tag.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            <MenuItem Header="Убрать из списка" CommandParameter="{Binding}"
+                                                      Command="{Binding PlacementTarget.Tag.RemoveAssemblyCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                        </ContextMenu>
+                                    </StackPanel.ContextMenu>
+
                                     <materialDesign:PackIcon Kind="PackageVariantClosed" Width="18" Height="18" Foreground="#f88518"
                                                              VerticalAlignment="Center" Margin="0 0 6 0"/>
                                     <TextBlock Text="{Binding DisplayName}" FontWeight="DemiBold" VerticalAlignment="Center"/>
@@ -122,7 +131,12 @@
                             </HierarchicalDataTemplate>
 
                             <DataTemplate DataType="{x:Type local:TargetNodeVM}">
-                                <StackPanel Orientation="Horizontal" ToolTip="{Binding TypeName}">
+                                <StackPanel Orientation="Horizontal" ToolTip="{Binding TypeName}" Background="Transparent">
+                                    <StackPanel.InputBindings>
+                                        <MouseBinding Gesture="LeftDoubleClick" CommandParameter="{Binding}"
+                                                      Command="{Binding DataContext.RunCommand, RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                    </StackPanel.InputBindings>
+
                                     <materialDesign:PackIcon Kind="LanguageCsharp" Width="16" Height="16" Foreground="#CC000000"
                                                              VerticalAlignment="Center" Margin="0 0 6 0"/>
                                     <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"/>
