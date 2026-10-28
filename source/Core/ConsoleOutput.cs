@@ -5,7 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 
-namespace RevitScriptRunner.Core
+namespace RevitDevKit.Core
 {
     public enum LogLevel
     {
@@ -50,7 +50,10 @@ namespace RevitScriptRunner.Core
             lock (Sync)
             {
                 if (_installed)
+                {
+                    EnsureTraceListener();
                     return;
+                }
 
                 _originalOut = Console.Out;
                 _originalError = Console.Error;
@@ -62,6 +65,23 @@ namespace RevitScriptRunner.Core
                 Trace.Listeners.Add(_traceListener);
 
                 _installed = true;
+            }
+        }
+
+        /// <summary>
+        /// Возвращает перехват Debug / Trace, если его убрали. Trace.Listeners общий на
+        /// весь процесс Revit, и другие надстройки могут очистить его после нашего
+        /// старта — тогда Debug.WriteLine молча перестаёт доходить до консоли.
+        /// </summary>
+        public static void EnsureTraceListener()
+        {
+            lock (Sync)
+            {
+                if (!_installed || _traceListener == null) return;
+                if (Trace.Listeners.Contains(_traceListener)) return;
+
+                Trace.Listeners.Add(_traceListener);
+                Debug("Перехват Debug/Trace был снят другой надстройкой — восстановлен.");
             }
         }
 

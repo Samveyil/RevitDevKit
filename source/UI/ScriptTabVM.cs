@@ -2,7 +2,7 @@ using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ICSharpCode.AvalonEdit.Document;
 
-namespace RevitScriptRunner.UI
+namespace RevitDevKit.UI
 {
     /// <summary>
     /// Вкладка со скриптом. Текст хранится в TextDocument — это модель AvalonEdit,

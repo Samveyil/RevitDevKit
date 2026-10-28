@@ -5,7 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 
-namespace RevitScriptRunner.Core
+namespace RevitDevKit.Core
 {
     /// <summary>
     /// Задание на выполнение в контексте Revit API.
@@ -58,11 +58,6 @@ namespace RevitScriptRunner.Core
             _event = ExternalEvent.Create(_instance);
         }
 
-        public static bool IsReady
-        {
-            get { return _event != null; }
-        }
-
         /// <summary>Ставит задание в очередь и просит Revit выполнить его.</summary>
         public static void Enqueue(RunRequest request)
         {
@@ -70,7 +65,7 @@ namespace RevitScriptRunner.Core
 
             if (_event == null)
             {
-                ConsoleOutput.Error("Script Runner не инициализирован — перезапустите Revit.");
+                ConsoleOutput.Error("DevKit не инициализирован — перезапустите Revit.");
                 return;
             }
 
@@ -93,7 +88,7 @@ namespace RevitScriptRunner.Core
         {
             // Кнопка «Ещё раз» повторяет последний запуск независимо от того,
             // каким путём он пошёл.
-            Commands.ExecutePendingCommand.Remember(request);
+            Commands.ExecutePendingCmd.Remember(request);
 
             if (needsCommandContext)
             {
@@ -109,7 +104,7 @@ namespace RevitScriptRunner.Core
 
         public string GetName()
         {
-            return "Revit Script Runner";
+            return "Revit DevKit";
         }
 
         public void Execute(UIApplication app)
@@ -131,6 +126,7 @@ namespace RevitScriptRunner.Core
             var sw = Stopwatch.StartNew();
             Exception failure = null;
 
+            ConsoleOutput.EnsureTraceListener();
             ConsoleOutput.Banner("Запуск: " + (request.Title ?? "скрипт"));
 
             Transaction transaction = null;
@@ -142,7 +138,7 @@ namespace RevitScriptRunner.Core
                     if (doc == null)
                         throw new InvalidOperationException("Автотранзакция включена, но активного документа нет.");
 
-                    transaction = new Transaction(doc, request.TransactionName ?? "Script Runner");
+                    transaction = new Transaction(doc, request.TransactionName ?? "DevKit");
                     transaction.Start();
                 }
 

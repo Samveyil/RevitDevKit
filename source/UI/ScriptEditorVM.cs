@@ -1,8 +1,8 @@
 ﻿using BIMPlugins.ExtStorage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using RevitScriptRunner.Core;
-using RevitScriptRunner.Scripting;
+using RevitDevKit.Core;
+using RevitDevKit.Scripting;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -13,9 +13,9 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 
-namespace RevitScriptRunner.UI
+namespace RevitDevKit.UI
 {
-    public partial class RunnerVM : ObservableObject
+    public partial class ScriptEditorVM : ObservableObject
     {
         private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
 
@@ -27,10 +27,6 @@ namespace RevitScriptRunner.UI
         [ObservableProperty] private string _txtStatus = "Готово";
         [ObservableProperty] private string _contextText;
 
-        [ObservableProperty] private bool _isAutoScroll = true;
-        [ObservableProperty] private bool _isTimestamps = false;
-        [ObservableProperty] private bool _isShowDebug = true;
-
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(RunCommand))]
         private bool _isRunning;
@@ -41,8 +37,11 @@ namespace RevitScriptRunner.UI
 
         public List<string> CodeSamples { get; } = Samples.All.Select(s => s.Title).ToList();
 
-        public RunnerVM()
+        public ConsoleVM Output { get; } = new ConsoleVM();
+
+        public ScriptEditorVM()
         {
+            Output.StatusReported += text => TxtStatus = text;
             NewTab(Samples.Starter, "Новый скрипт");
         }
 
@@ -155,7 +154,7 @@ namespace RevitScriptRunner.UI
             {
                 var answer = MessageBox.Show(
                     "Во вкладке «" + tab.Title + "» есть несохранённые изменения. Закрыть?",
-                    "Script Runner", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    "Script Editor", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (answer != MessageBoxResult.Yes) return;
             }
 
@@ -266,7 +265,7 @@ namespace RevitScriptRunner.UI
             {
                 Title = title,
                 AutoTransaction = autoTransaction,
-                TransactionName = "Script Runner: " + title,
+                TransactionName = "DevKit: " + title,
                 Body = () => target.Invoke(),
                 Completed = error => _dispatcher.Invoke(() =>
                 {
@@ -290,29 +289,6 @@ namespace RevitScriptRunner.UI
         {
             IsRunning = false;
             TxtStatus = status;
-        }
-
-        // ------------------------------------------------------------------
-        //  Консоль
-        // ------------------------------------------------------------------
-
-        [RelayCommand]
-        private void ClearConsole() => ConsoleOutput.Clear();
-
-        public event EventHandler CloseRequest;
-        public void RaiseCloseRequest()
-        {
-            CloseRequest?.Invoke(this, EventArgs.Empty);
-        }
-        public event EventHandler HideRequest;
-        public void RaiseHideRequest()
-        {
-            HideRequest?.Invoke(this, EventArgs.Empty);
-        }
-        public event EventHandler ShowRequest;
-        public void RaiseShowRequest()
-        {
-            ShowRequest?.Invoke(this, EventArgs.Empty);
         }
     }
 }

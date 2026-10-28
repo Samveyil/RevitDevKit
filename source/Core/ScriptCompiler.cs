@@ -10,7 +10,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace RevitScriptRunner.Core
+namespace RevitDevKit.Core
 {
     public sealed class CompileMessage
     {
@@ -115,7 +115,7 @@ namespace RevitScriptRunner.Core
                     messages.Add(new CompileMessage
                     {
                         IsError = true,
-                        Id = "RSR001",
+                        Id = "RDK001",
                         Message = "Компилятор упал: " + ex.GetType().Name + ": " + ex.Message +
                                   " (подробности и версии сборок — выше в консоли)"
                     });
@@ -153,7 +153,7 @@ namespace RevitScriptRunner.Core
                     messages.Add(new CompileMessage
                     {
                         IsError = true,
-                        Id = "RSR002",
+                        Id = "RDK002",
                         Message = "Не удалось загрузить сборку: " + ex.Message
                     });
                     return Failed(messages, sw.ElapsedMilliseconds, prepared);
@@ -260,7 +260,7 @@ namespace RevitScriptRunner.Core
                         messages.Add(new CompileMessage
                         {
                             IsError = true,
-                            Id = "RSR010",
+                            Id = "RDK010",
                             Message = "Не найдена ссылка из #r \"" + item + "\""
                         });
                         continue;

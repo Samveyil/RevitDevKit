@@ -1,9 +1,10 @@
 using Autodesk.Revit.UI;
 using BIMPlugins.ExtStorage;
+using RevitDevKit.Commands;
 using System;
 using System.Collections.Generic;
 
-namespace RevitScriptRunner.Core
+namespace RevitDevKit.Core
 {
     /// <summary>
     /// Запуск задания через настоящую команду Revit.
@@ -19,16 +20,8 @@ namespace RevitScriptRunner.Core
     /// </summary>
     internal static class RevitCommandBridge
     {
-        internal const string RunButtonName = "RsrRunPending";
-
         private static RevitCommandId _commandId;
         private static bool _resolved;
-
-        /// <summary>Доступен ли запуск в контексте настоящей команды Revit.</summary>
-        public static bool IsAvailable
-        {
-            get { return Resolve() != null; }
-        }
 
         private static RevitCommandId Resolve()
         {
@@ -57,13 +50,15 @@ namespace RevitScriptRunner.Core
         }
 
         /// <summary>Имя команды в манифесте — оно же пункт «Внешние инструменты».</summary>
-        private const string ExternalToolText = "Script Runner Run Again";
+        private const string ExternalToolText = "DevKit Run Again";
 
         private static IEnumerable<string> Candidates()
         {
+            var btnName = typeof(ExecutePendingCmd).Name;
+
             // Кнопка на собственной вкладке — основной вариант.
-            yield return "CustomCtrl_%CustomCtrl_%" + App.TabName + "%" + App.PanelName + "%" + RunButtonName;
-            yield return "CustomCtrl_%" + App.TabName + "%" + App.PanelName + "%" + RunButtonName;
+            yield return $"CustomCtrl_%CustomCtrl_%CustomCtrl_%Add-Ins%{App.PanelName}%{App.PanelName}%{btnName}";
+            yield return $"CustomCtrl_%CustomCtrl_%Add-Ins%{App.PanelName}%{App.PanelName}%{btnName}";
 
             // Запасной: пункт в «Надстройки → Внешние инструменты» из манифеста.
             yield return "CustomCtrl_%CustomCtrl_%Add-Ins%External Tools%" + ExternalToolText;
@@ -87,13 +82,13 @@ namespace RevitScriptRunner.Core
 
                 if (uiApp == null || !uiApp.CanPostCommand(id)) return false;
 
-                Commands.ExecutePendingCommand.SetPending(request);
+                Commands.ExecutePendingCmd.SetPending(request);
                 uiApp.PostCommand(id);
                 return true;
             }
             catch (Exception ex)
             {
-                Commands.ExecutePendingCommand.SetPending(null);
+                Commands.ExecutePendingCmd.SetPending(null);
                 ConsoleOutput.Debug("PostCommand не сработал (" + ex.Message + "), используем ExternalEvent.");
                 return false;
             }

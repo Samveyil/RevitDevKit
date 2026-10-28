@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Runtime.Loader;
 #endif
 
-namespace RevitScriptRunner.Core
+namespace RevitDevKit.Core
 {
     /// <summary>
     /// Загрузка скомпилированных и внешних сборок в процесс Revit.
@@ -57,7 +57,7 @@ namespace RevitScriptRunner.Core
             var sourceDir = Path.GetDirectoryName(original);
             var shadowDir = Path.Combine(
                 Path.GetTempPath(),
-                "RevitScriptRunner",
+                "RevitDevKit",
                 Path.GetFileNameWithoutExtension(original) + "_" + DateTime.Now.ToString("HHmmss_fff")
             );
 
@@ -86,8 +86,6 @@ namespace RevitScriptRunner.Core
             {
                 Assembly = assembly,
                 OriginalPath = original,
-                ShadowPath = shadowPath,
-                LoadedAt = DateTime.Now,
                 Owner = owner
             };
         }
@@ -107,18 +105,6 @@ namespace RevitScriptRunner.Core
             GC.WaitForPendingFinalizers();
             return true;
 #endif
-        }
-
-        public static bool SupportsUnload
-        {
-            get
-            {
-#if NETFRAMEWORK
-                return false;
-#else
-                return true;
-#endif
-            }
         }
 
         private static void CopyWithSiblings(string sourceDir, string targetDir)
@@ -148,7 +134,7 @@ namespace RevitScriptRunner.Core
             private readonly AssemblyDependencyResolver _resolver;
 
             public UnloadableContext(string name, string probeDir = null)
-                : base("RSR_" + name, isCollectible: true)
+                : base("RDK_" + name, isCollectible: true)
             {
                 if (probeDir != null)
                 {
@@ -179,8 +165,6 @@ namespace RevitScriptRunner.Core
     {
         public Assembly Assembly { get; set; }
         public string OriginalPath { get; set; }
-        public string ShadowPath { get; set; }
-        public DateTime LoadedAt { get; set; }
         internal IDisposable Owner { get; set; }
 
         public string DisplayName => System.IO.Path.GetFileName(OriginalPath);
