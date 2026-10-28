@@ -14,12 +14,12 @@
 
             <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding ClearCommand}"
                     Style="{DynamicResource MaterialDesignFlatButton}" ToolTip="Очистить консоль (Ctrl+L)">
-                <materialDesign:PackIcon Kind="Broom" Width="25" Height="25" Foreground="#CC000000"/>
+                <materialDesign:PackIcon Kind="Broom" Width="25" Height="25" Foreground="{DynamicResource IconBrush}"/>
             </Button>
 
             <Button Width="22" Height="22" Margin="10 0" Padding="0" VerticalAlignment="Center" Click="OnCopy"
                     Style="{DynamicResource MaterialDesignFlatButton}" ToolTip="Скопировать весь вывод в буфер обмена">
-                <materialDesign:PackIcon Kind="ContentCopy" Width="22" Height="22" Foreground="#CC000000"/>
+                <materialDesign:PackIcon Kind="ContentCopy" Width="22" Height="22" Foreground="{DynamicResource IconBrush}"/>
             </Button>
 
             <CheckBox Content="Автопрокрутка" VerticalAlignment="Center" Margin="15 0 0 0" Padding="2 0" IsChecked="{Binding IsAutoScroll}"/>
@@ -28,7 +28,7 @@
         </StackPanel>
 
         <RichTextBox x:Name="Output" IsReadOnly="True" IsDocumentEnabled="True" FontFamily="Consolas" Margin="0 2 0 0"
-                     Style="{DynamicResource MaterialDesignOutlinedRichTextBox}" VerticalContentAlignment="Top" Padding="6 4" BorderBrush="#f88518"
+                     Style="{DynamicResource MaterialDesignOutlinedRichTextBox}" VerticalContentAlignment="Top" Padding="6 4" BorderBrush="{DynamicResource AccentBrush}"
                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
     </DockPanel>
 </UserControl>

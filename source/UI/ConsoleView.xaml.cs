@@ -10,10 +10,6 @@ using RevitDevKit.Core;
 
 namespace RevitDevKit.UI
 {
-    /// <summary>
-    /// Консоль плагина: показывает всё, что пишется в ConsoleOutput. Вывод идёт
-    /// в FlowDocument пачками — это забота View, настройки берутся из ConsoleVM.
-    /// </summary>
     public partial class ConsoleView : UserControl
     {
         private readonly Queue<LogChunkEventArgs> _pending = new Queue<LogChunkEventArgs>();
@@ -24,10 +20,7 @@ namespace RevitDevKit.UI
         private bool _atLineStart = true;
         private bool _subscribed;
 
-        /// <summary>
-        /// Не отписываться от вывода, когда контрол уходит из дерева. Нужно панели Revit:
-        /// скрытая панель тоже должна копить вывод, а живёт она весь сеанс.
-        /// </summary>
+        // The dockable pane is hidden rather than destroyed: keep collecting output while hidden.
         public static readonly DependencyProperty IsPersistentProperty = DependencyProperty.Register(
             nameof(IsPersistent), typeof(bool), typeof(ConsoleView), new PropertyMetadata(false));
 
@@ -41,21 +34,16 @@ namespace RevitDevKit.UI
         {
             InitializeComponent();
 
-            // Абзац один на всю консоль: строки добавляются как Run + LineBreak.
-            // Нулевые отступы — это не оформление, а условие того, чтобы вывод
-            // выглядел потоком текста, а не набором абзацев документа.
             _paragraph = new Paragraph { Margin = new Thickness(0) };
             Output.Document = new FlowDocument(_paragraph) { PagePadding = new Thickness(2) };
 
-            // Вывод из скрипта может идти тысячами строк в секунду — копим и рисуем пачками.
+            // Scripts can print thousands of lines per second: queue output and render in batches.
             _flushTimer = new DispatcherTimer(DispatcherPriority.Background)
             {
                 Interval = TimeSpan.FromMilliseconds(60)
             };
             _flushTimer.Tick += (s, e) => Flush();
 
-            // Подписываемся сразу, а не по Loaded: редактор кода пишет диагностику
-            // ещё при загрузке окна.
             Subscribe();
             Loaded += (s, e) => Subscribe();
             Unloaded += (s, e) =>
@@ -176,11 +164,6 @@ namespace RevitDevKit.UI
                 new Run("… ранний вывод отброшен …" + Environment.NewLine) { Foreground = Brushes.Gray });
         }
 
-        /// <summary>
-        /// Цвет уровня сообщения. Это не оформление, а различение ошибки от обычного
-        /// вывода; берутся системные цвета, читаемые на стандартном фоне.
-        /// Для обычного вывода возвращается null — цвет наследуется от контрола.
-        /// </summary>
         private static Brush BrushFor(LogLevel level)
         {
             switch (level)
@@ -194,7 +177,6 @@ namespace RevitDevKit.UI
             }
         }
 
-        /// <summary>Текст консоли есть только во View, поэтому копирование — здесь.</summary>
         private void OnCopy(object sender, RoutedEventArgs e)
         {
             var range = new TextRange(Output.Document.ContentStart, Output.Document.ContentEnd);

@@ -41,15 +41,7 @@ namespace RevitDevKit.UI
 
         partial void OnSearchTextChanged(string value) => ApplySearch();
 
-        /// <summary>
-        /// DLL, к которой относится действие: переданная явно (контекстное меню DLL)
-        /// или та, где лежит выделенная команда (кнопки и горячие клавиши).
-        /// </summary>
         private AssemblyNodeVM TargetAssembly(AssemblyNodeVM node) => node ?? (SelectedNode as TargetNodeVM)?.Owner;
-
-        // ------------------------------------------------------------------
-        //  Список DLL
-        // ------------------------------------------------------------------
 
         [RelayCommand]
         private void AddAssembly()
@@ -69,7 +61,6 @@ namespace RevitDevKit.UI
 
         private bool HasAssembly(AssemblyNodeVM node) => TargetAssembly(node) != null;
 
-        /// <summary>Перечитывает список команд из DLL на диске.</summary>
         [RelayCommand(CanExecute = nameof(HasAssembly))]
         private void ReloadAssembly(AssemblyNodeVM node)
         {
@@ -101,7 +92,6 @@ namespace RevitDevKit.UI
             Process.Start("explorer.exe", "/select,\"" + node.FilePath + "\"");
         }
 
-        /// <summary>Загружает DLL и ставит в список её актуальные команды (на место прежних, если она уже есть).</summary>
         private void Refresh(string path)
         {
             try
@@ -118,7 +108,6 @@ namespace RevitDevKit.UI
                 else
                     Assemblies[Assemblies.IndexOf(previous)] = node;
 
-                // Выделенная команда этой DLL остаётся выделенной, если она ещё есть.
                 if (selected != null && selected.Owner == previous)
                 {
                     var again = node.Targets.FirstOrDefault(t => t.TypeName == selected.TypeName);
@@ -140,11 +129,6 @@ namespace RevitDevKit.UI
         private AssemblyNodeVM FindAssembly(string path) =>
             Assemblies.FirstOrDefault(a => string.Equals(a.FilePath, path, StringComparison.OrdinalIgnoreCase));
 
-        // ------------------------------------------------------------------
-        //  Поиск и сворачивание
-        // ------------------------------------------------------------------
-
-        /// <summary>Сворачивает дерево до списка DLL.</summary>
         [RelayCommand]
         private void CollapseAll()
         {
@@ -156,7 +140,7 @@ namespace RevitDevKit.UI
             }
         }
 
-        /// <summary>Какие узлы были раскрыты до начала поиска — чтобы вернуть дерево, когда поиск очистят.</summary>
+        // Expansion state to restore when the search box is cleared.
         private Dictionary<AssemblyTreeNodeVM, bool> _expandedBeforeSearch;
 
         private IEnumerable<AssemblyTreeNodeVM> ExpandableNodes() =>
@@ -183,7 +167,6 @@ namespace RevitDevKit.UI
 
             IsNothingFound = query.Length > 0 && Assemblies.Count > 0 && !Assemblies.Any(a => a.IsVisible);
 
-            // Скрытую поиском команду не должно быть можно запустить по F5.
             if (SelectedNode != null && !SelectedNode.IsVisible)
             {
                 SelectedNode.IsSelected = false;
@@ -191,17 +174,11 @@ namespace RevitDevKit.UI
             }
         }
 
-        // ------------------------------------------------------------------
-        //  Запуск
-        // ------------------------------------------------------------------
-
         private bool CanRun(TargetNodeVM node) => (node ?? SelectedNode as TargetNodeVM) != null && !IsRunning;
 
-        /// <summary>
-        /// Берёт команду из актуальной DLL на диске: после пересборки запускается новая
-        /// версия класса с тем же именем, обновлять список для этого не нужно.
-        /// </summary>
         [RelayCommand(CanExecute = nameof(CanRun))]
+        // Always resolves the command from the DLL on disk, so a rebuilt class with the same
+        // name runs without refreshing the list.
         private void Run(TargetNodeVM node)
         {
             node ??= SelectedNode as TargetNodeVM;
@@ -236,8 +213,7 @@ namespace RevitDevKit.UI
                 TransactionName = "DevKit: " + target.Type.Name,
                 Body = () =>
                 {
-                    // Окно закрыто, а вывод команды идёт в консоль — показываем панель
-                    // здесь, в контексте API.
+                    // The window closes on run; showing the console pane needs an API context, i.e. here.
                     ConsolePane.TryShow(RevitAPI.UIApplication);
                     return target.Invoke();
                 },
@@ -256,11 +232,7 @@ namespace RevitDevKit.UI
             }
         }
 
-        // ------------------------------------------------------------------
-        //  Сохранение списка между сеансами
-        // ------------------------------------------------------------------
-
-        // Формат: путь к DLL с начала строки, её команды — ниже, с отступом.
+        // Format: DLL path at line start, its command type names below, indented.
         private static string StorePath => Path.Combine(App.DataDirectory, "assemblies.txt");
 
         private void Save()
