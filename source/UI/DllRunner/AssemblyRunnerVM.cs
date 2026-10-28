@@ -2,6 +2,7 @@ using BIMPlugins.ExtStorage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using RevitDevKit.Core;
+using RevitDevKit.UI.Console;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -11,7 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Threading;
 
-namespace RevitDevKit.UI
+namespace RevitDevKit.UI.DllRunner
 {
     public partial class AssemblyRunnerVM : ObservableObject
     {

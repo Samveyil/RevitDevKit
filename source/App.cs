@@ -57,8 +57,8 @@ namespace RevitDevKit
 
         public Result OnShutdown(UIControlledApplication application)
         {
-            UI.ScriptEditorWindow.CloseIfOpen();
-            UI.AssemblyRunnerWindow.CloseIfOpen();
+            UI.ScriptEditor.ScriptEditorWindow.CloseIfOpen();
+            UI.DllRunner.AssemblyRunnerWindow.CloseIfOpen();
             ConsoleOutput.Uninstall();
             AppDomain.CurrentDomain.AssemblyResolve -= ResolveFromPluginFolder;
             return Result.Succeeded;
@@ -98,7 +98,7 @@ namespace RevitDevKit
         {
             try
             {
-                UI.ConsolePane.Register(application);
+                UI.Console.ConsolePane.Register(application);
             }
             catch (Exception ex)
             {

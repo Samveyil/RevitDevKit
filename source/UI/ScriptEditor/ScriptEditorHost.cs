@@ -8,7 +8,7 @@ using System.Windows.Input;
 using ICSharpCode.AvalonEdit.Highlighting;
 using RevitDevKit.Core;
 
-namespace RevitDevKit.UI
+namespace RevitDevKit.UI.ScriptEditor
 {
     // TabControl reuses one ContentPresenter for all tabs. Keep one editor per tab
     // so caret, scroll and undo survive tab switches; it lives as long as the tab VM.

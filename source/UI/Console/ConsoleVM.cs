@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using RevitDevKit.Core;
 
-namespace RevitDevKit.UI
+namespace RevitDevKit.UI.Console
 {
     public partial class ConsoleVM : ObservableObject
     {

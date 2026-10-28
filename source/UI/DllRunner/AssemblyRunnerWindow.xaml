@@ -1,17 +1,17 @@
-<Window x:Class="RevitDevKit.UI.AssemblyRunnerWindow"
+<Window x:Class="RevitDevKit.UI.DllRunner.AssemblyRunnerWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        xmlns:local="clr-namespace:RevitDevKit.UI"
+        xmlns:local="clr-namespace:RevitDevKit.UI.DllRunner"
         d:DataContext="{d:DesignInstance local:AssemblyRunnerVM}"
         mc:Ignorable="d"
         Title="DLL Runner" WindowStartupLocation="CenterScreen"
         Height="720" Width="520" MinHeight="320" MinWidth="520">
 
     <Window.Resources>
-        <ResourceDictionary Source="pack://application:,,,/RevitDevKit;component/UI/Theme.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/RevitDevKit;component/UI/Shared/Theme.xaml" />
     </Window.Resources>
 
     <Window.InputBindings>

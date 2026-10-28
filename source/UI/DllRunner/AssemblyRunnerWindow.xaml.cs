@@ -1,7 +1,8 @@
+using RevitDevKit.UI.Shared;
 using System;
 using System.Windows;
 
-namespace RevitDevKit.UI
+namespace RevitDevKit.UI.DllRunner
 {
     public partial class AssemblyRunnerWindow : Window
     {

@@ -8,7 +8,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using RevitDevKit.Core;
 
-namespace RevitDevKit.UI
+namespace RevitDevKit.UI.Console
 {
     public partial class ConsoleView : UserControl
     {

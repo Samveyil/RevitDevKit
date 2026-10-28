@@ -3,7 +3,7 @@ using System;
 using Autodesk.Revit.UI;
 using RevitDevKit.Core;
 
-namespace RevitDevKit.UI
+namespace RevitDevKit.UI.Console
 {
     // Dockable panes can be registered only in OnStartup and shown only from an API context.
     public sealed class ConsolePane : IDockablePaneProvider

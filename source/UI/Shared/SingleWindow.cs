@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Interop;
 
-namespace RevitDevKit.UI
+namespace RevitDevKit.UI.Shared
 {
     // One modeless window per Revit session: showing it again brings the open one to front.
     internal sealed class SingleWindow<TWindow> where TWindow : Window
