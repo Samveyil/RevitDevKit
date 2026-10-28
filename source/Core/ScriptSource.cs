@@ -15,9 +15,6 @@ namespace RevitDevKit.Core
         /// <summary>Сколько строк добавлено сверху (для пересчёта номеров в ошибках).</summary>
         public int LineOffset { get; set; }
 
-        /// <summary>true — пользователь написал короткий фрагмент, мы обернули его в класс.</summary>
-        public bool WasWrapped { get; set; }
-
         /// <summary>Ссылки, запрошенные директивами #r.</summary>
         public IList<string> ExtraReferences { get; set; }
     }
@@ -81,7 +78,6 @@ namespace RevitDevKit.Core
                 {
                     Code = withoutDirectives,
                     LineOffset = 0,
-                    WasWrapped = false,
                     ExtraReferences = references
                 };
             }
@@ -113,7 +109,6 @@ namespace RevitDevKit.Core
             {
                 Code = sb.ToString(),
                 LineOffset = 2, // строка с using-ами + строка с объявлением класса
-                WasWrapped = true,
                 ExtraReferences = references
             };
         }

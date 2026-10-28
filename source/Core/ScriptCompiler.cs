@@ -33,8 +33,6 @@ namespace RevitDevKit.Core
         public Assembly Assembly { get; set; }
         public IList<CompileMessage> Messages { get; set; }
         public long ElapsedMs { get; set; }
-        public string GeneratedCode { get; set; }
-        public bool WasWrapped { get; set; }
 
         public IEnumerable<CompileMessage> Errors { get => Messages.Where(m => m.IsError); }
     }
@@ -49,13 +47,13 @@ namespace RevitDevKit.Core
 
         private static readonly object CacheSync = new object();
 
-        public static CompileResult Compile(string userCode, string assemblyName = null)
+        public static CompileResult Compile(string userCode)
         {
             var sw = Stopwatch.StartNew();
             var messages = new List<CompileMessage>();
 
             var prepared = ScriptSource.Prepare(userCode);
-            assemblyName = assemblyName ?? ("RevitScript_" + Guid.NewGuid().ToString("N"));
+            var assemblyName = "RevitScript_" + Guid.NewGuid().ToString("N");
 
             // Настройки собираются через Default и With*-методы, а не через конструкторы.
             //
@@ -119,7 +117,7 @@ namespace RevitDevKit.Core
                         Message = "Компилятор упал: " + ex.GetType().Name + ": " + ex.Message +
                                   " (подробности и версии сборок — выше в консоли)"
                     });
-                    return Failed(messages, sw.ElapsedMilliseconds, prepared);
+                    return Failed(messages, sw.ElapsedMilliseconds);
                 }
 
                 foreach (var d in emitResult.Diagnostics)
@@ -135,7 +133,7 @@ namespace RevitDevKit.Core
                 if (!emitResult.Success)
                 {
                     sw.Stop();
-                    return Failed(messages, sw.ElapsedMilliseconds, prepared);
+                    return Failed(messages, sw.ElapsedMilliseconds);
                 }
 
                 var peBytes = peStream.ToArray();
@@ -156,7 +154,7 @@ namespace RevitDevKit.Core
                         Id = "RDK002",
                         Message = "Не удалось загрузить сборку: " + ex.Message
                     });
-                    return Failed(messages, sw.ElapsedMilliseconds, prepared);
+                    return Failed(messages, sw.ElapsedMilliseconds);
                 }
 
                 sw.Stop();
@@ -165,22 +163,18 @@ namespace RevitDevKit.Core
                     Success = true,
                     Assembly = assembly,
                     Messages = messages,
-                    ElapsedMs = sw.ElapsedMilliseconds,
-                    GeneratedCode = prepared.Code,
-                    WasWrapped = prepared.WasWrapped
+                    ElapsedMs = sw.ElapsedMilliseconds
                 };
             }
         }
 
-        private static CompileResult Failed(List<CompileMessage> messages, long ms, PreparedSource prepared)
+        private static CompileResult Failed(List<CompileMessage> messages, long ms)
         {
             return new CompileResult
             {
                 Success = false,
                 Messages = messages,
-                ElapsedMs = ms,
-                GeneratedCode = prepared.Code,
-                WasWrapped = prepared.WasWrapped
+                ElapsedMs = ms
             };
         }
 
