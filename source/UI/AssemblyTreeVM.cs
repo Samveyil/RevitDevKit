@@ -32,22 +32,29 @@ namespace RevitScriptRunner.UI
             text.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
 
         /// <summary>
-        /// Показывает узел, если он сам подходит под запрос или под него подошёл кто-то
-        /// из детей. Родителя, совпавшего с запросом, показываем целиком; папку, которая
-        /// видна только ради детей, раскрываем.
+        /// Показывает узел, если он сам подходит под запрос, подошёл его родитель или
+        /// кто-то из детей. Совпавший родитель показывается целиком. При поиске узел
+        /// раскрыт, только если внутри него есть совпадение по имени, — так дерево
+        /// открывается до найденной команды, даже когда совпала и папка над ней.
         /// </summary>
+        /// <returns>true, если совпал сам узел или кто-то внутри него.</returns>
         protected bool ApplyFilter(string ownName, IEnumerable<AssemblyTreeNodeVM> children, string query, bool parentMatched)
         {
-            var self = parentMatched || Matches(ownName, query);
-            var anyChild = false;
+            var ownMatch = query.Length > 0 && Matches(ownName, query);
+            var shown = parentMatched || ownMatch;
+            var matchInside = false;
+            var anyChildVisible = false;
 
             foreach (var child in children)
-                anyChild |= child.Filter(query, self);
+            {
+                matchInside |= child.Filter(query, shown);
+                anyChildVisible |= child.IsVisible;
+            }
 
-            IsVisible = self || anyChild;
-            if (anyChild && !self) IsExpanded = true;
+            IsVisible = shown || anyChildVisible;
+            if (query.Length > 0) IsExpanded = matchInside;
 
-            return IsVisible;
+            return ownMatch || matchInside;
         }
 
         /// <summary>Применяет поиск к узлу и его детям; пустой запрос показывает всё.</summary>
@@ -88,10 +95,10 @@ namespace RevitScriptRunner.UI
         }
 
         public override bool Filter(string query, bool parentMatched = false) =>
-            ApplyFilter(DisplayName, Children, query, parentMatched || string.IsNullOrEmpty(query));
+            ApplyFilter(DisplayName, Children, query ?? string.Empty, parentMatched || string.IsNullOrEmpty(query));
     }
 
-    /// <summary>Пространство имён внутри DLL и его команды.</summary>
+    /// <summary>Пространство имён внутри DLL и его команды. Изначально свёрнуто: DLL открыта до папок.</summary>
     public sealed class NamespaceNodeVM : AssemblyTreeNodeVM
     {
         public AssemblyNodeVM Owner { get; }
@@ -104,6 +111,7 @@ namespace RevitScriptRunner.UI
             Owner = owner;
             Name = name;
             Targets = targets.ToList();
+            IsExpanded = false;
         }
 
         public override bool Filter(string query, bool parentMatched = false) =>
