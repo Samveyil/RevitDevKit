@@ -1,10 +1,10 @@
 using Autodesk.Revit.UI;
 using BIMPlugins.ExtStorage;
-using RevitScriptRunner.Commands;
+using RevitDevKit.Commands;
 using System;
 using System.Collections.Generic;
 
-namespace RevitScriptRunner.Core
+namespace RevitDevKit.Core
 {
     /// <summary>
     /// Запуск задания через настоящую команду Revit.
@@ -50,7 +50,7 @@ namespace RevitScriptRunner.Core
         }
 
         /// <summary>Имя команды в манифесте — оно же пункт «Внешние инструменты».</summary>
-        private const string ExternalToolText = "Script Runner Run Again";
+        private const string ExternalToolText = "DevKit Run Again";
 
         private static IEnumerable<string> Candidates()
         {

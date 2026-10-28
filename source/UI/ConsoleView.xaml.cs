@@ -6,9 +6,9 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Threading;
-using RevitScriptRunner.Core;
+using RevitDevKit.Core;
 
-namespace RevitScriptRunner.UI
+namespace RevitDevKit.UI
 {
     /// <summary>
     /// Консоль плагина: показывает всё, что пишется в ConsoleOutput. Вывод идёт

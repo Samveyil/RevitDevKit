@@ -5,7 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 
-namespace RevitScriptRunner.Core
+namespace RevitDevKit.Core
 {
     /// <summary>
     /// Задание на выполнение в контексте Revit API.
@@ -65,7 +65,7 @@ namespace RevitScriptRunner.Core
 
             if (_event == null)
             {
-                ConsoleOutput.Error("Script Runner не инициализирован — перезапустите Revit.");
+                ConsoleOutput.Error("DevKit не инициализирован — перезапустите Revit.");
                 return;
             }
 
@@ -104,7 +104,7 @@ namespace RevitScriptRunner.Core
 
         public string GetName()
         {
-            return "Revit Script Runner";
+            return "Revit DevKit";
         }
 
         public void Execute(UIApplication app)
@@ -138,7 +138,7 @@ namespace RevitScriptRunner.Core
                     if (doc == null)
                         throw new InvalidOperationException("Автотранзакция включена, но активного документа нет.");
 
-                    transaction = new Transaction(doc, request.TransactionName ?? "Script Runner");
+                    transaction = new Transaction(doc, request.TransactionName ?? "DevKit");
                     transaction.Start();
                 }
 

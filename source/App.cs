@@ -1,21 +1,22 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Windows.Media.Imaging;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BIMPlugins.UI;
-using RevitScriptRunner.Commands;
-using RevitScriptRunner.Core;
+using RevitDevKit.Commands;
+using RevitDevKit.Core;
 
-namespace RevitScriptRunner
+namespace RevitDevKit
 {
     /// <summary>
     /// Точка входа надстройки: лента, перехват консоли, мост в поток Revit.
     /// </summary>
     public class App : IExternalApplication
     {
-        internal const string PanelName = "Script Runner";
+        internal const string PanelName = "DevKit";
 
         public static string PluginDirectory
         {
@@ -29,7 +30,7 @@ namespace RevitScriptRunner
             {
                 var dir = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "RevitScriptRunner"
+                    "RevitDevKit"
                 );
                 
                 Directory.CreateDirectory(dir);
@@ -49,20 +50,20 @@ namespace RevitScriptRunner
                 BuildRibbon(application);
                 RegisterConsolePane(application);
 
-                ConsoleOutput.System("Script Runner загружен. Revit " +
+                ConsoleOutput.System("DevKit загружен. Revit " +
                                      application.ControlledApplication.VersionNumber + ".");
                 return Result.Succeeded;
             }
             catch (Exception ex)
             {
-                TaskDialog.Show("Script Runner", "Не удалось загрузить надстройку:\n\n" + ex);
+                TaskDialog.Show("DevKit", "Не удалось загрузить надстройку:\n\n" + ex);
                 return Result.Failed;
             }
         }
 
         public Result OnShutdown(UIControlledApplication application)
         {
-            UI.RunnerWindow.CloseIfOpen();
+            UI.ScriptEditorWindow.CloseIfOpen();
             UI.AssemblyRunnerWindow.CloseIfOpen();
             ConsoleOutput.Uninstall();
             AppDomain.CurrentDomain.AssemblyResolve -= ResolveFromPluginFolder;
@@ -74,29 +75,71 @@ namespace RevitScriptRunner
             var panel = application.CreateOrSelectPanel(PanelName);
 
             var pullBtn = panel.CreatePulldownButton(PanelName)
-                .SetLargeImage("")
-                .SetImage("")
-                .SetToolTip(PanelName);
+                .SetToolTip("Revit DevKit — инструменты разработчика: скрипты, запуск команд из DLL, консоль.");
 
-            pullBtn.CreatePushButton<OpenAssemblyRunnerCmd, AlwaysAvailable>("Dll Manager")
-                .SetToolTip("Загрузка внешних DLL и запуск их команд.")
-                .SetLongDescription(
-                    "Подключите собранную DLL и запустите из неё IExternalCommand. " +
-                    "Команда берётся из актуальной DLL на диске: после пересборки достаточно запустить её снова."
-                );
-
-            pullBtn.CreatePushButton<ExecutePendingCmd, AlwaysAvailable>("Repeat last one")
-                .SetToolTip("Повторить последний запуск в контексте настоящей команды Revit.");
-
-            pullBtn.CreatePushButton<OpenRunnerCmd, AlwaysAvailable>("Script Runner")
+            pullBtn.CreatePushButton<OpenScriptEditorCmd, AlwaysAvailable>("Script Editor")
                 .SetToolTip("Редактор C#-скриптов.")
                 .SetLongDescription(
                     "Пишите код прямо в Revit и запускайте его без пересборки надстройки. " +
                     "Весь вывод — Console.WriteLine, Debug, исключения — попадает в консоль плагина."
                 );
 
-            pullBtn.CreatePushButton<ShowConsolePaneCmd, AlwaysAvailable>("Консоль")
+            pullBtn.CreatePushButton<OpenAssemblyRunnerCmd, AlwaysAvailable>("DLL Runner")
+                .SetToolTip("Загрузка внешних DLL и запуск их команд.")
+                .SetLongDescription(
+                    "Подключите собранную DLL и запустите из неё IExternalCommand. " +
+                    "Команда берётся из актуальной DLL на диске: после пересборки достаточно запустить её снова."
+                );
+
+            pullBtn.CreatePushButton<ExecutePendingCmd, AlwaysAvailable>("Run Again")
+                .SetToolTip("Повторить последний запуск в контексте настоящей команды Revit.");
+
+            pullBtn.CreatePushButton<ShowConsolePaneCmd, AlwaysAvailable>("Console")
                 .SetToolTip("Показать панель с консолью плагина.");
+
+            SetPulldownIcons(application);
+        }
+
+        /// <summary>
+        /// Ставит иконки выпадающей кнопке плагина. Кнопку ищем через Revit API, а картинки
+        /// берём из встроенных ресурсов сборки — так не нужны ни файлы рядом с DLL, ни pack URI.
+        /// </summary>
+        private static void SetPulldownIcons(UIControlledApplication application)
+        {
+            try
+            {
+                var pulldown = application.GetRibbonPanels(Tab.AddIns)
+                    .Where(p => p.Name == PanelName)
+                    .SelectMany(p => p.GetItems())
+                    .OfType<PulldownButton>()
+                    .FirstOrDefault(b => b.Name == PanelName);
+
+                if (pulldown == null) return;
+
+                pulldown.LargeImage = LoadIcon("DevKit_32.png");
+                pulldown.Image = LoadIcon("DevKit_16.png");
+            }
+            catch (Exception ex)
+            {
+                ConsoleOutput.Debug("Не удалось поставить иконки на ленту: " + ex.Message);
+            }
+        }
+
+        /// <summary>Иконка из Resources\Icons, встроенная в сборку (см. EmbeddedResource в .csproj).</summary>
+        internal static BitmapSource LoadIcon(string fileName)
+        {
+            using (var stream = typeof(App).Assembly.GetManifestResourceStream("Icons." + fileName))
+            {
+                if (stream == null) return null;
+
+                var image = new BitmapImage();
+                image.BeginInit();
+                image.CacheOption = BitmapCacheOption.OnLoad;
+                image.StreamSource = stream;
+                image.EndInit();
+                image.Freeze();
+                return image;
+            }
         }
 
         private static void RegisterConsolePane(UIControlledApplication application)

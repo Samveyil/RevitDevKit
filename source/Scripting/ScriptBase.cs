@@ -5,9 +5,9 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BIMPlugins.ExtStorage;
 using BIMPlugins.ExtStorage.Extensions;
-using RevitScriptRunner.Core;
+using RevitDevKit.Core;
 
-namespace RevitScriptRunner.Scripting
+namespace RevitDevKit.Scripting
 {
     /// <summary>
     /// Базовый класс, в который «заворачивается» короткий скрипт.

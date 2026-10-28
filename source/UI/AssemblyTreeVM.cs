@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace RevitScriptRunner.UI
+namespace RevitDevKit.UI
 {
     /// <summary>
     /// Узел дерева DLL. TreeView не даёт привязать SelectedItem,

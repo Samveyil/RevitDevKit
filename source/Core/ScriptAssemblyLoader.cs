@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Runtime.Loader;
 #endif
 
-namespace RevitScriptRunner.Core
+namespace RevitDevKit.Core
 {
     /// <summary>
     /// Загрузка скомпилированных и внешних сборок в процесс Revit.
@@ -57,7 +57,7 @@ namespace RevitScriptRunner.Core
             var sourceDir = Path.GetDirectoryName(original);
             var shadowDir = Path.Combine(
                 Path.GetTempPath(),
-                "RevitScriptRunner",
+                "RevitDevKit",
                 Path.GetFileNameWithoutExtension(original) + "_" + DateTime.Now.ToString("HHmmss_fff")
             );
 
@@ -134,7 +134,7 @@ namespace RevitScriptRunner.Core
             private readonly AssemblyDependencyResolver _resolver;
 
             public UnloadableContext(string name, string probeDir = null)
-                : base("RSR_" + name, isCollectible: true)
+                : base("RDK_" + name, isCollectible: true)
             {
                 if (probeDir != null)
                 {

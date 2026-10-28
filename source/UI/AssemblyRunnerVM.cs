@@ -1,7 +1,7 @@
 using BIMPlugins.ExtStorage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using RevitScriptRunner.Core;
+using RevitDevKit.Core;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -11,7 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Threading;
 
-namespace RevitScriptRunner.UI
+namespace RevitDevKit.UI
 {
     public partial class AssemblyRunnerVM : ObservableObject
     {
@@ -233,7 +233,7 @@ namespace RevitScriptRunner.UI
             var request = new RunRequest
             {
                 Title = target.DisplayName,
-                TransactionName = "Script Runner: " + target.Type.Name,
+                TransactionName = "DevKit: " + target.Type.Name,
                 Body = () =>
                 {
                     // Окно закрыто, а вывод команды идёт в консоль — показываем панель

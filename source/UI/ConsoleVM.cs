@@ -1,9 +1,9 @@
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using RevitScriptRunner.Core;
+using RevitDevKit.Core;
 
-namespace RevitScriptRunner.UI
+namespace RevitDevKit.UI
 {
     /// <summary>
     /// Настройки консоли плагина. Сам вывод общий для всех окон (ConsoleOutput),

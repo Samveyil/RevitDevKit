@@ -5,7 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 using ICSharpCode.AvalonEdit;
 
-namespace RevitScriptRunner.UI
+namespace RevitDevKit.UI
 {
     /// <summary>
     /// Показывает редактор для вкладки из VM.

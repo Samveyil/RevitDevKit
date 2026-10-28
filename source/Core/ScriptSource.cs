@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace RevitScriptRunner.Core
+namespace RevitDevKit.Core
 {
     /// <summary>
     /// Результат подготовки исходника к компиляции.
@@ -28,14 +28,14 @@ namespace RevitScriptRunner.Core
     /// </summary>
     public static class ScriptSource
     {
-        public const string EntryTypeName = "RevitScriptRunner.UserScripts.__ScriptEntry";
+        public const string EntryTypeName = "RevitDevKit.UserScripts.__ScriptEntry";
 
         private const string DefaultUsings =
             "using System; using System.Collections; using System.Collections.Generic; using System.Linq; " +
             "using System.Text; using System.IO; " +
             "using Autodesk.Revit.DB; using Autodesk.Revit.DB.Structure; " +
             "using Autodesk.Revit.UI; using Autodesk.Revit.UI.Selection; " +
-            "using RevitScriptRunner.Core; using RevitScriptRunner.Scripting; " +
+            "using RevitDevKit.Core; using RevitDevKit.Scripting; " +
             "using BIMPlugins.ExtStorage.Extensions; using BIMPlugins.ExtStorage.Extensions.UtilsExtensions;";
 
         // using System.Linq;  /  using static System.Math;  /  using Doc = Autodesk.Revit.DB.Document;
@@ -105,7 +105,7 @@ namespace RevitScriptRunner.Core
                 sb.Append(' ').Append(u);
             
             sb.Append('\n');
-            sb.Append("namespace RevitScriptRunner.UserScripts { public class __ScriptEntry : RevitScriptRunner.Scripting.ScriptBase { public void Main() {\n");
+            sb.Append("namespace RevitDevKit.UserScripts { public class __ScriptEntry : RevitDevKit.Scripting.ScriptBase { public void Main() {\n");
             sb.Append(body);
             sb.Append("\n} } }\n");
 
