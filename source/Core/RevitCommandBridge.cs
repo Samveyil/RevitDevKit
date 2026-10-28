@@ -49,20 +49,12 @@ namespace RevitDevKit.Core
             return null;
         }
 
-        /// <summary>Имя команды в манифесте — оно же пункт «Внешние инструменты».</summary>
-        private const string ExternalToolText = "DevKit Run Again";
-
         private static IEnumerable<string> Candidates()
         {
             var btnName = typeof(ExecutePendingCmd).Name;
 
-            // Кнопка на собственной вкладке — основной вариант.
             yield return $"CustomCtrl_%CustomCtrl_%CustomCtrl_%Add-Ins%{App.PanelName}%{App.PanelName}%{btnName}";
             yield return $"CustomCtrl_%CustomCtrl_%Add-Ins%{App.PanelName}%{App.PanelName}%{btnName}";
-
-            // Запасной: пункт в «Надстройки → Внешние инструменты» из манифеста.
-            yield return "CustomCtrl_%CustomCtrl_%Add-Ins%External Tools%" + ExternalToolText;
-            yield return "CustomCtrl_%CustomCtrl_%Add-Ins%" + ExternalToolText;
         }
 
         /// <summary>
