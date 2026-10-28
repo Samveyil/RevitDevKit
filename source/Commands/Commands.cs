@@ -2,16 +2,16 @@ using System;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using RevitScriptRunner.Core;
+using RevitDevKit.Core;
 
-namespace RevitScriptRunner.Commands
+namespace RevitDevKit.Commands
 {
     /// <summary>
-    /// Открывает окно Script Runner.
+    /// Открывает окно Script Editor.
     /// </summary>
     [Transaction(TransactionMode.Manual)]
     [Regeneration(RegenerationOption.Manual)]
-    public class OpenRunnerCommand : IExternalCommand
+    public class OpenScriptEditorCmd : IExternalCommand
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
@@ -20,13 +20,61 @@ namespace RevitScriptRunner.Commands
 
             try
             {
-                UI.RunnerWindow.ShowSingleton();
+                UI.ScriptEditorWindow.ShowSingleton();
                 return Result.Succeeded;
             }
             catch (Exception ex)
             {
                 message = ex.Message;
-                ConsoleOutput.Exception(ex, "Не удалось открыть окно Script Runner:");
+                ConsoleOutput.Exception(ex, "Не удалось открыть окно Script Editor:");
+                return Result.Failed;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Открывает окно загрузки внешних DLL.
+    /// </summary>
+    [Transaction(TransactionMode.Manual)]
+    [Regeneration(RegenerationOption.Manual)]
+    public class OpenAssemblyRunnerCmd : IExternalCommand
+    {
+        public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
+        {
+            ConsoleOutput.Install();
+            RevitTaskRunner.Initialize();
+
+            try
+            {
+                UI.AssemblyRunnerWindow.ShowSingleton();
+                return Result.Succeeded;
+            }
+            catch (Exception ex)
+            {
+                message = ex.Message;
+                ConsoleOutput.Exception(ex, "Не удалось открыть окно загрузки DLL:");
+                return Result.Failed;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Показывает прикрепляемую панель с консолью плагина.
+    /// </summary>
+    [Transaction(TransactionMode.Manual)]
+    [Regeneration(RegenerationOption.Manual)]
+    public class ShowConsolePaneCmd : IExternalCommand
+    {
+        public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
+        {
+            try
+            {
+                UI.ConsolePane.Show(commandData.Application);
+                return Result.Succeeded;
+            }
+            catch (Exception ex)
+            {
+                message = "Панель консоли недоступна: " + ex.Message;
                 return Result.Failed;
             }
         }
@@ -44,7 +92,7 @@ namespace RevitScriptRunner.Commands
     /// </summary>
     [Transaction(TransactionMode.Manual)]
     [Regeneration(RegenerationOption.Manual)]
-    public class ExecutePendingCommand : IExternalCommand
+    public class ExecutePendingCmd : IExternalCommand
     {
         private static readonly object Sync = new object();
         private static RunRequest _pending;
@@ -68,12 +116,6 @@ namespace RevitScriptRunner.Commands
             lock (Sync) _last = request;
         }
 
-        /// <summary>Есть ли что повторить по кнопке на ленте.</summary>
-        internal static bool HasLast
-        {
-            get { lock (Sync) return _last != null; }
-        }
-
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             RunRequest request;
@@ -85,8 +127,8 @@ namespace RevitScriptRunner.Commands
 
             if (request == null)
             {
-                TaskDialog.Show("Script Runner",
-                    "Нечего повторять. Откройте Script Runner и запустите скрипт хотя бы один раз.");
+                TaskDialog.Show("DevKit",
+                    "Нечего повторять. Запустите скрипт в Script Editor или команду в DLL Runner хотя бы один раз.");
                 return Result.Cancelled;
             }
 

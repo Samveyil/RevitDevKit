@@ -1,19 +1,17 @@
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using BIMPlugins.UI;
+using RevitDevKit.Commands;
+using RevitDevKit.Core;
 using System;
 using System.IO;
 using System.Reflection;
-using System.Windows.Media.Imaging;
-using Autodesk.Revit.UI;
-using RevitScriptRunner.Core;
 
-namespace RevitScriptRunner
+namespace RevitDevKit
 {
-    /// <summary>
-    /// Точка входа надстройки: лента, перехват консоли, мост в поток Revit.
-    /// </summary>
     public class App : IExternalApplication
     {
-        internal const string TabName = "Script Runner";
-        internal const string PanelName = "C#";
+        internal const string PanelName = "DevKit";
 
         public static string PluginDirectory
         {
@@ -27,7 +25,9 @@ namespace RevitScriptRunner
             {
                 var dir = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "RevitScriptRunner");
+                    "RevitDevKit"
+                );
+                
                 Directory.CreateDirectory(dir);
                 return dir;
             }
@@ -43,21 +43,23 @@ namespace RevitScriptRunner
                 RevitTaskRunner.Initialize();
 
                 BuildRibbon(application);
+                RegisterConsolePane(application);
 
-                ConsoleOutput.System("Script Runner загружен. Revit " +
+                ConsoleOutput.System("DevKit загружен. Revit " +
                                      application.ControlledApplication.VersionNumber + ".");
                 return Result.Succeeded;
             }
             catch (Exception ex)
             {
-                TaskDialog.Show("Script Runner", "Не удалось загрузить надстройку:\n\n" + ex);
+                TaskDialog.Show("DevKit", "Не удалось загрузить надстройку:\n\n" + ex);
                 return Result.Failed;
             }
         }
 
         public Result OnShutdown(UIControlledApplication application)
         {
-            UI.RunnerWindow.CloseIfOpen();
+            UI.ScriptEditorWindow.CloseIfOpen();
+            UI.AssemblyRunnerWindow.CloseIfOpen();
             ConsoleOutput.Uninstall();
             AppDomain.CurrentDomain.AssemblyResolve -= ResolveFromPluginFolder;
             return Result.Succeeded;
@@ -65,63 +67,43 @@ namespace RevitScriptRunner
 
         private static void BuildRibbon(UIControlledApplication application)
         {
-            try { application.CreateRibbonTab(TabName); }
-            catch (Exception) { /* вкладка уже создана другой надстройкой */ }
+            var panel = application.CreateOrSelectPanel(PanelName);
 
-            var panel = application.CreateRibbonPanel(TabName, PanelName);
-            var assemblyPath = typeof(App).Assembly.Location;
+            var pullBtn = panel.CreatePulldownButton(PanelName)
+                .SetLargeImage("DevKit_32.png")
+                .SetImage("DevKit_16.png")
+                .SetToolTip("DevKit — инструменты разработчика: скрипты, запуск команд из DLL, консоль.");
 
-            var openButton = new PushButtonData(
-                "RsrOpen",
-                "Script\nRunner",
-                assemblyPath,
-                typeof(Commands.OpenRunnerCommand).FullName)
-            {
-                ToolTip = "Редактор C#-скриптов и загрузчик внешних DLL",
-                LongDescription =
-                    "Пишите код прямо в Revit и запускайте его без пересборки надстройки, " +
-                    "либо подключайте готовую DLL и вызывайте из неё команды. " +
+            pullBtn.CreatePushButton<OpenScriptEditorCmd>("Script Editor")
+                .SetToolTip("Редактор C#-скриптов.")
+                .SetLongDescription(
+                    "Пишите код прямо в Revit и запускайте его без пересборки надстройки. " +
                     "Весь вывод — Console.WriteLine, Debug, исключения — попадает в консоль плагина."
-            };
+                );
 
-            SetIcon(panel.AddItem(openButton) as PushButton, "runner");
+            pullBtn.CreatePushButton<OpenAssemblyRunnerCmd, AlwaysAvailable>("DLL Runner")
+                .SetToolTip("Загрузка внешних DLL и запуск их команд.")
+                .SetLongDescription(
+                    "Подключите собранную DLL и запустите из неё IExternalCommand. " +
+                    "Команда берётся из актуальной DLL на диске: после пересборки достаточно запустить её снова."
+                );
 
-            // Эта кнопка нужна не только пользователю: без места на ленте у команды
-            // нет идентификатора, который принимает UIApplication.PostCommand, —
-            // а именно так плагин получает живой ExternalCommandData.
-            var runAgainButton = new PushButtonData(
-                Core.RevitCommandBridge.RunButtonName,
-                "Ещё\nраз",
-                assemblyPath,
-                typeof(Commands.ExecutePendingCommand).FullName)
-            {
-                ToolTip = "Повторить последний запуск в контексте настоящей команды Revit",
-                LongDescription =
-                    "Script Runner использует эту команду, чтобы запускать чужие IExternalCommand " +
-                    "так же, как это делает сам Revit. Нажатая вручную, она повторяет последний запуск."
-            };
+            pullBtn.CreatePushButton<ExecutePendingCmd, AlwaysAvailable>("Run Again")
+                .SetToolTip("Повторить последний запуск в контексте настоящей команды Revit.");
 
-            SetIcon(panel.AddItem(runAgainButton) as PushButton, "run");
+            pullBtn.CreatePushButton<ShowConsolePaneCmd>("Console")
+                .SetToolTip("Показать панель с консолью плагина.");
         }
 
-        private static void SetIcon(PushButton button, string name)
-        {
-            if (button == null) return;
-
-            button.LargeImage = LoadIcon(name + ".png");
-            button.Image = LoadIcon(name + ".small.png");
-        }
-
-        private static BitmapImage LoadIcon(string fileName)
+        private static void RegisterConsolePane(UIControlledApplication application)
         {
             try
             {
-                var path = Path.Combine(PluginDirectory ?? ".", "Icons", fileName);
-                return File.Exists(path) ? new BitmapImage(new Uri(path, UriKind.Absolute)) : null;
+                UI.ConsolePane.Register(application);
             }
-            catch
+            catch (Exception ex)
             {
-                return null; // иконка — не повод падать при загрузке надстройки
+                ConsoleOutput.Exception(ex, "Не удалось зарегистрировать панель консоли:");
             }
         }
 
@@ -160,5 +142,10 @@ namespace RevitScriptRunner
                 return null;
             }
         }
+    }
+
+    public class AlwaysAvailable : IExternalCommandAvailability
+    {
+        public bool IsCommandAvailable(UIApplication applicationData, CategorySet selectedCategories) => applicationData != null;
     }
 }
