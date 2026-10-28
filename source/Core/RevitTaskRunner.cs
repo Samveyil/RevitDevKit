@@ -4,9 +4,23 @@ using BIMPlugins.ExtStorage;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using RevitDevKit.Commands;
+using System.Collections.Generic;
 
 namespace RevitDevKit.Core
 {
+    public sealed class RunRequest
+    {
+        public string Title { get; set; }
+        public Func<object> Body { get; set; }
+
+        public bool AutoTransaction { get; set; }
+
+        public string TransactionName { get; set; }
+
+        public Action<Exception> Completed { get; set; }
+    }
+
     // The Revit API may only be called on Revit's thread in a valid context, so every run
     // from the modeless windows goes through ExternalEvent (or PostCommand, see RevitCommandBridge).
     public sealed class RevitTaskRunner : IExternalEventHandler
@@ -152,6 +166,76 @@ namespace RevitDevKit.Core
 
             ConsoleOutput.WriteLine("Результат: " + ConsoleOutput.Format(result), LogLevel.Success);
             ConsoleOutput.Success("Готово за " + ms + " мс.");
+        }
+    }
+
+    // ExternalCommandData exists only inside IExternalCommand.Execute, so a modeless window
+    // cannot keep it. To run a foreign IExternalCommand we PostCommand our own ribbon
+    // button (Run Again) and execute the pending request inside it.
+    internal static class RevitCommandBridge
+    {
+        private static RevitCommandId _commandId;
+        private static bool _resolved;
+
+        private static RevitCommandId Resolve()
+        {
+            if (_resolved) return _commandId;
+            _resolved = true;
+
+            foreach (var candidate in Candidates())
+            {
+                try
+                {
+                    var id = RevitCommandId.LookupCommandId(candidate);
+                    if (id == null) continue;
+
+                    _commandId = id;
+                    ConsoleOutput.Debug("Контекст команды Revit доступен: " + candidate);
+                    return _commandId;
+                }
+                catch
+                {
+                    // invalid id format - try the next candidate
+                }
+            }
+
+            ConsoleOutput.Debug("Команда ленты не найдена — IExternalCommand будет запускаться через ExternalEvent.");
+            return null;
+        }
+
+        // Ribbon command ids are undocumented: CustomCtrl_%...%{tab}%{panel}%{pulldown}%{button},
+        // where every segment is the internal Name, not the caption.
+        private static IEnumerable<string> Candidates()
+        {
+            var btnName = typeof(ExecutePendingCmd).Name;
+
+            yield return $"CustomCtrl_%CustomCtrl_%CustomCtrl_%Add-Ins%{App.PanelName}%{App.PanelName}%{btnName}";
+            yield return $"CustomCtrl_%CustomCtrl_%Add-Ins%{App.PanelName}%{App.PanelName}%{btnName}";
+        }
+
+        public static bool TryPost(RunRequest request)
+        {
+            if (request == null) return false;
+
+            var id = Resolve();
+            if (id == null) return false;
+
+            try
+            {
+                var uiApp = RevitAPI.UIApplication;
+
+                if (uiApp == null || !uiApp.CanPostCommand(id)) return false;
+
+                Commands.ExecutePendingCmd.SetPending(request);
+                uiApp.PostCommand(id);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Commands.ExecutePendingCmd.SetPending(null);
+                ConsoleOutput.Debug("PostCommand не сработал (" + ex.Message + "), используем ExternalEvent.");
+                return false;
+            }
         }
     }
 }

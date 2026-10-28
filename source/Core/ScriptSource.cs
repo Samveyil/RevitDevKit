@@ -4,6 +4,15 @@ using System.Text.RegularExpressions;
 
 namespace RevitDevKit.Core
 {
+    public sealed class PreparedSource
+    {
+        public string Code { get; set; }
+
+        public int LineOffset { get; set; }
+
+        public IList<string> ExtraReferences { get; set; }
+    }
+
     public static class ScriptSource
     {
         public const string EntryTypeName = "RevitDevKit.UserScripts.__ScriptEntry";
