@@ -52,8 +52,6 @@
 		<ErrorReport>prompt</ErrorReport>
 		<WarningLevel>4</WarningLevel>
 		<DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
-		<StartAction>Program</StartAction>
-		<StartProgram>C:\Program Files\Autodesk\Revit $(RevitVersion)\Revit.exe</StartProgram>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="!$(Configuration.Contains('Debug'))">
@@ -64,7 +62,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AvalonEdit" Version="*" />
+		<PackageReference Include="AvalonEdit" Version="6.3.*" />
 		<PackageReference Include="BIMPlugins.ExtStorage" Version="$(RevitVersion).*" />
 		<PackageReference Include="BIMPlugins.UI" Version="*" />
 		<PackageReference Include="BIMPlugins.Windows" Version="*" />
@@ -75,7 +73,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<EmbeddedResource Include="Resources\Icons\*.png" LogicalName="Icons.%(Filename)%(Extension)" />
+	  <Resource Include="Resources\DevKit_16.png" />
+	  <Resource Include="Resources\DevKit_32.png" />
 	</ItemGroup>
 
 </Project>
