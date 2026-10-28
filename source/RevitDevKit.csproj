@@ -74,4 +74,8 @@
 		<PackageReference Include="Revit_All_Main_Versions_API_x64" Version="$(RevitVersion).*" IncludeAssets="build; compile" PrivateAssets="All" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<EmbeddedResource Include="Resources\Icons\*.png" LogicalName="Icons.%(Filename)%(Extension)" />
+	</ItemGroup>
+
 </Project>

@@ -2,16 +2,16 @@ using System;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using RevitScriptRunner.Core;
+using RevitDevKit.Core;
 
-namespace RevitScriptRunner.Commands
+namespace RevitDevKit.Commands
 {
     /// <summary>
-    /// Открывает окно Script Runner.
+    /// Открывает окно Script Editor.
     /// </summary>
     [Transaction(TransactionMode.Manual)]
     [Regeneration(RegenerationOption.Manual)]
-    public class OpenRunnerCmd : IExternalCommand
+    public class OpenScriptEditorCmd : IExternalCommand
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
@@ -20,13 +20,13 @@ namespace RevitScriptRunner.Commands
 
             try
             {
-                UI.RunnerWindow.ShowSingleton();
+                UI.ScriptEditorWindow.ShowSingleton();
                 return Result.Succeeded;
             }
             catch (Exception ex)
             {
                 message = ex.Message;
-                ConsoleOutput.Exception(ex, "Не удалось открыть окно Script Runner:");
+                ConsoleOutput.Exception(ex, "Не удалось открыть окно Script Editor:");
                 return Result.Failed;
             }
         }
@@ -127,8 +127,8 @@ namespace RevitScriptRunner.Commands
 
             if (request == null)
             {
-                TaskDialog.Show("Script Runner",
-                    "Нечего повторять. Откройте Script Runner и запустите скрипт хотя бы один раз.");
+                TaskDialog.Show("DevKit",
+                    "Нечего повторять. Запустите скрипт в Script Editor или команду в DLL Runner хотя бы один раз.");
                 return Result.Cancelled;
             }
 

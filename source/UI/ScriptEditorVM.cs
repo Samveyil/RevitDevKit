@@ -1,8 +1,8 @@
 ﻿using BIMPlugins.ExtStorage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using RevitScriptRunner.Core;
-using RevitScriptRunner.Scripting;
+using RevitDevKit.Core;
+using RevitDevKit.Scripting;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -13,9 +13,9 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 
-namespace RevitScriptRunner.UI
+namespace RevitDevKit.UI
 {
-    public partial class RunnerVM : ObservableObject
+    public partial class ScriptEditorVM : ObservableObject
     {
         private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
 
@@ -39,7 +39,7 @@ namespace RevitScriptRunner.UI
 
         public ConsoleVM Output { get; } = new ConsoleVM();
 
-        public RunnerVM()
+        public ScriptEditorVM()
         {
             Output.StatusReported += text => TxtStatus = text;
             NewTab(Samples.Starter, "Новый скрипт");
@@ -154,7 +154,7 @@ namespace RevitScriptRunner.UI
             {
                 var answer = MessageBox.Show(
                     "Во вкладке «" + tab.Title + "» есть несохранённые изменения. Закрыть?",
-                    "Script Runner", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    "Script Editor", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (answer != MessageBoxResult.Yes) return;
             }
 
@@ -265,7 +265,7 @@ namespace RevitScriptRunner.UI
             {
                 Title = title,
                 AutoTransaction = autoTransaction,
-                TransactionName = "Script Runner: " + title,
+                TransactionName = "DevKit: " + title,
                 Body = () => target.Invoke(),
                 Completed = error => _dispatcher.Invoke(() =>
                 {

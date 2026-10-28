@@ -3,19 +3,19 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Interop;
 
-namespace RevitScriptRunner.UI
+namespace RevitDevKit.UI
 {
     /// <summary>
-    /// Логика окна — в RunnerVM, консоль — в ConsoleView. Здесь остался только
+    /// Логика окна — в ScriptEditorVM, консоль — в ConsoleView. Здесь остался только
     /// жизненный цикл окна.
     /// </summary>
-    public partial class RunnerWindow : Window
+    public partial class ScriptEditorWindow : Window
     {
-        private static RunnerWindow _instance;
+        private static ScriptEditorWindow _instance;
 
-        private readonly RunnerVM _vm;
+        private readonly ScriptEditorVM _vm;
 
-        public RunnerWindow(RunnerVM vm)
+        public ScriptEditorWindow(ScriptEditorVM vm)
         {
             InitializeComponent();
 
@@ -36,7 +36,7 @@ namespace RevitScriptRunner.UI
                 return;
             }
 
-            _instance = new RunnerWindow(new RunnerVM());
+            _instance = new ScriptEditorWindow(new ScriptEditorVM());
 
             // Привязываем к главному окну Revit, чтобы не терялось за ним.
             try

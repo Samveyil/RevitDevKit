@@ -1,13 +1,13 @@
-<Window x:Class="RevitScriptRunner.UI.AssemblyRunnerWindow"
+<Window x:Class="RevitDevKit.UI.AssemblyRunnerWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        xmlns:local="clr-namespace:RevitScriptRunner.UI"
+        xmlns:local="clr-namespace:RevitDevKit.UI"
         d:DataContext="{d:DesignInstance local:AssemblyRunnerVM}"
         mc:Ignorable="d"
-        Title="Script Runner — DLL" WindowStartupLocation="CenterScreen"
+        Title="DLL Runner" WindowStartupLocation="CenterScreen"
         Height="720" Width="520" MinHeight="320" MinWidth="520">
 
     <Window.Resources>

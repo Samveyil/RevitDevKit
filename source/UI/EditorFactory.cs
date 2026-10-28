@@ -2,9 +2,9 @@ using System;
 using System.Windows.Input;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Highlighting;
-using RevitScriptRunner.Core;
+using RevitDevKit.Core;
 
-namespace RevitScriptRunner.UI
+namespace RevitDevKit.UI
 {
     /// <summary>
     /// Создаёт редактор кода на стандартных настройках AvalonEdit.

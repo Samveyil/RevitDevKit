@@ -1,8 +1,8 @@
 using System;
 using Autodesk.Revit.UI;
-using RevitScriptRunner.Core;
+using RevitDevKit.Core;
 
-namespace RevitScriptRunner.UI
+namespace RevitDevKit.UI
 {
     /// <summary>
     /// Консоль плагина как прикрепляемая панель Revit.
@@ -15,7 +15,7 @@ namespace RevitScriptRunner.UI
     {
         public static readonly DockablePaneId Id = new DockablePaneId(new Guid("6b0f6c2e-5a2d-4c8e-9a43-2f1d8e7b5c91"));
 
-        public const string Title = "Script Runner — консоль";
+        public const string Title = "DevKit Console";
 
         public static void Register(UIControlledApplication application)
         {

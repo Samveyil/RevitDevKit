@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace RevitScriptRunner.Scripting
+namespace RevitDevKit.Scripting
 {
     public sealed class Sample
     {
