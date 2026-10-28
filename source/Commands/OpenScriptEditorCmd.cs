@@ -17,7 +17,7 @@ namespace RevitDevKit.Commands
 
             try
             {
-                UI.ScriptEditorWindow.ShowSingleton();
+                UI.ScriptEditor.ScriptEditorWindow.ShowSingleton();
                 return Result.Succeeded;
             }
             catch (Exception ex)

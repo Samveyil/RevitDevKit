@@ -1,6 +1,7 @@
+using RevitDevKit.UI.Shared;
 using System.Windows;
 
-namespace RevitDevKit.UI
+namespace RevitDevKit.UI.ScriptEditor
 {
     public partial class ScriptEditorWindow : Window
     {

@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace RevitDevKit.UI
+namespace RevitDevKit.UI.DllRunner
 {
     // TreeView.SelectedItem is read-only, so selection is tracked via IsSelected on each node.
     public abstract partial class AssemblyTreeNodeVM : ObservableObject

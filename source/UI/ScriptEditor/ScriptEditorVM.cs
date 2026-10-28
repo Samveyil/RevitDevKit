@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using RevitDevKit.Core;
 using RevitDevKit.Scripting;
+using RevitDevKit.UI.Console;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -14,7 +15,7 @@ using System.Windows;
 using System.Windows.Threading;
 using ICSharpCode.AvalonEdit.Document;
 
-namespace RevitDevKit.UI
+namespace RevitDevKit.UI.ScriptEditor
 {
     public partial class ScriptEditorVM : ObservableObject
     {

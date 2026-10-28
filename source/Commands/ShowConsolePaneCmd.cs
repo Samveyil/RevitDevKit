@@ -13,7 +13,7 @@ namespace RevitDevKit.Commands
         {
             try
             {
-                UI.ConsolePane.Show(commandData.Application);
+                UI.Console.ConsolePane.Show(commandData.Application);
                 return Result.Succeeded;
             }
             catch (Exception ex)

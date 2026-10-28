@@ -1,11 +1,11 @@
-<Page x:Class="RevitDevKit.UI.ConsolePage"
+<Page x:Class="RevitDevKit.UI.Console.ConsolePage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:local="clr-namespace:RevitDevKit.UI"
+      xmlns:local="clr-namespace:RevitDevKit.UI.Console"
       Title="DevKit Console" Background="White">
 
     <Page.Resources>
-        <ResourceDictionary Source="pack://application:,,,/RevitDevKit;component/UI/Theme.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/RevitDevKit;component/UI/Shared/Theme.xaml" />
     </Page.Resources>
 
     <Page.InputBindings>
