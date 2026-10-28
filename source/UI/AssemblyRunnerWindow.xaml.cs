@@ -42,7 +42,9 @@ namespace RevitScriptRunner.UI
 
             if (_instance != null)
             {
-                if (_instance.WindowState == WindowState.Minimized) _instance.WindowState = WindowState.Normal;
+                if (_instance.WindowState == WindowState.Minimized)
+                    _instance.WindowState = WindowState.Normal;
+                
                 _instance.Activate();
                 return;
             }
@@ -55,10 +57,7 @@ namespace RevitScriptRunner.UI
                 var helper = new WindowInteropHelper(_instance);
                 helper.Owner = Process.GetCurrentProcess().MainWindowHandle;
             }
-            catch
-            {
-                // не критично
-            }
+            catch {}
 
             _instance.Show();
         }

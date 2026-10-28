@@ -42,17 +42,17 @@
             </Button>
 
             <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding ReloadAssemblyCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Обновить список команд DLL выбранной команды (Ctrl+R). Для любой DLL — правой кнопкой по ней">
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Обновить список команд DLL (Ctrl+R). Для любой DLL — правой кнопкой по ней">
                 <materialDesign:PackIcon Kind="Refresh" Width="25" Height="25" Foreground="#CC000000"/>
             </Button>
 
             <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RevealInExplorerCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике DLL выбранной команды">
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике DLL">
                 <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="#CC000000"/>
             </Button>
 
             <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RemoveAssemblyCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Убрать из списка DLL выбранной команды">
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Убрать из списка DLL">
                 <materialDesign:PackIcon Kind="DeleteOutline" Width="25" Height="25" Foreground="#CC000000"/>
             </Button>
 
@@ -94,7 +94,7 @@
                                 <StackPanel Orientation="Horizontal" ToolTip="{Binding FilePath}" Background="Transparent"
                                             Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TreeView}}">
                                     <StackPanel.ContextMenu>
-                                        <ContextMenu>
+                                        <ContextMenu materialDesign:MenuAssist.MenuItemsPresenterMargin="0">
                                             <MenuItem Header="Обновить список команд" CommandParameter="{Binding}"
                                                       Command="{Binding PlacementTarget.Tag.ReloadAssemblyCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                             <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"

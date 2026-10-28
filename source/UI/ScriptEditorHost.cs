@@ -61,10 +61,7 @@ namespace RevitScriptRunner.UI
                     editor.ScrollToLine(line);
                     editor.Focus();
                 }
-                catch
-                {
-                    // позиция не сошлась — не беда
-                }
+                catch {}
             };
 
             return editor;

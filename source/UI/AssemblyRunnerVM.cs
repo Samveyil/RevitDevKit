@@ -35,13 +35,9 @@ namespace RevitScriptRunner.UI
 
         public ObservableCollection<AssemblyNodeVM> Assemblies { get; } = [];
 
-        /// <summary>Окно закрывается, как только команда передана в Revit.</summary>
         public event EventHandler CloseRequested;
 
-        public AssemblyRunnerVM()
-        {
-            Restore();
-        }
+        public AssemblyRunnerVM() => Restore();
 
         partial void OnSearchTextChanged(string value) => ApplySearch();
 
@@ -78,7 +74,8 @@ namespace RevitScriptRunner.UI
         private void ReloadAssembly(AssemblyNodeVM node)
         {
             node = TargetAssembly(node);
-            if (node != null) Refresh(node.FilePath);
+            if (node != null)
+                Refresh(node.FilePath);
         }
 
         [RelayCommand(CanExecute = nameof(HasAssembly))]
@@ -89,7 +86,9 @@ namespace RevitScriptRunner.UI
 
             CachedAssemblyLoader.Forget(node.FilePath);
             Assemblies.Remove(node);
-            if ((SelectedNode as TargetNodeVM)?.Owner == node) SelectedNode = null;
+            if ((SelectedNode as TargetNodeVM)?.Owner == node)
+                SelectedNode = null;
+            
             Save();
             ApplySearch();
         }
@@ -123,8 +122,10 @@ namespace RevitScriptRunner.UI
                 if (selected != null && selected.Owner == previous)
                 {
                     var again = node.Targets.FirstOrDefault(t => t.TypeName == selected.TypeName);
-                    if (again != null) again.IsSelected = true;
-                    else SelectedNode = null;
+                    if (again != null)
+                        again.IsSelected = true;
+                    else
+                        SelectedNode = null;
                 }
 
                 Save();

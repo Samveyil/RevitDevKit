@@ -55,7 +55,8 @@ namespace RevitScriptRunner.UI
             }
 
             IsVisible = shown || anyChildVisible;
-            if (query.Length > 0) IsExpanded = matchInside;
+            if (query.Length > 0)
+                IsExpanded = matchInside;
 
             return ownMatch || matchInside;
         }

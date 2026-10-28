@@ -88,7 +88,7 @@ namespace RevitScriptRunner.Core
         {
             // Кнопка «Ещё раз» повторяет последний запуск независимо от того,
             // каким путём он пошёл.
-            Commands.ExecutePendingCommand.Remember(request);
+            Commands.ExecutePendingCmd.Remember(request);
 
             if (needsCommandContext)
             {
