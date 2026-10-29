@@ -1,23 +1,72 @@
-using System;
-using System.Windows.Input;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Highlighting;
 using RevitDevKit.Core;
+using System;
+using System.Runtime.CompilerServices;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Threading;
 
-namespace RevitDevKit.UI
+namespace RevitDevKit.UI.ScriptEditor
 {
-    /// <summary>
-    /// Создаёт редактор кода на стандартных настройках AvalonEdit.
-    ///
-    /// Оформления здесь намеренно нет — ни цветов, ни шрифтовых настроек помимо
-    /// моноширинного шрифта. Используются только те члены API, которые есть в
-    /// AvalonEdit любых версий: в процессе Revit может оказаться чужая сборка
-    /// ICSharpCode.AvalonEdit (у Dynamo, например, версия 4.3 от 2012 года), и
-    /// обращение к более новому члену падает MissingMethodException.
-    ///
-    /// Тёмная схема лежит в CSharpDark.xshd — она понадобится, когда будем
-    /// заниматься оформлением.
-    /// </summary>
+    // TabControl reuses one ContentPresenter for all tabs. Keep one editor per tab
+    // so caret, scroll and undo survive tab switches; it lives as long as the tab VM.
+    public sealed class ScriptEditorHost : ContentControl
+    {
+        private static readonly ConditionalWeakTable<ScriptTabVM, TextEditor> Editors =
+            new ConditionalWeakTable<ScriptTabVM, TextEditor>();
+
+        public static readonly DependencyProperty TabProperty = DependencyProperty.Register(
+            nameof(Tab), typeof(ScriptTabVM), typeof(ScriptEditorHost),
+            new PropertyMetadata(null, (d, e) => ((ScriptEditorHost)d).Show((ScriptTabVM)e.NewValue)));
+
+        public ScriptTabVM Tab
+        {
+            get => (ScriptTabVM)GetValue(TabProperty);
+            set => SetValue(TabProperty, value);
+        }
+
+        private void Show(ScriptTabVM tab)
+        {
+            if (tab == null)
+            {
+                Content = null;
+                return;
+            }
+
+            var editor = Editors.GetValue(tab, CreateEditor);
+
+            if (editor.Parent is ContentControl owner && owner != this)
+                owner.Content = null;
+
+            Content = editor;
+            Dispatcher.BeginInvoke(new Action(() => editor.Focus()), DispatcherPriority.Input);
+        }
+
+        private static TextEditor CreateEditor(ScriptTabVM tab)
+        {
+            var editor = EditorFactory.Create();
+            editor.Document = tab.Document;
+
+            tab.NavigateRequested += (line, column) =>
+            {
+                try
+                {
+                    editor.TextArea.Caret.Line = line;
+                    editor.TextArea.Caret.Column = column;
+                    editor.ScrollToLine(line);
+                    editor.Focus();
+                }
+                catch { } // line/column out of range after an edit
+            };
+
+            return editor;
+        }
+    }
+
+    // Revit may already have an old AvalonEdit loaded (e.g. 4.3 from Dynamo),
+    // so only members available in every version are used here.
     internal static class EditorFactory
     {
         private static bool _versionLogged;
@@ -34,11 +83,9 @@ namespace RevitDevKit.UI
                 SyntaxHighlighting = HighlightingManager.Instance.GetDefinition("C#")
             };
 
-            // Поведение ввода, а не оформление: отступы пробелами по 4.
             editor.Options.ConvertTabsToSpaces = true;
             editor.Options.IndentationSize = 4;
 
-            // Ctrl+D — дублировать строку или выделение, как в Visual Studio.
             editor.TextArea.PreviewKeyDown += (s, e) =>
             {
                 if (e.Key != Key.D || Keyboard.Modifiers != ModifierKeys.Control) return;
@@ -50,11 +97,8 @@ namespace RevitDevKit.UI
             return editor;
         }
 
-        /// <summary>
-        /// Без выделения копирует текущую строку под неё и переводит каретку на копию
-        /// в тот же столбец. С выделением вставляет его копию сразу за ним и выделяет её.
-        /// Одно действие — один шаг отмены.
-        /// </summary>
+        // Ctrl+D as in Visual Studio: duplicates the current line, or the selection,
+        // as a single undo step.
         internal static void Duplicate(TextEditor editor)
         {
             var document = editor.Document;
@@ -79,8 +123,6 @@ namespace RevitDevKit.UI
                     caretLine = line.LineNumber + 1;
                     caretColumn = caret.Column;
 
-                    // Перевод строки берём тот, что уже в документе; у последней строки
-                    // его нет — тогда у предыдущей.
                     var delimited = line.DelimiterLength > 0 ? line : line.PreviousLine;
                     var newLine = delimited != null && delimited.DelimiterLength > 0
                         ? document.GetText(delimited.EndOffset, delimited.DelimiterLength)
@@ -103,11 +145,6 @@ namespace RevitDevKit.UI
             caret.BringCaretToView();
         }
 
-        /// <summary>
-        /// Пишет в консоль, какая именно сборка AvalonEdit используется.
-        /// Полезно при разборе странностей редактора: версия зависит от того, какая
-        /// надстройка Revit успела загрузить AvalonEdit первой.
-        /// </summary>
         private static void LogAvalonEditVersionOnce()
         {
             if (_versionLogged) return;

@@ -1,6 +1,7 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BIMPlugins.ExtStorage;
+using BIMPlugins.ExtStorage.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,32 +11,24 @@ namespace RevitDevKit.Core
 {
     public enum RunTargetKind
     {
-        /// <summary>Класс реализует IExternalCommand.</summary>
         ExternalCommand,
-
-        /// <summary>Метод-точка входа (Main / Run / Execute) в обычном классе.</summary>
         Method
     }
 
-    /// <summary>
-    /// Точка входа, которую можно запустить: команда Revit или обычный метод.
-    /// </summary>
     public sealed class RunTarget
     {
         public RunTargetKind Kind { get; set; }
         public Type Type { get; set; }
         public MethodInfo Method { get; set; }
 
-        public string TypeName
-        {
-            get { return Type == null ? "?" : Type.FullName; }
-        }
+        public string TypeName { get => Type == null ? "?" : Type.FullName; }
 
         public string DisplayName
         {
             get
             {
-                if (Kind == RunTargetKind.ExternalCommand) return Type.Name + "   (IExternalCommand)";
+                if (Kind == RunTargetKind.ExternalCommand)
+                    return Type.Name + "   (IExternalCommand)";
                 return Type.Name + "." + Method.Name + "()";
             }
         }
@@ -44,19 +37,18 @@ namespace RevitDevKit.Core
         {
             get
             {
-                if (Kind == RunTargetKind.ExternalCommand) return TypeName;
+                if (Kind == RunTargetKind.ExternalCommand)
+                    return TypeName;
+
                 var args = string.Join(", ", Method.GetParameters().Select(p => p.ParameterType.Name));
                 return TypeName + "." + Method.Name + "(" + args + ")";
             }
         }
 
-        /// <summary>
-        /// Выполняет цель. Должен вызываться в валидном контексте Revit API.
-        /// Контекст не передаётся параметрами — он берётся из RevitAPI.
-        /// </summary>
         public object Invoke()
         {
-            if (Kind == RunTargetKind.ExternalCommand) return InvokeCommand();
+            if (Kind == RunTargetKind.ExternalCommand)
+                return InvokeCommand();
             return InvokeMethod();
         }
 
@@ -68,7 +60,7 @@ namespace RevitDevKit.Core
             {
                 throw new InvalidOperationException(
                     "Для запуска IExternalCommand нужен живой ExternalCommandData, а его выдаёт " +
-                    "только сам Revit. Убедитесь, что на ленте есть кнопка «Ещё раз» — через неё " +
+                    "только сам Revit. Убедитесь, что на ленте есть кнопка «Run Again» — через неё " +
                     "плагин получает контекст команды.");
             }
 
@@ -80,7 +72,7 @@ namespace RevitDevKit.Core
 
             var result = command.Execute(commandData, ref message, elements);
 
-            if (!string.IsNullOrEmpty(message))
+            if (!message.IsNullOrEmpty())
                 ConsoleOutput.Warning("Команда вернула сообщение: " + message);
 
             if (elements.Size > 0)
@@ -102,10 +94,6 @@ namespace RevitDevKit.Core
             return Method.Invoke(instance, args);
         }
 
-        /// <summary>
-        /// Подставляет аргументы чужому методу по типу параметра — его сигнатуру
-        /// мы не контролируем, поэтому этот путь остаётся.
-        /// </summary>
         private static object BindArgument(ParameterInfo parameter)
         {
             var t = parameter.ParameterType;
@@ -124,21 +112,17 @@ namespace RevitDevKit.Core
         }
     }
 
-    /// <summary>
-    /// Ищет в сборке всё, что можно запустить.
-    /// </summary>
     public static class EntryPointResolver
     {
         private static readonly string[] EntryMethodNames = { "Main", "Run", "Execute" };
 
-        /// <summary>Все запускаемые цели сборки — для дерева загруженных DLL.</summary>
         public static IList<RunTarget> FindAll(Assembly assembly, bool includeMethods = true)
         {
             var result = new List<RunTarget>();
 
             foreach (var type in SafeGetTypes(assembly))
             {
-                if (type.IsAbstract && !type.IsSealed) continue; // абстрактные — не запустить
+                if (type.IsAbstract && !type.IsSealed) continue;
                 if (type.IsGenericTypeDefinition) continue;
 
                 if (typeof(IExternalCommand).IsAssignableFrom(type) && !type.IsAbstract && !type.IsInterface)
@@ -159,10 +143,6 @@ namespace RevitDevKit.Core
                 .ToList();
         }
 
-        /// <summary>
-        /// Единственная точка входа скомпилированного скрипта.
-        /// Приоритет: сгенерированный класс-обёртка → IExternalCommand → метод Main/Run/Execute.
-        /// </summary>
         public static RunTarget ResolveScriptEntry(Assembly assembly)
         {
             var targets = FindAll(assembly);
@@ -209,8 +189,6 @@ namespace RevitDevKit.Core
                    || parameter.HasDefaultValue;
         }
 
-
-        /// <summary>GetTypes() падает, если часть зависимостей не разрешилась — берём что получилось.</summary>
         public static IEnumerable<Type> SafeGetTypes(Assembly assembly)
         {
             try
