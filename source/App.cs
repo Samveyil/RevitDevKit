@@ -18,7 +18,6 @@ namespace RevitDevKit
             get { return Path.GetDirectoryName(typeof(App).Assembly.Location); }
         }
 
-        /// <summary>Пользовательские данные: сохранённые скрипты, настройки.</summary>
         public static string DataDirectory
         {
             get
@@ -58,8 +57,8 @@ namespace RevitDevKit
 
         public Result OnShutdown(UIControlledApplication application)
         {
-            UI.ScriptEditorWindow.CloseIfOpen();
-            UI.AssemblyRunnerWindow.CloseIfOpen();
+            UI.ScriptEditor.ScriptEditorWindow.CloseIfOpen();
+            UI.DllRunner.AssemblyRunnerWindow.CloseIfOpen();
             ConsoleOutput.Uninstall();
             AppDomain.CurrentDomain.AssemblyResolve -= ResolveFromPluginFolder;
             return Result.Succeeded;
@@ -99,7 +98,7 @@ namespace RevitDevKit
         {
             try
             {
-                UI.ConsolePane.Register(application);
+                UI.Console.ConsolePane.Register(application);
             }
             catch (Exception ex)
             {
@@ -107,15 +106,9 @@ namespace RevitDevKit
             }
         }
 
-        /// <summary>
-        /// В процессе Revit крутятся свои версии Roslyn и прочих библиотек. Если
-        /// запрошенную сборку загрузчик не нашёл — берём ту, что лежит рядом с плагином.
-        ///
-        /// Версию при этом проверяем. Подсунуть более старую сборку, чем запрошена, —
-        /// худшее из решений: загрузка пройдёт, а потом вызов уйдёт в метод, которого
-        /// там нет, и мы получим MissingMethodException вдалеке от причины. Лучше
-        /// отказаться и сказать, что именно не сходится.
-        /// </summary>
+        // Revit ships its own Roslyn and other libraries. When the loader cannot find an
+        // assembly, fall back to the copy next to the add-in - but never to an older version:
+        // that would load fine and then fail later with MissingMethodException.
         private static Assembly ResolveFromPluginFolder(object sender, ResolveEventArgs args)
         {
             try

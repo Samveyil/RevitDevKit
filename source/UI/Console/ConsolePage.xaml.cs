@@ -1,16 +1,11 @@
+using System.Windows.Controls;
 using System;
 using Autodesk.Revit.UI;
 using RevitDevKit.Core;
 
-namespace RevitDevKit.UI
+namespace RevitDevKit.UI.Console
 {
-    /// <summary>
-    /// Консоль плагина как прикрепляемая панель Revit.
-    ///
-    /// Revit принимает регистрацию панели только в OnStartup, а показать её можно
-    /// только в контексте API — из команды ленты или из выполняемого задания.
-    /// Панель создаётся один раз и живёт весь сеанс, поэтому копит вывод и скрытой.
-    /// </summary>
+    // Dockable panes can be registered only in OnStartup and shown only from an API context.
     public sealed class ConsolePane : IDockablePaneProvider
     {
         public static readonly DockablePaneId Id = new DockablePaneId(new Guid("6b0f6c2e-5a2d-4c8e-9a43-2f1d8e7b5c91"));
@@ -27,7 +22,6 @@ namespace RevitDevKit.UI
             application.GetDockablePane(Id).Show();
         }
 
-        /// <summary>Показывает панель, если это возможно; ошибка здесь не повод срывать запуск.</summary>
         public static void TryShow(UIApplication application)
         {
             if (application == null) return;
@@ -47,6 +41,15 @@ namespace RevitDevKit.UI
             data.FrameworkElement = new ConsolePage();
             data.InitialState = new DockablePaneState { DockPosition = DockPosition.Bottom };
             data.VisibleByDefault = false;
+        }
+    }
+
+    public partial class ConsolePage : Page
+    {
+        public ConsolePage()
+        {
+            InitializeComponent();
+            DataContext = new ConsoleVM();
         }
     }
 }

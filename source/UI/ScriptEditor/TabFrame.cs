@@ -3,18 +3,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace RevitDevKit.UI
+namespace RevitDevKit.UI.ScriptEditor
 {
-    /// <summary>
-    /// Рисует одним контуром выбранную вкладку и рамку под ней: скруглённые углы
-    /// у вкладки и у рамки, а в местах, где вкладка встаёт на рамку, — вогнутые
-    /// скругления того же радиуса. Если вкладка стоит вплотную к краю рамки,
-    /// её боковая сторона просто продолжает сторону рамки.
-    ///
-    /// Кладётся в шаблон TabControl поверх заголовков и содержимого (обе строки).
-    /// Положение вкладки берётся из её контейнера после каждого прохода разметки,
-    /// так что контур следует и за выбором, и за изменением размеров.
-    /// </summary>
+    // Draws the selected tab and the editor frame as a single outline, so the rounded
+    // corners and the concave joints match exactly.
     public sealed class TabFrame : FrameworkElement
     {
         public static readonly DependencyProperty StrokeProperty = DependencyProperty.Register(
@@ -66,7 +58,7 @@ namespace RevitDevKit.UI
             }
             catch (InvalidOperationException)
             {
-                return Rect.Empty; // контейнер ещё не в дереве
+                return Rect.Empty;
             }
         }
 
@@ -79,7 +71,6 @@ namespace RevitDevKit.UI
 
             var r = Radius;
 
-            // +0.5: линия толщиной 1 ложится ровно в ряд пикселей, а не размазывается на два.
             double left = 0.5, right = ActualWidth - 0.5, bottom = ActualHeight - 0.5;
 
             if (_tab.IsEmpty || _tab.Height < 2 * r)
@@ -88,12 +79,11 @@ namespace RevitDevKit.UI
                 return;
             }
 
-            var top = Math.Round(_tab.Bottom) + 0.5;   // верхняя линия рамки
+            var top = Math.Round(_tab.Bottom) + 0.5;
             var tabTop = Math.Round(_tab.Top) + 0.5;
             var tabLeft = Math.Max(left, Math.Round(_tab.Left) + 0.5);
             var tabRight = Math.Min(right, Math.Round(_tab.Right) - 0.5);
 
-            // Для вогнутого скругления нужно место: угол рамки + само скругление.
             var leftFlare = tabLeft - left >= 2 * r;
             var rightFlare = right - tabRight >= 2 * r;
             if (!leftFlare) tabLeft = left;

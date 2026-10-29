@@ -1,8 +1,10 @@
 ﻿using BIMPlugins.ExtStorage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ICSharpCode.AvalonEdit.Document;
 using RevitDevKit.Core;
 using RevitDevKit.Scripting;
+using RevitDevKit.UI.Console;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -13,7 +15,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 
-namespace RevitDevKit.UI
+namespace RevitDevKit.UI.ScriptEditor
 {
     public partial class ScriptEditorVM : ObservableObject
     {
@@ -58,10 +60,6 @@ namespace RevitDevKit.UI
                 ConsoleOutput.Debug("Не удалось прочитать контекст Revit: " + ex.Message);
             }
         }
-
-        // ------------------------------------------------------------------
-        //  Вкладки и файлы
-        // ------------------------------------------------------------------
 
         [RelayCommand]
         private void NewTab() => NewTab(Samples.Starter, "Скрипт " + (_untitledCounter + 1));
@@ -143,7 +141,6 @@ namespace RevitDevKit.UI
                 SelectedTab = tab;
         }
 
-        /// <summary>Без параметра (Ctrl+W) закрывает текущую вкладку.</summary>
         [RelayCommand]
         private void CloseTab(ScriptTabVM tab)
         {
@@ -193,10 +190,6 @@ namespace RevitDevKit.UI
             return dir;
         }
 
-        // ------------------------------------------------------------------
-        //  Запуск скрипта
-        // ------------------------------------------------------------------
-
         private bool CanRun() => !IsRunning;
 
         [RelayCommand(CanExecute = nameof(CanRun))]
@@ -220,7 +213,7 @@ namespace RevitDevKit.UI
             var title = tab.Title;
             var autoTransaction = IsAutoTransaction;
 
-            // Исключение из async-команды ушло бы в диспетчер Revit, поэтому ловим всё здесь.
+            // An exception escaping an async command would reach Revit's dispatcher - catch it here.
             CompileResult result;
             try
             {
@@ -289,6 +282,40 @@ namespace RevitDevKit.UI
         {
             IsRunning = false;
             TxtStatus = status;
+        }
+    }
+
+    public partial class ScriptTabVM : ObservableObject
+    {
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(Header))]
+        private string _title;
+
+        [ObservableProperty] private string _filePath;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(Header))]
+        private bool _isDirty;
+
+        public TextDocument Document { get; }
+
+        public string Header { get => IsDirty ? Title + " *" : Title; }
+
+        public event Action<int, int> NavigateRequested;
+
+        public ScriptTabVM(string code, string title, string filePath = null)
+        {
+            Document = new TextDocument { Text = code ?? string.Empty };
+            _title = title;
+            _filePath = filePath;
+
+            Document.TextChanged += (s, e) => IsDirty = true;
+        }
+
+        public void NavigateTo(int line, int column)
+        {
+            line = Math.Max(1, Math.Min(line, Document.LineCount));
+            NavigateRequested?.Invoke(line, Math.Max(1, column));
         }
     }
 }

@@ -2,7 +2,6 @@
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
 		<UseWPF>true</UseWPF>
-		<UseWindowsForms>true</UseWindowsForms>
 		<LangVersion>latest</LangVersion>
 		<Configurations>Debug R2019;Debug R2020;Debug R2021;Debug R2022;Debug R2023;Debug R2024;R2019;R2020;R2021;R2022;R2023;R2024</Configurations>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
@@ -65,7 +64,6 @@
 		<PackageReference Include="AvalonEdit" Version="6.3.*" />
 		<PackageReference Include="BIMPlugins.ExtStorage" Version="$(RevitVersion).*" />
 		<PackageReference Include="BIMPlugins.UI" Version="*" />
-		<PackageReference Include="BIMPlugins.Windows" Version="*" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.11.0" />

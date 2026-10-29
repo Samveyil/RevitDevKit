@@ -1,22 +1,18 @@
-<Window x:Class="RevitDevKit.UI.ScriptEditorWindow"
+<Window x:Class="RevitDevKit.UI.ScriptEditor.ScriptEditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        xmlns:local="clr-namespace:RevitDevKit.UI"
+        xmlns:local="clr-namespace:RevitDevKit.UI.ScriptEditor"
+        xmlns:console="clr-namespace:RevitDevKit.UI.Console"
         d:DataContext="{d:DesignInstance local:ScriptEditorVM}"
         mc:Ignorable="d"
         Title="Script Editor" WindowStartupLocation="CenterScreen"
         Height="800" Width="820" MinHeight="480" MinWidth="820">
 
     <Window.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <materialDesign:CustomColorTheme BaseTheme="Light" PrimaryColor="#f88518" SecondaryColor="#FF0052A5" />
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
+        <ResourceDictionary Source="pack://application:,,,/RevitDevKit;component/UI/Shared/Theme.xaml" />
     </Window.Resources>
 
     <Window.InputBindings>
@@ -34,7 +30,7 @@
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding RunCommand}"
                     ToolTip="Скомпилировать и выполнить (F5 или Ctrl+Enter)" >
                 <StackPanel Orientation="Horizontal">
-                    <materialDesign:PackIcon Kind="Play" Width="20" Height="20" Foreground="#f88518"
+                    <materialDesign:PackIcon Kind="Play" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
                                              VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
                     <TextBlock Text="Запустить (F5)" VerticalAlignment="Center"/>
                 </StackPanel>
@@ -42,20 +38,20 @@
 
             <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding NewTabCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Новая вкладка (Ctrl+N)">
-                <materialDesign:PackIcon Kind="FileCodeOutline" Width="25" Height="25" Foreground="#CC000000"/>
+                <materialDesign:PackIcon Kind="FileCodeOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
             <Button Width="25" Height="25" Margin="10 0" Padding="0" Command="{Binding OpenFileCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Открыть .cs (Ctrl+O)">
-                <materialDesign:PackIcon Kind="FolderOpenOutline" Width="25" Height="25" Foreground="#CC000000"/>
+                <materialDesign:PackIcon Kind="FolderOpenOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
             <Button Width="25" Height="25" Padding="0" Command="{Binding SaveFileCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить (Ctrl+S)">
-                <materialDesign:PackIcon Kind="ContentSaveOutline" Width="25" Height="25" Foreground="#CC000000"/>
+                <materialDesign:PackIcon Kind="ContentSaveOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Border BorderThickness="1" BorderBrush="#f88518" CornerRadius="3" Margin="20 0">
+            <Border BorderThickness="1" BorderBrush="{StaticResource AccentBrush}" CornerRadius="3" Margin="20 0">
                 <materialDesign:PopupBox ToolTip="Вставить готовый пример в новую вкладку">
                     <materialDesign:PopupBox.ToggleContent>
                         <TextBlock Text="Примеры ▾" Margin="10 0 5 0" />
@@ -109,7 +105,7 @@
 
                             <ContentPresenter Grid.Row="1" x:Name="PART_SelectedContentHost" ContentSource="SelectedContent" Margin="1"/>
 
-                            <local:TabFrame Grid.RowSpan="2" Stroke="#f88518" Radius="4"/>
+                            <local:TabFrame Grid.RowSpan="2" Stroke="{StaticResource AccentBrush}" Radius="4"/>
                         </Grid>
                     </ControlTemplate>
                 </TabControl.Template>
@@ -131,7 +127,7 @@
                                         <Trigger Property="IsSelected" Value="True">
                                             <Setter TargetName="TabBorder" Property="BorderBrush" Value="Transparent"/>
                                             <Setter TargetName="TabBorder" Property="CornerRadius" Value="4 4 0 0"/>
-                                            <Setter TargetName="TabBorder" Property="Background" Value="#0F000000"/>
+                                            <Setter TargetName="TabBorder" Property="Background" Value="{StaticResource SelectedTabBrush}"/>
                                         </Trigger>
                                         <MultiTrigger>
                                             <MultiTrigger.Conditions>
@@ -195,7 +191,7 @@
 
             <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
 
-            <local:ConsoleView Grid.Row="2" Margin="5" DataContext="{Binding Output}"/>
+            <console:ConsoleView Grid.Row="2" Margin="5" DataContext="{Binding Output}"/>
         </Grid>
     </DockPanel>
 </Window>

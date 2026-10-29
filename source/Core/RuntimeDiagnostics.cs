@@ -5,17 +5,6 @@ using System.Reflection;
 
 namespace RevitDevKit.Core
 {
-    /// <summary>
-    /// Печатает, какие версии сборок компилятора реально живут в процессе Revit.
-    ///
-    /// Нужно потому, что Revit тащит с собой свои копии базовых библиотек, а в
-    /// Revit.exe.config могут стоять binding redirect'ы. Тогда запрос новой версии
-    /// молча перенаправляется на старую, загрузка проходит — и Roslyn падает внутри,
-    /// на вызове метода, которого в старой сборке нет.
-    ///
-    /// Этот класс намеренно не ссылается ни на один тип Roslyn: он должен работать
-    /// даже когда сам Roslyn сломан.
-    /// </summary>
     internal static class RuntimeDiagnostics
     {
         private static readonly string[] Watched =
@@ -69,11 +58,12 @@ namespace RevitDevKit.Core
                 }
                 catch
                 {
-                    // отдельные сборки бросают на .Location — пропускаем
+                    // some assemblies cannot report their name or location
                 }
             }
 
-            if (found.Count == 0) found.Add("не загружена");
+            if (found.Count == 0)
+                found.Add("не загружена");
             return found;
         }
 
