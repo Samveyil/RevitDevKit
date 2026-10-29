@@ -1,12 +1,12 @@
+using ICSharpCode.AvalonEdit;
+using ICSharpCode.AvalonEdit.Highlighting;
+using RevitDevKit.Core;
 using System;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Threading;
-using ICSharpCode.AvalonEdit;
 using System.Windows.Input;
-using ICSharpCode.AvalonEdit.Highlighting;
-using RevitDevKit.Core;
+using System.Windows.Threading;
 
 namespace RevitDevKit.UI.ScriptEditor
 {

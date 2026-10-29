@@ -1,11 +1,11 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BIMPlugins.ExtStorage;
+using RevitDevKit.Commands;
 using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
-using RevitDevKit.Commands;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace RevitDevKit.Core
 {
@@ -21,8 +21,6 @@ namespace RevitDevKit.Core
         public Action<Exception> Completed { get; set; }
     }
 
-    // The Revit API may only be called on Revit's thread in a valid context, so every run
-    // from the modeless windows goes through ExternalEvent (or PostCommand, see RevitCommandBridge).
     public sealed class RevitTaskRunner : IExternalEventHandler
     {
         private static RevitTaskRunner _instance;
@@ -41,7 +39,8 @@ namespace RevitDevKit.Core
 
         public static void Enqueue(RunRequest request)
         {
-            if (request == null) throw new ArgumentNullException("request");
+            if (request == null)
+                throw new ArgumentNullException("request");
 
             if (_event == null)
             {
@@ -58,11 +57,12 @@ namespace RevitDevKit.Core
 
         public static void Run(RunRequest request, bool needsCommandContext)
         {
-            Commands.ExecutePendingCmd.Remember(request);
+            ExecutePendingCmd.Remember(request);
 
             if (needsCommandContext)
             {
-                if (RevitCommandBridge.TryPost(request)) return;
+                if (RevitCommandBridge.TryPost(request))
+                    return;
 
                 ConsoleOutput.Warning(
                     "Не удалось получить контекст команды Revit. IExternalCommand будет запущен " +
@@ -72,10 +72,7 @@ namespace RevitDevKit.Core
             Enqueue(request);
         }
 
-        public string GetName()
-        {
-            return "Revit DevKit";
-        }
+        public string GetName() => "Revit DevKit";
 
         public void Execute(UIApplication app)
         {
@@ -226,13 +223,13 @@ namespace RevitDevKit.Core
 
                 if (uiApp == null || !uiApp.CanPostCommand(id)) return false;
 
-                Commands.ExecutePendingCmd.SetPending(request);
+                ExecutePendingCmd.SetPending(request);
                 uiApp.PostCommand(id);
                 return true;
             }
             catch (Exception ex)
             {
-                Commands.ExecutePendingCmd.SetPending(null);
+                ExecutePendingCmd.SetPending(null);
                 ConsoleOutput.Debug("PostCommand не сработал (" + ex.Message + "), используем ExternalEvent.");
                 return false;
             }

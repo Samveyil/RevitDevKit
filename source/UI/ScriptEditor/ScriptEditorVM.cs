@@ -1,6 +1,7 @@
 ﻿using BIMPlugins.ExtStorage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ICSharpCode.AvalonEdit.Document;
 using RevitDevKit.Core;
 using RevitDevKit.Scripting;
 using RevitDevKit.UI.Console;
@@ -13,7 +14,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
-using ICSharpCode.AvalonEdit.Document;
 
 namespace RevitDevKit.UI.ScriptEditor
 {

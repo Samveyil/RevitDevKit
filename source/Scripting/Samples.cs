@@ -12,7 +12,7 @@ namespace RevitDevKit.Scripting
     {
         public const string Starter =
 @"// Короткий фрагмент: плагин сам обернёт его в класс.
-// Доступны Doc, UIDoc, UIApp, App, а также Print / Tx / All / Instances / Dump.
+// Доступны Doc, UIDoc, UIApp, App, ActiveView, а также Print / Tx / All / Instances / Types / Table / Dump.
 // Запуск — F5 или Ctrl+Enter.
 
 Print(""Документ: "" + Doc.Title);
@@ -56,7 +56,20 @@ for (int i = 1; i <= 5; i++)
             {
                 Title = "3. Обход элементов и таблица",
                 Code =
-@"var walls = All<Wall>();
+@"// All<type>() — возвращает все элементы указанного класса, например All<FamilyInstance>().
+// Instances(category) — возвращает все экземпляры указанной категории,
+// например Instances(BuiltInCategory.OST_Walls).
+// Types(category) — возвращает все типоразмеры указанной категории, например Types(BuiltInCategory.OST_Floors).
+//
+// Дополнительно можно указать ID вида, чтобы ограничить выборку элементами, видимыми на этом виде:
+// All<type>(viewId), Instances(viewId, category), Types(viewId, category).
+// Например, All<Dimension>(ActiveView.Id) возвращает все размеры, видимые на текущем виде.
+//
+// Для All<type>() также доступны перегрузки с фильтрацией по категории:
+// All<type>(category) и All<type>(viewId, category).
+// Например, All<FamilyInstance>(BuiltInCategory.OST_StructuralColumns)
+// возвращает все экземпляры семейств категории «Несущие колонны».
+var walls = All<Wall>();
 Print($""Найдено стен: {walls.Count}"");
 
 Table(walls,
@@ -79,7 +92,8 @@ Tx(""Пометить стены комментарием"", () =>
     foreach (var wall in walls)
     {
         var p = wall.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS);
-        if (p != null && !p.IsReadOnly) p.Set(""проверено скриптом"");
+        if (p != null && !p.IsReadOnly)
+            p.Set(""проверено скриптом"");
     }
 });
 
@@ -89,15 +103,18 @@ Ok($""Обновлено стен: {walls.Count}"");
 
             new Sample
             {
-                Title = "5. Параметры выбранного элемента",
+                Title = "5. Параметры выбранных элементов",
                 Code =
-@"if (Selection.Count == 0) { Warn(""Ничего не выбрано в модели.""); return; }
+@"// S0 возвращает первый элемент, S1 — второй, S2 — третий.
+// Для получения элемента по индексу используйте S(i), где i — индекс элемента, начиная с 0.
+if (Selection.Count == 0) { Warn(""Ничего не выбрано в модели.""); return; }
 
+// Если выбран только один элемент, используйте Dump(S0).
+// Dump(element, true) дополнительно выводит параметры типа элемента.
 foreach (var element in Selection)
     Dump(element);
 "
             },
-
             new Sample
             {
                 Title = "6. Полноценный IExternalCommand",

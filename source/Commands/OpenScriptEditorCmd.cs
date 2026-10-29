@@ -1,8 +1,8 @@
-using System;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using RevitDevKit.Core;
+using System;
 
 namespace RevitDevKit.Commands
 {

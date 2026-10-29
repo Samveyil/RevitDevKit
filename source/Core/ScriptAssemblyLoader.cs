@@ -1,3 +1,4 @@
+using BIMPlugins.ExtStorage.Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -94,7 +95,8 @@ namespace RevitDevKit.Core
 
         private static void CopyWithSiblings(string sourceDir, string targetDir)
         {
-            if (string.IsNullOrEmpty(sourceDir) || !Directory.Exists(sourceDir)) return;
+            if (sourceDir.IsNullOrEmpty() || !Directory.Exists(sourceDir))
+                return;
 
             foreach (var file in Directory.GetFiles(sourceDir))
             {
@@ -109,7 +111,7 @@ namespace RevitDevKit.Core
                 {
                     File.Copy(file, Path.Combine(targetDir, Path.GetFileName(file)), true);
                 }
-                catch { } // a locked sibling file is not fatal
+                catch { }
             }
         }
 

@@ -1,7 +1,7 @@
-using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using RevitDevKit.Core;
+using System;
 
 namespace RevitDevKit.UI.Console
 {
