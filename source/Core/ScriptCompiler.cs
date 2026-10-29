@@ -6,9 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Linq;
 
 namespace RevitDevKit.Core
 {
@@ -103,11 +103,9 @@ namespace RevitDevKit.Core
 
                 foreach (var d in emitResult.Diagnostics)
                 {
-                    if (d.Severity == DiagnosticSeverity.Hidden)
-                        continue;
-                    if (d.Severity == DiagnosticSeverity.Info)
-                        continue;
-                    
+                    if (d.Severity == DiagnosticSeverity.Hidden) continue;
+                    if (d.Severity == DiagnosticSeverity.Info) continue;
+
                     messages.Add(ToMessage(d, prepared.LineOffset));
                 }
 
@@ -189,10 +187,8 @@ namespace RevitDevKit.Core
 
             void Add(string path)
             {
-                if (path.IsNullOrEmpty())
-                    return;
-                if (!File.Exists(path))
-                    return;
+                if (path.IsNullOrEmpty()) return;
+                if (!File.Exists(path)) return;
                 
                 var key = Path.GetFileName(path);
                 if (!paths.ContainsKey(key))
@@ -211,7 +207,7 @@ namespace RevitDevKit.Core
 
                     Add(location);
                 }
-                catch { } // dynamic or unloaded assemblies have no usable location
+                catch { }
             }
 
             foreach (var path in PlatformAssemblies())
@@ -240,7 +236,8 @@ namespace RevitDevKit.Core
             foreach (var path in paths.Values)
             {
                 var reference = GetCached(path);
-                if (reference != null) result.Add(reference);
+                if (reference != null)
+                    result.Add(reference);
             }
             return result;
         }
@@ -253,7 +250,8 @@ namespace RevitDevKit.Core
             var fileName = item.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) ? item : item + ".dll";
 
             string hit;
-            if (known.TryGetValue(fileName, out hit)) return hit;
+            if (known.TryGetValue(fileName, out hit))
+                return hit;
 
             var pluginDir = Path.GetDirectoryName(typeof(ScriptCompiler).Assembly.Location);
             var candidate = Path.Combine(pluginDir ?? ".", fileName);
@@ -315,7 +313,7 @@ namespace RevitDevKit.Core
 
             foreach (var searchDir in PlatformSearchDirectories())
             {
-                if (string.IsNullOrEmpty(searchDir))
+                if (searchDir.IsNullOrEmpty())
                     continue;
                 var netstandard = Path.Combine(searchDir, "netstandard.dll");
                 

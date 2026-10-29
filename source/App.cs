@@ -1,3 +1,4 @@
+using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BIMPlugins.UI;
 using RevitDevKit.Commands;
@@ -5,7 +6,6 @@ using RevitDevKit.Core;
 using System;
 using System.IO;
 using System.Reflection;
-using Autodesk.Revit.DB;
 
 namespace RevitDevKit
 {

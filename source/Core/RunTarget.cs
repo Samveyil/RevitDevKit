@@ -1,17 +1,17 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BIMPlugins.ExtStorage;
+using BIMPlugins.ExtStorage.Extensions;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Collections.Generic;
 
 namespace RevitDevKit.Core
 {
     public enum RunTargetKind
     {
         ExternalCommand,
-
         Method
     }
 
@@ -21,16 +21,14 @@ namespace RevitDevKit.Core
         public Type Type { get; set; }
         public MethodInfo Method { get; set; }
 
-        public string TypeName
-        {
-            get { return Type == null ? "?" : Type.FullName; }
-        }
+        public string TypeName { get => Type == null ? "?" : Type.FullName; }
 
         public string DisplayName
         {
             get
             {
-                if (Kind == RunTargetKind.ExternalCommand) return Type.Name + "   (IExternalCommand)";
+                if (Kind == RunTargetKind.ExternalCommand)
+                    return Type.Name + "   (IExternalCommand)";
                 return Type.Name + "." + Method.Name + "()";
             }
         }
@@ -39,7 +37,9 @@ namespace RevitDevKit.Core
         {
             get
             {
-                if (Kind == RunTargetKind.ExternalCommand) return TypeName;
+                if (Kind == RunTargetKind.ExternalCommand)
+                    return TypeName;
+
                 var args = string.Join(", ", Method.GetParameters().Select(p => p.ParameterType.Name));
                 return TypeName + "." + Method.Name + "(" + args + ")";
             }
@@ -47,7 +47,8 @@ namespace RevitDevKit.Core
 
         public object Invoke()
         {
-            if (Kind == RunTargetKind.ExternalCommand) return InvokeCommand();
+            if (Kind == RunTargetKind.ExternalCommand)
+                return InvokeCommand();
             return InvokeMethod();
         }
 
@@ -59,7 +60,7 @@ namespace RevitDevKit.Core
             {
                 throw new InvalidOperationException(
                     "Для запуска IExternalCommand нужен живой ExternalCommandData, а его выдаёт " +
-                    "только сам Revit. Убедитесь, что на ленте есть кнопка «Ещё раз» — через неё " +
+                    "только сам Revit. Убедитесь, что на ленте есть кнопка «Run Again» — через неё " +
                     "плагин получает контекст команды.");
             }
 
@@ -71,7 +72,7 @@ namespace RevitDevKit.Core
 
             var result = command.Execute(commandData, ref message, elements);
 
-            if (!string.IsNullOrEmpty(message))
+            if (!message.IsNullOrEmpty())
                 ConsoleOutput.Warning("Команда вернула сообщение: " + message);
 
             if (elements.Size > 0)

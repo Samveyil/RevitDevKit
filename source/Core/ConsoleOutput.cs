@@ -155,10 +155,7 @@ namespace RevitDevKit.Core
             }
         }
 
-        public static void Clear()
-        {
-            Cleared?.Invoke(null, EventArgs.Empty);
-        }
+        public static void Clear() => Cleared?.Invoke(null, EventArgs.Empty);
 
         public static string Format(object value)
         {
@@ -207,11 +204,7 @@ namespace RevitDevKit.Core
 
             public override Encoding Encoding { get { return Encoding.UTF8; } }
 
-            public override void Write(char value)
-            {
-                Write(value.ToString());
-            }
-
+            public override void Write(char value) => Write(value.ToString());
             public override void Write(string value)
             {
                 if (string.IsNullOrEmpty(value)) return;
@@ -222,18 +215,11 @@ namespace RevitDevKit.Core
                     if (_passthrough != null)
                         _passthrough.Write(value);
                 }
-                catch { } // the original stream is best effort
+                catch { }
             }
 
-            public override void WriteLine(string value)
-            {
-                Write((value ?? string.Empty) + Environment.NewLine);
-            }
-
-            public override void WriteLine()
-            {
-                Write(Environment.NewLine);
-            }
+            public override void WriteLine(string value) => Write((value ?? string.Empty) + Environment.NewLine);
+            public override void WriteLine() => Write(Environment.NewLine);
         }
 
         private sealed class ConsoleTraceListener : TraceListener
