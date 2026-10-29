@@ -12,7 +12,7 @@ namespace RevitDevKit.Scripting
     {
         public const string Starter =
 @"// Короткий фрагмент: плагин сам обернёт его в класс.
-// Доступны Doc, UIDoc, UIApp, App, ActiveView, а также Print / Tx / All / Instances / Types / Table / Dump.
+// Доступны Doc, UIDoc, UIApp, App, ActiveView, а также Print / Tx / All / Instances / Types / Table / Dump / Compare.
 // Запуск — F5 или Ctrl+Enter.
 
 Print(""Документ: "" + Doc.Title);
@@ -115,9 +115,26 @@ foreach (var element in Selection)
     Dump(element);
 "
             },
+
             new Sample
             {
-                Title = "6. Полноценный IExternalCommand",
+                Title = "6. Сравнение параметров элементов",
+                Code =
+@"// Выберите в модели от двух до пяти элементов: выводятся только параметры с разными значениями.
+// Прочерк ""—"" значит, что у элемента такого параметра нет; ""-"" — параметр есть, но пустой.
+if (Selection.Count < 2) { Warn(""Выберите в модели минимум два элемента.""); return; }
+
+Compare(Selection);
+
+// Другие варианты:
+// Compare(S0, S1);            — два конкретных элемента
+// Compare(S0, S1, S2);        — до пяти элементов через запятую
+// Compare(Selection, true);   — с параметрами типов
+"
+            },
+            new Sample
+            {
+                Title = "7. Полноценный IExternalCommand",
                 Code =
 @"// Если в коде есть объявление класса, плагин компилирует файл как есть.
 using System;
@@ -150,7 +167,7 @@ public class MyCommand : IExternalCommand
 
             new Sample
             {
-                Title = "7. Свой класс с методом Main",
+                Title = "8. Свой класс с методом Main",
                 Code =
 @"using System;
 using System.Linq;
@@ -181,7 +198,7 @@ public class Report
 
             new Sample
             {
-                Title = "8. Подключение внешней библиотеки через #r",
+                Title = "9. Подключение внешней библиотеки через #r",
                 Code =
 @"// Директива #r добавляет ссылку на сборку: по имени или по полному пути.
 #r ""System.Xml""
