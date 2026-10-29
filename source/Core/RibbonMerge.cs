@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
-using System.Runtime.ExceptionServices;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Adw = Autodesk.Windows;
@@ -86,100 +85,6 @@ namespace RevitDevKit.Core
             {
                 if (tab.Panels.Remove(panel)) return;
             }
-        }
-    }
-
-    // OnStartup of the new build runs against an empty name registry, so the add-in builds its
-    // ribbon from scratch next to the live one. Live custom tabs are renamed for that time:
-    // CreateRibbonTab looks tabs up by Id and refuses an existing one.
-    internal sealed class RibbonDraft
-    {
-        private const string HiddenSuffix = "\u0001DevKitLive";
-
-        public Dictionary<string, Dictionary<string, RibbonPanel>> Registry { get; } =
-            new Dictionary<string, Dictionary<string, RibbonPanel>>
-            {
-                [RibbonAccess.AddInsTab] = new Dictionary<string, RibbonPanel>(),
-                [RibbonAccess.AnalyzeTab] = new Dictionary<string, RibbonPanel>()
-            };
-
-        public List<Adw.RibbonTab> NewTabs { get; private set; } = new List<Adw.RibbonTab>();
-
-        public static RibbonDraft Run(Action startup)
-        {
-            var ribbon = RibbonAccess.Ribbon;
-            var live = RibbonAccess.Registry;
-            var tabsBefore = ribbon.Tabs.ToList();
-
-            var renamed = live.Keys
-                .Where(RibbonAccess.IsCustomTab)
-                .Select(ribbon.FindTab)
-                .Where(t => t != null)
-                .ToList();
-
-            var draft = new RibbonDraft();
-            Exception failure = null;
-
-            foreach (var tab in renamed) tab.Id += HiddenSuffix;
-            RibbonAccess.Registry = draft.Registry;
-            try
-            {
-                startup();
-            }
-            catch (Exception ex)
-            {
-                failure = ex;
-            }
-            finally
-            {
-                RibbonAccess.Registry = live;
-                foreach (var tab in renamed) tab.Id = tab.Id.Substring(0, tab.Id.Length - HiddenSuffix.Length);
-            }
-
-            draft.NewTabs = ribbon.Tabs.Where(t => !tabsBefore.Contains(t)).ToList();
-
-            if (failure != null)
-            {
-                draft.Discard();
-                ExceptionDispatchInfo.Capture(failure).Throw();
-            }
-
-            return draft;
-        }
-
-        public IEnumerable<RibbonItem> Items()
-        {
-            foreach (var item in Registry.Values.SelectMany(p => p.Values).SelectMany(p => RibbonAccess.Items(p).Values))
-            {
-                yield return item;
-
-                if (item is PulldownButton pulldown)
-                {
-                    foreach (var child in RibbonAccess.Items(pulldown).Values)
-                        yield return child;
-                }
-            }
-        }
-
-        // DLL file names the new build's commands live in: live buttons pointing to them are its own.
-        public HashSet<string> CommandFiles() =>
-            new HashSet<string>(
-                Items().OfType<PushButton>().Select(b => FileName(b.AssemblyName)).Where(n => n != null),
-                StringComparer.OrdinalIgnoreCase);
-
-        public void Discard()
-        {
-            foreach (var panel in Registry.Values.SelectMany(p => p.Values))
-                RibbonAccess.Detach(RibbonAccess.AdwPanel(panel));
-
-            foreach (var tab in NewTabs)
-                RibbonAccess.Ribbon.Tabs.Remove(tab);
-        }
-
-        internal static string FileName(string path)
-        {
-            try { return string.IsNullOrEmpty(path) ? null : Path.GetFileName(path); }
-            catch { return null; }
         }
     }
 

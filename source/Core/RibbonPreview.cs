@@ -88,39 +88,15 @@ namespace RevitDevKit.Core
                 return state;
             }
 
-            var instances = new List<IExternalApplication>();
             RibbonDraft draft;
             try
             {
-                using (PackImages.Isolate(folder.AssemblyNames()))
-                {
-                    draft = RibbonDraft.Run(() =>
-                    {
-                        foreach (var type in types)
-                        {
-                            var instance = (IExternalApplication)Activator.CreateInstance(type);
-                            instances.Add(instance);
-
-                            var result = instance.OnStartup(_application);
-                            if (result != Result.Succeeded)
-                                throw new InvalidOperationException(type.FullName + ".OnStartup вернул " + result + ".");
-                        }
-                    });
-                }
+                draft = RunDraft(types, folder);
             }
             catch (Exception ex)
             {
                 ConsoleOutput.Exception(Unwrap(ex), "OnStartup новой версии упал — лента не изменена:");
                 return state;
-            }
-            finally
-            {
-                // The draft instance only describes its ribbon: its events and updaters must not stay alive.
-                foreach (var instance in instances)
-                {
-                    try { instance.OnShutdown(_application); }
-                    catch (Exception ex) { ConsoleOutput.Exception(Unwrap(ex), instance.GetType().FullName + ".OnShutdown упал:"); }
-                }
             }
 
             PackImages.Refresh(draft.Items(), folder);
@@ -134,6 +110,38 @@ namespace RevitDevKit.Core
             state.Merge = merge;
             Applied[original] = state;
             return state;
+        }
+
+        private static RibbonDraft RunDraft(IList<Type> types, ShadowFolder folder)
+        {
+            var instances = new List<IExternalApplication>();
+            try
+            {
+                using (PackImages.Isolate(folder.AssemblyNames()))
+                {
+                    return RibbonDraft.Run(() =>
+                    {
+                        foreach (var type in types)
+                        {
+                            var instance = (IExternalApplication)Activator.CreateInstance(type);
+                            instances.Add(instance);
+
+                            var result = instance.OnStartup(_application);
+                            if (result != Result.Succeeded)
+                                throw new InvalidOperationException(type.FullName + ".OnStartup вернул " + result + ".");
+                        }
+                    });
+                }
+            }
+            finally
+            {
+                // The draft instance only describes its ribbon: its events and updaters must not stay alive.
+                foreach (var instance in instances)
+                {
+                    try { instance.OnShutdown(_application); }
+                    catch (Exception ex) { ConsoleOutput.Exception(Unwrap(ex), instance.GetType().FullName + ".OnShutdown упал:"); }
+                }
+            }
         }
 
         public static void Revert(string path)
