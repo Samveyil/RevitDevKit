@@ -20,6 +20,12 @@ namespace RevitDevKit.UI.Console
         private bool _atLineStart = true;
         private bool _subscribed;
 
+        // Lines never wrap: the document is made as wide as the longest line (Consolas is
+        // monospaced, so characters are enough), and a wide table scrolls horizontally instead.
+        private int _lineLength;
+        private int _longestLine;
+        private double _charWidth;
+
         // The dockable pane is hidden rather than destroyed: keep collecting output while hidden.
         public static readonly DependencyProperty IsPersistentProperty = DependencyProperty.Register(
             nameof(IsPersistent), typeof(bool), typeof(ConsoleView), new PropertyMetadata(false));
@@ -45,7 +51,11 @@ namespace RevitDevKit.UI.Console
             _flushTimer.Tick += (s, e) => Flush();
 
             Subscribe();
-            Loaded += (s, e) => Subscribe();
+            Loaded += (s, e) =>
+            {
+                Subscribe();
+                UpdatePageWidth();
+            };
             Unloaded += (s, e) =>
             {
                 if (!IsPersistent) Unsubscribe();
@@ -90,6 +100,9 @@ namespace RevitDevKit.UI.Console
             lock (_pendingSync) _pending.Clear();
             _paragraph.Inlines.Clear();
             _atLineStart = true;
+            _lineLength = 0;
+            _longestLine = 0;
+            UpdatePageWidth();
         }
 
         private void Flush()
@@ -113,8 +126,24 @@ namespace RevitDevKit.UI.Console
             }
 
             Trim();
+            UpdatePageWidth();
 
             if (options?.IsAutoScroll ?? true) Output.ScrollToEnd();
+        }
+
+        private void UpdatePageWidth()
+        {
+            if (_charWidth <= 0)
+            {
+                var sample = new FormattedText("0", System.Globalization.CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+                    new Typeface(Output.FontFamily, Output.FontStyle, Output.FontWeight, Output.FontStretch),
+                    Output.FontSize, Brushes.Black, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+                _charWidth = sample.WidthIncludingTrailingWhitespace;
+            }
+
+            var padding = Output.Document.PagePadding;
+            var longest = Math.Max(_longestLine, _lineLength);
+            Output.Document.PageWidth = longest * _charWidth + padding.Left + padding.Right + _charWidth;
         }
 
         private void Append(LogChunkEventArgs chunk, bool showTime)
@@ -128,8 +157,9 @@ namespace RevitDevKit.UI.Console
 
                 if (_atLineStart && showTime && (text.Length > 0 || i < parts.Length - 1))
                 {
-                    _paragraph.Inlines.Add(
-                        new Run(chunk.Timestamp.ToString("HH:mm:ss.fff") + "  ") { Foreground = Brushes.Gray });
+                    var stamp = chunk.Timestamp.ToString("HH:mm:ss.fff") + "  ";
+                    _paragraph.Inlines.Add(new Run(stamp) { Foreground = Brushes.Gray });
+                    _lineLength += stamp.Length;
                     _atLineStart = false;
                 }
 
@@ -138,12 +168,15 @@ namespace RevitDevKit.UI.Console
                     var run = new Run(text);
                     if (brush != null) run.Foreground = brush;
                     _paragraph.Inlines.Add(run);
+                    _lineLength += text.Length;
                     _atLineStart = false;
                 }
 
                 if (i < parts.Length - 1)
                 {
                     _paragraph.Inlines.Add(new LineBreak());
+                    _longestLine = Math.Max(_longestLine, _lineLength);
+                    _lineLength = 0;
                     _atLineStart = true;
                 }
             }
