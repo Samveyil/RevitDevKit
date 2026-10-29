@@ -50,13 +50,13 @@ namespace RevitDevKit.UI.DllRunner
         partial void OnSearchTextChanged(string value) => ApplySearch();
 
         [RelayCommand]
-        private void RunHotkey() => Execute(IsAppsTab ? Apps.ReloadCommand : RunCommand);
+        private void RunHotkey() => Execute(IsAppsTab ? Apps.ApplyCommand : RunCommand);
 
         [RelayCommand]
         private void AddHotkey() => Execute(IsAppsTab ? Apps.AddAssemblyCommand : AddAssemblyCommand);
 
         [RelayCommand]
-        private void ReloadHotkey() => Execute(IsAppsTab ? Apps.ReloadCommand : ReloadAssemblyCommand);
+        private void ReloadHotkey() => Execute(IsAppsTab ? Apps.ApplyCommand : ReloadAssemblyCommand);
 
         private static void Execute(System.Windows.Input.ICommand command)
         {

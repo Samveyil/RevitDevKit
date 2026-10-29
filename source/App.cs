@@ -36,8 +36,8 @@ namespace RevitDevKit
         {
             try
             {
-                // Hosted add-ins resolve their own dependencies first, so it is registered before ours.
-                AppHost.Initialize(application);
+                // Fresh builds resolve their own dependencies first, so it is registered before ours.
+                RibbonPreview.Initialize(application);
                 AppDomain.CurrentDomain.AssemblyResolve += ResolveFromPluginFolder;
 
                 ConsoleOutput.Install();
@@ -61,7 +61,7 @@ namespace RevitDevKit
         {
             UI.ScriptEditor.ScriptEditorWindow.CloseIfOpen();
             UI.DllRunner.AssemblyRunnerWindow.CloseIfOpen();
-            AppHost.Shutdown();
+            RibbonPreview.Shutdown();
             ConsoleOutput.Uninstall();
             AppDomain.CurrentDomain.AssemblyResolve -= ResolveFromPluginFolder;
             return Result.Succeeded;

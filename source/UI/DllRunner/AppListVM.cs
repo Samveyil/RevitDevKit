@@ -14,9 +14,11 @@ namespace RevitDevKit.UI.DllRunner
 {
     public sealed partial class AppNodeVM : ObservableObject
     {
+        public const string NotApplied = "как в .addin";
+
         [ObservableProperty] private IReadOnlyList<string> _applicationTypes;
-        [ObservableProperty] private string _status = "не загружено";
-        [ObservableProperty] private bool _isLoaded;
+        [ObservableProperty] private string _status = NotApplied;
+        [ObservableProperty] private bool _isApplied;
 
         public string FilePath { get; }
         public string DisplayName => Path.GetFileName(FilePath);
@@ -33,21 +35,21 @@ namespace RevitDevKit.UI.DllRunner
         partial void OnApplicationTypesChanged(IReadOnlyList<string> value) => OnPropertyChanged(nameof(ApplicationsText));
     }
 
-    // IExternalApplication add-ins that DevKit starts itself, so their ribbon is rebuilt on reload.
+    // Fresh builds of add-ins whose ribbon is shown on top of the one Revit loaded from .addin.
     public sealed partial class AppListVM : ObservableObject
     {
         private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
 
         [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(ReloadCommand))]
-        [NotifyCanExecuteChangedFor(nameof(UnloadCommand))]
+        [NotifyCanExecuteChangedFor(nameof(ApplyCommand))]
+        [NotifyCanExecuteChangedFor(nameof(RevertCommand))]
         [NotifyCanExecuteChangedFor(nameof(RemoveCommand))]
         [NotifyCanExecuteChangedFor(nameof(RevealInExplorerCommand))]
         private AppNodeVM _selectedItem;
 
         [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(ReloadCommand))]
-        [NotifyCanExecuteChangedFor(nameof(UnloadCommand))]
+        [NotifyCanExecuteChangedFor(nameof(ApplyCommand))]
+        [NotifyCanExecuteChangedFor(nameof(RevertCommand))]
         [NotifyCanExecuteChangedFor(nameof(RemoveCommand))]
         private bool _isBusy;
 
@@ -85,7 +87,7 @@ namespace RevitDevKit.UI.DllRunner
                 }
 
                 SelectedItem = node;
-                Reload(node);
+                Apply(node);
             }
 
             Save();
@@ -93,30 +95,30 @@ namespace RevitDevKit.UI.DllRunner
 
         private bool CanChange(AppNodeVM node) => Target(node) != null && !IsBusy;
 
-        private bool CanUnload(AppNodeVM node) => CanChange(node) && Target(node).IsLoaded;
+        private bool CanRevert(AppNodeVM node) => CanChange(node) && Target(node).IsApplied;
 
         private bool HasTarget(AppNodeVM node) => Target(node) != null;
 
         [RelayCommand(CanExecute = nameof(CanChange))]
-        private void Reload(AppNodeVM node)
+        private void Apply(AppNodeVM node)
         {
             node = Target(node);
             if (node == null) return;
 
-            Enqueue(node, "Обновление " + node.DisplayName, () =>
+            Enqueue(node, "Обновление ленты из " + node.DisplayName, () =>
             {
-                var app = AppHost.Reload(node.FilePath);
-                node.ApplicationTypes = app.ApplicationTypes;
+                var state = RibbonPreview.Apply(node.FilePath);
+                node.ApplicationTypes = state.ApplicationTypes;
             });
         }
 
-        [RelayCommand(CanExecute = nameof(CanUnload))]
-        private void Unload(AppNodeVM node)
+        [RelayCommand(CanExecute = nameof(CanRevert))]
+        private void Revert(AppNodeVM node)
         {
             node = Target(node);
             if (node == null) return;
 
-            Enqueue(node, "Выгрузка " + node.DisplayName, () => AppHost.Unload(node.FilePath));
+            Enqueue(node, "Возврат ленты " + node.DisplayName, () => RibbonPreview.Revert(node.FilePath));
         }
 
         [RelayCommand(CanExecute = nameof(CanChange))]
@@ -125,8 +127,8 @@ namespace RevitDevKit.UI.DllRunner
             node = Target(node);
             if (node == null) return;
 
-            if (node.IsLoaded)
-                Enqueue(node, "Выгрузка " + node.DisplayName, () => AppHost.Unload(node.FilePath));
+            if (node.IsApplied)
+                Enqueue(node, "Возврат ленты " + node.DisplayName, () => RibbonPreview.Revert(node.FilePath));
 
             Items.Remove(node);
             if (SelectedItem == node) SelectedItem = null;
@@ -158,7 +160,7 @@ namespace RevitDevKit.UI.DllRunner
                 {
                     UpdateStatus(node);
                     IsBusy = false;
-                    UnloadCommand.NotifyCanExecuteChanged();
+                    RevertCommand.NotifyCanExecuteChanged();
                     Save();
                 })
             });
@@ -166,9 +168,9 @@ namespace RevitDevKit.UI.DllRunner
 
         private static void UpdateStatus(AppNodeVM node)
         {
-            var app = AppHost.Find(node.FilePath);
-            node.IsLoaded = app != null;
-            node.Status = app == null ? "не загружено" : "загружено в " + app.LoadedAt.ToString("HH:mm:ss");
+            var state = RibbonPreview.Find(node.FilePath);
+            node.IsApplied = state != null;
+            node.Status = state == null ? AppNodeVM.NotApplied : "обновлено в " + state.AppliedAt.ToString("HH:mm:ss");
         }
 
         private static bool SamePath(string a, string b) =>
