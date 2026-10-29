@@ -134,28 +134,153 @@ namespace RevitDevKit.Scripting
             ConsoleOutput.WriteLine("Класс:     " + element.GetType().FullName);
             ConsoleOutput.WriteLine("Категория: " + (element.Category != null ? element.Category.Name : "—"));
 
-            var parameters = element.Parameters.Cast<Parameter>().ToList();
-            if (useType)
+            foreach (var p in ReadParameters(element, useType).OrderBy(p => p.Definition.Name))
+                ConsoleOutput.WriteLine("  " + p.Definition.Name.PadRight(NameWidth) + " = " + ReadValue(p));
+        }
+
+        // Prints only the parameters whose values differ; "—" means the element has no such parameter.
+        public void Compare(Element first, Element second, bool useType = false) =>
+            Compare(new[] { first, second }, useType);
+
+        public void Compare(params Element[] elements) => Compare(elements, false);
+
+        // Up to MaxCompared elements: wider tables no longer fit a docked console pane.
+        public void Compare(IEnumerable<Element> elements, bool useType = false)
+        {
+            var items = (elements ?? Enumerable.Empty<Element>()).ToList();
+
+            if (items.Count < 2 || items.Any(e => e == null))
             {
-                parameters.AddRange(element.ToElementType().Parameters.Cast<Parameter>());
+                Warn("Для сравнения нужны минимум два элемента, и ни один не должен быть null.");
+                return;
             }
 
-            foreach (Parameter p in parameters.OrderBy(p => p.Definition == null ? "" : p.Definition.Name))
+            if (items.Count > MaxCompared)
             {
-                if (p.Definition == null) continue;
-                string value;
-                try
+                Warn("Сравниваются первые " + MaxCompared + " из " + items.Count + " элементов.");
+                items = items.Take(MaxCompared).ToList();
+            }
+
+            var maps = items.Select(e => ByKey(ReadParameters(e, useType))).ToList();
+
+            var rows = maps.SelectMany(m => m.Keys).Distinct()
+                .Select(key => maps.Select(m => m.TryGetValue(key, out var p) ? p : null).ToList())
+                .Where(ps => ps.Any(p => p == null) || ps.Skip(1).Any(p => !SameValue(ps[0], p)))
+                .Select(ps => new
                 {
-                    if (p.HasValue)
-                    {
-                        value = p.StorageType == StorageType.String ? p.AsString() : p.AsValueString();
-                    }
-                    else
-                        value = "-";
-                }
-                catch { value = "<ошибка чтения>"; }
-                ConsoleOutput.WriteLine("  " + p.Definition.Name.PadRight(38) + " = " + value);
+                    Name = ps.First(p => p != null).Definition.Name,
+                    Values = ps.Select(p => p == null ? Missing : ReadValue(p)).ToList()
+                })
+                .OrderBy(r => r.Name)
+                .ToList();
+
+            var titles = items.Select(e => e.Id + " " + (e.Name ?? "<без имени>")).ToList();
+
+            ConsoleOutput.Banner("Сравнение: " + string.Join("  ↔  ", titles));
+
+            if (rows.Count == 0)
+            {
+                Ok("Все параметры совпадают.");
+                return;
+            }
+
+            // Every column is as wide as its longest value or title, but not wider than MaxValueWidth.
+            var widths = Enumerable.Range(0, items.Count)
+                .Select(i => Math.Min(MaxValueWidth, rows.Select(r => r.Values[i].Length).Append(titles[i].Length).Max()))
+                .ToList();
+
+            string Line(string name, IList<string> cells) =>
+                "  " + name.PadRight(NameWidth) + string.Concat(cells.Select((c, i) => " | " + Fit(c, widths[i]).PadRight(widths[i]))).TrimEnd();
+
+            ConsoleOutput.WriteLine(Line("Параметр", titles));
+            ConsoleOutput.WriteLine("  " + new string('-', NameWidth) + string.Concat(widths.Select(w => "-+-" + new string('-', w))));
+
+            foreach (var r in rows)
+                ConsoleOutput.WriteLine(Line(r.Name, r.Values));
+
+            ConsoleOutput.WriteLine("Различий: " + rows.Count);
+        }
+
+        private const int NameWidth = 38;
+        private const int MaxValueWidth = 20;
+        private const int MaxCompared = 5;
+        private const string Missing = "—";
+
+        private static List<Parameter> ReadParameters(Element element, bool useType)
+        {
+            var parameters = element.Parameters.Cast<Parameter>().ToList();
+
+            if (useType)
+            {
+                var type = element.ToElementType();
+                if (type != null)
+                    parameters.AddRange(type.Parameters.Cast<Parameter>());
+            }
+
+            return parameters.Where(p => p.Definition != null).ToList();
+        }
+
+        private static string ReadValue(Parameter p)
+        {
+            try
+            {
+                if (!p.HasValue) return "-";
+                return (p.StorageType == StorageType.String ? p.AsString() : p.AsValueString()) ?? "";
+            }
+            catch
+            {
+                return "<ошибка чтения>";
             }
         }
+
+        // Names are not unique (e.g. a shared and a project parameter may share one), so match
+        // built-in parameters by id and shared ones by GUID. With useType the instance wins.
+        private static Dictionary<string, Parameter> ByKey(IEnumerable<Parameter> parameters)
+        {
+            var result = new Dictionary<string, Parameter>();
+
+            foreach (var p in parameters)
+            {
+                string key;
+                if (p.Definition is InternalDefinition d && d.BuiltInParameter != BuiltInParameter.INVALID)
+                    key = "bip:" + (int)d.BuiltInParameter;
+                else if (p.IsShared)
+                    key = "guid:" + p.GUID;
+                else
+                    key = "name:" + p.Definition.Name;
+
+                if (!result.ContainsKey(key))
+                    result.Add(key, p);
+            }
+
+            return result;
+        }
+
+        // Compares stored values, not display strings, so rounding in AsValueString hides nothing.
+        private static bool SameValue(Parameter a, Parameter b)
+        {
+            try
+            {
+                if (a.HasValue != b.HasValue) return false;
+                if (!a.HasValue) return true;
+                if (a.StorageType != b.StorageType) return ReadValue(a) == ReadValue(b);
+
+                switch (a.StorageType)
+                {
+                    case StorageType.Double: return Math.Abs(a.AsDouble() - b.AsDouble()) < 1e-9;
+                    case StorageType.Integer: return a.AsInteger() == b.AsInteger();
+                    case StorageType.String: return a.AsString() == b.AsString();
+                    case StorageType.ElementId: return a.AsElementId().Equals(b.AsElementId());
+                    default: return ReadValue(a) == ReadValue(b);
+                }
+            }
+            catch
+            {
+                return ReadValue(a) == ReadValue(b);
+            }
+        }
+
+        private static string Fit(string text, int width) =>
+            text.Length <= width ? text : text.Substring(0, width - 1) + "…";
     }
 }
