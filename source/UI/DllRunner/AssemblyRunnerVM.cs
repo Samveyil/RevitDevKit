@@ -36,11 +36,32 @@ namespace RevitDevKit.UI.DllRunner
 
         public ObservableCollection<AssemblyNodeVM> Assemblies { get; } = [];
 
+        public AppListVM Apps { get; } = new AppListVM();
+
+        // 0 - commands, 1 - applications. The toolbar and hotkeys follow the open tab.
+        [ObservableProperty] private int _selectedTabIndex;
+
+        private bool IsAppsTab => SelectedTabIndex == 1;
+
         public event EventHandler CloseRequested;
 
         public AssemblyRunnerVM() => Restore();
 
         partial void OnSearchTextChanged(string value) => ApplySearch();
+
+        [RelayCommand]
+        private void RunHotkey() => Execute(IsAppsTab ? Apps.ReloadCommand : RunCommand);
+
+        [RelayCommand]
+        private void AddHotkey() => Execute(IsAppsTab ? Apps.AddAssemblyCommand : AddAssemblyCommand);
+
+        [RelayCommand]
+        private void ReloadHotkey() => Execute(IsAppsTab ? Apps.ReloadCommand : ReloadAssemblyCommand);
+
+        private static void Execute(System.Windows.Input.ICommand command)
+        {
+            if (command.CanExecute(null)) command.Execute(null);
+        }
 
         private AssemblyNodeVM TargetAssembly(AssemblyNodeVM node) => node ?? (SelectedNode as TargetNodeVM)?.Owner;
 
