@@ -28,7 +28,7 @@
         </StackPanel>
 
         <RichTextBox x:Name="Output" IsReadOnly="True" IsDocumentEnabled="True" FontFamily="Consolas" Margin="0 2 0 0"
-                     Style="{DynamicResource MaterialDesignOutlinedRichTextBox}" VerticalContentAlignment="Top" Padding="6 4" BorderBrush="{DynamicResource AccentBrush}"
+                     Style="{DynamicResource MaterialDesignOutlinedRichTextBox}" VerticalContentAlignment="Stretch" Padding="6 4" BorderBrush="{DynamicResource AccentBrush}"
                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
     </DockPanel>
 </UserControl>
