@@ -1,4 +1,3 @@
-using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
@@ -8,28 +7,24 @@ using System.Reflection;
 
 namespace RevitDevKit.Core
 {
-    public sealed class HostedApp
+    public sealed class PreviewState
     {
         public string FilePath { get; internal set; }
-        public string ShadowDirectory { get; internal set; }
-        public DateTime LoadedAt { get; internal set; }
+        public DateTime AppliedAt { get; internal set; }
         public IReadOnlyList<string> ApplicationTypes { get; internal set; } = Array.Empty<string>();
 
-        internal List<IExternalApplication> Instances { get; } = new List<IExternalApplication>();
-        internal RibbonFootprint Ribbon { get; set; }
-
-        public string DisplayName => Path.GetFileName(FilePath);
+        internal RibbonMerge Merge { get; set; }
     }
 
-    // Runs IExternalApplication from a DLL that can be rebuilt and reloaded without restarting Revit.
-    // Each reload: OnShutdown of the old instances, their ribbon items are removed, a fresh shadow
-    // copy is loaded and OnStartup runs again with DevKit's own UIControlledApplication.
-    public static class AppHost
+    // Shows the ribbon of a freshly built add-in on top of the one Revit loaded from .addin:
+    // the new build runs OnStartup into a draft ribbon, and the existing buttons are updated
+    // from it. Nothing is persisted - "Revert" or a Revit restart brings back the original.
+    public static class RibbonPreview
     {
         private static UIControlledApplication _application;
 
-        private static readonly Dictionary<string, HostedApp> Hosted =
-            new Dictionary<string, HostedApp>(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<string, PreviewState> Applied =
+            new Dictionary<string, PreviewState>(StringComparer.OrdinalIgnoreCase);
 
         // Every shadow copy and the assemblies loaded from it, newest last.
         private static readonly List<ShadowFolder> Folders = new List<ShadowFolder>();
@@ -47,30 +42,30 @@ namespace RevitDevKit.Core
 
         public static void Shutdown()
         {
-            foreach (var app in Hosted.Values)
-                StopInstances(app);
-
-            Hosted.Clear();
+            Applied.Clear();
             AppDomain.CurrentDomain.AssemblyResolve -= ResolveDependency;
         }
 
-        public static HostedApp Find(string path)
+        public static PreviewState Find(string path)
         {
-            Hosted.TryGetValue(Path.GetFullPath(path), out var app);
-            return app;
+            Applied.TryGetValue(Path.GetFullPath(path), out var state);
+            return state;
         }
 
         // Must run in a Revit API context: OnStartup of the add-in may call any API.
-        public static HostedApp Reload(string path)
+        public static PreviewState Apply(string path)
         {
             if (_application == null)
                 throw new InvalidOperationException("DevKit не инициализирован — перезапустите Revit.");
+
+            RibbonAccess.Verify();
 
             var original = Path.GetFullPath(path);
             if (!File.Exists(original))
                 throw new FileNotFoundException("DLL не найдена", original);
 
-            Unload(original);
+            // Always compared with the ribbon from .addin, not with the previous preview.
+            Revert(original);
 
             var folder = CopyToShadow(original);
             var assembly = folder.Load(Path.Combine(folder.Directory, Path.GetFileName(original)));
@@ -80,76 +75,74 @@ namespace RevitDevKit.Core
                 .OrderBy(t => t.FullName, StringComparer.Ordinal)
                 .ToList();
 
-            var app = new HostedApp
+            var state = new PreviewState
             {
                 FilePath = original,
-                ShadowDirectory = folder.Directory,
-                LoadedAt = DateTime.Now,
+                AppliedAt = DateTime.Now,
                 ApplicationTypes = types.Select(t => t.FullName).ToList()
             };
 
             if (types.Count == 0)
             {
-                ConsoleOutput.Warning("В " + app.DisplayName + " нет классов IExternalApplication.");
-                return app;
+                ConsoleOutput.Warning("В " + Path.GetFileName(original) + " нет классов IExternalApplication.");
+                return state;
             }
 
-            var before = RibbonFootprint.Snapshot();
-
-            foreach (var type in types)
+            var instances = new List<IExternalApplication>();
+            RibbonDraft draft;
+            try
             {
-                try
+                using (PackImages.Isolate(folder.AssemblyNames()))
                 {
-                    var instance = (IExternalApplication)Activator.CreateInstance(type);
-                    app.Instances.Add(instance);
+                    draft = RibbonDraft.Run(() =>
+                    {
+                        foreach (var type in types)
+                        {
+                            var instance = (IExternalApplication)Activator.CreateInstance(type);
+                            instances.Add(instance);
 
-                    var result = instance.OnStartup(_application);
-                    if (result == Result.Succeeded)
-                        ConsoleOutput.Success(type.FullName + ".OnStartup — " + result);
-                    else
-                        ConsoleOutput.Warning(type.FullName + ".OnStartup вернул " + result);
+                            var result = instance.OnStartup(_application);
+                            if (result != Result.Succeeded)
+                                throw new InvalidOperationException(type.FullName + ".OnStartup вернул " + result + ".");
+                        }
+                    });
                 }
-                catch (Exception ex)
+            }
+            catch (Exception ex)
+            {
+                ConsoleOutput.Exception(Unwrap(ex), "OnStartup новой версии упал — лента не изменена:");
+                return state;
+            }
+            finally
+            {
+                // The draft instance only describes its ribbon: its events and updaters must not stay alive.
+                foreach (var instance in instances)
                 {
-                    ConsoleOutput.Exception(Unwrap(ex), type.FullName + ".OnStartup упал:");
+                    try { instance.OnShutdown(_application); }
+                    catch (Exception ex) { ConsoleOutput.Exception(Unwrap(ex), instance.GetType().FullName + ".OnShutdown упал:"); }
                 }
             }
 
-            // Recorded even after a failed OnStartup: whatever it managed to add is removed next time.
-            app.Ribbon = RibbonFootprint.Diff(before);
-            var rebound = ProxyCommands.Rebind(app.Ribbon.PushButtons(), folder, Path.GetDirectoryName(original));
+            PackImages.Refresh(draft.Items(), folder);
 
-            ConsoleOutput.Info("Лента: панелей " + app.Ribbon.PanelCount + ", кнопок " + rebound + ".");
+            var merge = new RibbonMerge(draft.CommandFiles());
+            merge.Apply(draft);
+            ProxyCommands.Rebind(merge.Adopted, folder, Path.GetDirectoryName(original));
 
-            Hosted[original] = app;
-            return app;
+            ConsoleOutput.Info("Лента: обновлено " + merge.Updated + ", добавлено " + merge.Added + ", убрано " + merge.Removed + ".");
+
+            state.Merge = merge;
+            Applied[original] = state;
+            return state;
         }
 
-        public static void Unload(string path)
+        public static void Revert(string path)
         {
             var key = Path.GetFullPath(path);
-            if (!Hosted.TryGetValue(key, out var app)) return;
+            if (!Applied.TryGetValue(key, out var state)) return;
 
-            StopInstances(app);
-            app.Ribbon?.Remove();
-            Hosted.Remove(key);
-        }
-
-        private static void StopInstances(HostedApp app)
-        {
-            foreach (var instance in app.Instances)
-            {
-                try
-                {
-                    instance.OnShutdown(_application);
-                }
-                catch (Exception ex)
-                {
-                    ConsoleOutput.Exception(Unwrap(ex), instance.GetType().FullName + ".OnShutdown упал:");
-                }
-            }
-
-            app.Instances.Clear();
+            Applied.Remove(key);
+            state.Merge?.Undo();
         }
 
         private static Exception Unwrap(Exception ex) =>
@@ -218,7 +211,7 @@ namespace RevitDevKit.Core
             }
         }
 
-        // Assembly.LoadFile keeps every shadow copy separate, so references of a hosted DLL are
+        // Assembly.LoadFile keeps every shadow copy separate, so references of a copied DLL are
         // resolved here: first from its own folder, then from the newest copies.
         private static Assembly ResolveDependency(object sender, ResolveEventArgs args)
         {
@@ -257,6 +250,9 @@ namespace RevitDevKit.Core
             public string Directory { get; }
 
             public bool Contains(Assembly assembly) => _loaded.Values.Contains(assembly);
+
+            public IEnumerable<string> AssemblyNames() =>
+                System.IO.Directory.GetFiles(Directory, "*.dll").Select(Path.GetFileNameWithoutExtension);
 
             public bool Owns(string path) =>
                 !string.IsNullOrEmpty(path) &&

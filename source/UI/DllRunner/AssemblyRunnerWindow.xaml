@@ -81,8 +81,8 @@
         </StackPanel>
 
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource AppsToolbar}">
-            <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding Apps.ReloadCommand}"
-                    ToolTip="Перезапустить приложение из актуальной DLL и пересоздать его кнопки на ленте (F5 или двойной щелчок)">
+            <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding Apps.ApplyCommand}"
+                    ToolTip="Обновить кнопки на ленте по свежей сборке DLL (F5 или двойной щелчок)">
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
                                              VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
@@ -91,13 +91,13 @@
             </Button>
 
             <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding Apps.AddAssemblyCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Добавить DLL и запустить её приложение (Ctrl+O)">
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Добавить собранную DLL и сразу обновить по ней ленту (Ctrl+O)">
                 <materialDesign:PackIcon Kind="FolderOpenOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Apps.UnloadCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Остановить приложение и убрать его кнопки с ленты">
-                <materialDesign:PackIcon Kind="PowerPlugOffOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Apps.RevertCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Вернуть как было: лента снова такая, как её создал .addin">
+                <materialDesign:PackIcon Kind="Restore" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
             <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Apps.RevealInExplorerCommand}"
@@ -106,7 +106,7 @@
             </Button>
 
             <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Apps.RemoveCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Остановить и убрать из списка DLL">
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Вернуть ленту и убрать DLL из списка">
                 <materialDesign:PackIcon Kind="DeleteOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
         </StackPanel>
@@ -244,15 +244,15 @@
                                       Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ListBox}}">
                                     <Grid.InputBindings>
                                         <MouseBinding Gesture="LeftDoubleClick" CommandParameter="{Binding}"
-                                                      Command="{Binding DataContext.Apps.ReloadCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"/>
+                                                      Command="{Binding DataContext.Apps.ApplyCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"/>
                                     </Grid.InputBindings>
 
                                     <Grid.ContextMenu>
                                         <ContextMenu materialDesign:MenuAssist.MenuItemsPresenterMargin="0">
                                             <MenuItem Header="Обновить" CommandParameter="{Binding}"
-                                                      Command="{Binding PlacementTarget.Tag.Apps.ReloadCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                            <MenuItem Header="Выгрузить" CommandParameter="{Binding}"
-                                                      Command="{Binding PlacementTarget.Tag.Apps.UnloadCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                      Command="{Binding PlacementTarget.Tag.Apps.ApplyCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            <MenuItem Header="Вернуть как было" CommandParameter="{Binding}"
+                                                      Command="{Binding PlacementTarget.Tag.Apps.RevertCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                             <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
                                                       Command="{Binding PlacementTarget.Tag.Apps.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                             <MenuItem Header="Убрать из списка" CommandParameter="{Binding}"
@@ -276,7 +276,7 @@
                                             <Style TargetType="materialDesign:PackIcon">
                                                 <Setter Property="Foreground" Value="Gray"/>
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsLoaded}" Value="True">
+                                                    <DataTrigger Binding="{Binding IsApplied}" Value="True">
                                                         <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>

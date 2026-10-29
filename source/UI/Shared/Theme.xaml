@@ -41,7 +41,8 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
-                    <Border x:Name="TabBorder" BorderThickness="1" CornerRadius="4" Padding="5" BorderBrush="{DynamicResource MaterialDesignDivider}">
+                    <Border x:Name="TabBorder" BorderThickness="1" CornerRadius="4" Padding="5" Background="Transparent"
+                            BorderBrush="{DynamicResource MaterialDesignDivider}">
                         <ContentPresenter ContentSource="Header" HorizontalAlignment="Stretch" VerticalAlignment="Center" />
                     </Border>
 

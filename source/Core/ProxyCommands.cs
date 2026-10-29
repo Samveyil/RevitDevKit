@@ -8,170 +8,13 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using Adw = Autodesk.Windows;
 
 namespace RevitDevKit.Core
 {
-    // What a hosted add-in added to the ribbon, so a reload can remove it and create it again.
-    // The API cannot delete ribbon items and refuses duplicate names, so removal also clears
-    // the private name registries of RevitAPIUI (same fields in Revit 2019–2024).
-    internal sealed class RibbonFootprint
-    {
-        private const BindingFlags Private = BindingFlags.NonPublic | BindingFlags.Instance;
-
-        private static readonly FieldInfo PanelsField =
-            typeof(UIApplication).GetField("m_ItemsNameDictionary", BindingFlags.NonPublic | BindingFlags.Static);
-
-        private static readonly FieldInfo PanelItemsField = typeof(RibbonPanel).GetField("m_ItemsNameDictionary", Private);
-        private static readonly FieldInfo AdwPanelField = typeof(RibbonPanel).GetField("m_RibbonPanel", Private);
-
-        private readonly List<(string Tab, string Name, RibbonPanel Panel)> _panels = new List<(string, string, RibbonPanel)>();
-        private readonly List<(RibbonPanel Panel, RibbonItem Item)> _items = new List<(RibbonPanel, RibbonItem)>();
-        private readonly List<string> _tabs = new List<string>();
-
-        public int PanelCount => _panels.Count;
-
-        public sealed class State
-        {
-            internal Dictionary<string, Dictionary<string, HashSet<string>>> Panels { get; } =
-                new Dictionary<string, Dictionary<string, HashSet<string>>>();
-
-            internal HashSet<string> Tabs { get; } = new HashSet<string>();
-        }
-
-        public static State Snapshot()
-        {
-            var state = new State();
-
-            foreach (var tab in Registry())
-                state.Panels[tab.Key] = tab.Value.ToDictionary(p => p.Key, p => new HashSet<string>(ItemNames(p.Value)));
-
-            foreach (var tab in AdwTabs())
-                state.Tabs.Add(tab.Id);
-
-            return state;
-        }
-
-        public static RibbonFootprint Diff(State before)
-        {
-            var result = new RibbonFootprint();
-
-            foreach (var tab in Registry())
-            {
-                before.Panels.TryGetValue(tab.Key, out var oldPanels);
-
-                foreach (var panel in tab.Value)
-                {
-                    if (oldPanels == null || !oldPanels.TryGetValue(panel.Key, out var oldItems))
-                    {
-                        result._panels.Add((tab.Key, panel.Key, panel.Value));
-                        continue;
-                    }
-
-                    foreach (var item in panel.Value.GetItems().Where(i => !oldItems.Contains(i.Name)))
-                        result._items.Add((panel.Value, item));
-                }
-            }
-
-            result._tabs.AddRange(AdwTabs().Select(t => t.Id).Where(id => !before.Tabs.Contains(id)));
-            return result;
-        }
-
-        public IEnumerable<PushButton> PushButtons()
-        {
-            var items = _panels.SelectMany(p => p.Panel.GetItems()).Concat(_items.Select(i => i.Item));
-
-            foreach (var item in items)
-            {
-                if (item is PulldownButton pulldown)
-                {
-                    foreach (var child in pulldown.GetItems())
-                        yield return child;
-                }
-                else if (item is PushButton button)
-                {
-                    yield return button;
-                }
-            }
-        }
-
-        public void Remove()
-        {
-            foreach (var (panel, item) in _items)
-            {
-                Try(() => item.Visible = false);
-                Try(() => PanelItems(panel)?.Remove(item.Name));
-            }
-
-            var registry = Registry();
-
-            foreach (var (tab, name, panel) in _panels)
-            {
-                Try(() => panel.Visible = false);
-                Try(() => DetachFromTab(AdwPanelField?.GetValue(panel) as Adw.RibbonPanel));
-
-                if (registry.TryGetValue(tab, out var panels))
-                {
-                    panels.Remove(name);
-                    if (panels.Count == 0 && _tabs.Contains(tab))
-                        registry.Remove(tab);
-                }
-            }
-
-            foreach (var id in _tabs)
-            {
-                Try(() =>
-                {
-                    var tab = AdwTabs().FirstOrDefault(t => t.Id == id);
-                    if (tab != null) Adw.ComponentManager.Ribbon.Tabs.Remove(tab);
-                });
-            }
-
-            _items.Clear();
-            _panels.Clear();
-            _tabs.Clear();
-        }
-
-        private static Dictionary<string, Dictionary<string, RibbonPanel>> Registry()
-        {
-            if (PanelsField?.GetValue(null) is Dictionary<string, Dictionary<string, RibbonPanel>> registry)
-                return registry;
-
-            return new Dictionary<string, Dictionary<string, RibbonPanel>>();
-        }
-
-        private static IEnumerable<string> ItemNames(RibbonPanel panel)
-        {
-            try { return panel.GetItems().Select(i => i.Name).ToList(); }
-            catch { return Enumerable.Empty<string>(); }
-        }
-
-        private static Dictionary<string, RibbonItem> PanelItems(RibbonPanel panel) =>
-            PanelItemsField?.GetValue(panel) as Dictionary<string, RibbonItem>;
-
-        private static IEnumerable<Adw.RibbonTab> AdwTabs() =>
-            Adw.ComponentManager.Ribbon?.Tabs.ToList() ?? new List<Adw.RibbonTab>();
-
-        private static void DetachFromTab(Adw.RibbonPanel panel)
-        {
-            if (panel == null) return;
-
-            foreach (var tab in AdwTabs())
-            {
-                if (tab.Panels.Remove(panel)) return;
-            }
-        }
-
-        private static void Try(Action action)
-        {
-            try { action(); }
-            catch (Exception ex) { ConsoleOutput.Debug("Лента: " + ex.Message); }
-        }
-    }
-
-    // Revit loads a button's command from the DLL path stored in it and never loads that file
-    // again. So buttons of a hosted add-in point to a small generated proxy assembly instead,
-    // and every proxy class forwards to the command type of the currently loaded copy.
+    // Revit loads a button's command from the DLL path stored in it, and a second DLL with the
+    // same assembly name resolves to the one already loaded. So buttons taken from a fresh build
+    // point to a small generated proxy assembly, and every proxy class forwards to the command
+    // type of that build's copy.
     public static class ProxyCommands
     {
         private static readonly List<Binding> Bindings = new List<Binding>();
@@ -184,7 +27,7 @@ namespace RevitDevKit.Core
             public IExternalCommandAvailability AvailabilityInstance;
         }
 
-        internal static int Rebind(IEnumerable<PushButton> buttons, AppHost.ShadowFolder folder, string originalDirectory)
+        internal static int Rebind(IEnumerable<PushButton> buttons, RibbonPreview.ShadowFolder folder, string originalDirectory)
         {
             var targets = new List<(PushButton Button, int Id, bool HasAvailability)>();
 
@@ -274,7 +117,7 @@ namespace RevitDevKit.Core
 
         // Buttons usually point to the shadow copy (Assembly.Location), but a path built from
         // the original build folder is mapped to the copy too, so the original is never locked.
-        private static string ShadowPath(string assemblyPath, AppHost.ShadowFolder folder, string originalDirectory)
+        private static string ShadowPath(string assemblyPath, RibbonPreview.ShadowFolder folder, string originalDirectory)
         {
             if (string.IsNullOrEmpty(assemblyPath)) return null;
             if (folder.Owns(assemblyPath)) return Path.GetFullPath(assemblyPath);
