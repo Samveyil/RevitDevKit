@@ -139,6 +139,7 @@ namespace RevitDevKit.Scripting
         }
 
         // Prints only the parameters whose values differ; "—" means the element has no such parameter.
+        // Only parameters shown in the Properties palette (GetOrderedParameters).
         public void Compare(Element first, Element second, bool useType = false) =>
             Compare(new[] { first, second }, useType);
 
@@ -161,7 +162,8 @@ namespace RevitDevKit.Scripting
                 items = items.Take(MaxCompared).ToList();
             }
 
-            var maps = items.Select(e => ByKey(ReadParameters(e, useType))).ToList();
+            var maps = items.Select(e => ByKey(ReadParameters(e, useType, visibleOnly: true)))
+                .ToList();
 
             var rows = maps.SelectMany(m => m.Keys).Distinct()
                 .Select(key => maps.Select(m => m.TryGetValue(key, out var p) ? p : null).ToList())
@@ -169,7 +171,7 @@ namespace RevitDevKit.Scripting
                 .Select(ps => new
                 {
                     Name = ps.First(p => p != null).Definition.Name,
-                    Values = ps.Select(p => p == null ? Missing : ReadValue(p)).ToList()
+                    Values = ps.Select(p => p == null ? null : ReadValue(p)).ToList()
                 })
                 .OrderBy(r => r.Name)
                 .ToList();
@@ -186,35 +188,52 @@ namespace RevitDevKit.Scripting
 
             // Every column is as wide as its longest value or title, but not wider than MaxValueWidth.
             var widths = Enumerable.Range(0, items.Count)
-                .Select(i => Math.Min(MaxValueWidth, rows.Select(r => r.Values[i].Length).Append(titles[i].Length).Max()))
+                .Select(i => Math.Min(MaxValueWidth, rows.Select(r => (r.Values[i] ?? Missing).Length).Append(titles[i].Length).Max()))
                 .ToList();
 
-            string Line(string name, IList<string> cells) =>
-                "  " + name.PadRight(NameWidth) + string.Concat(cells.Select((c, i) => " | " + Fit(c, widths[i]).PadRight(widths[i]))).TrimEnd();
+            // Written cell by cell so a missing parameter (null) can be coloured on its own.
+            void Row(string name, IList<string> cells)
+            {
+                ConsoleOutput.Write("  " + name.PadRight(NameWidth));
 
-            ConsoleOutput.WriteLine(Line("Параметр", titles));
+                for (var i = 0; i < cells.Count; i++)
+                {
+                    var text = Fit(cells[i] ?? Missing, widths[i]);
+                    if (i < cells.Count - 1) text = text.PadRight(widths[i]);
+
+                    ConsoleOutput.Write(" | ");
+                    ConsoleOutput.Write(text, cells[i] == null ? LogLevel.Warning : LogLevel.Info);
+                }
+
+                ConsoleOutput.WriteLine();
+            }
+
+            Row("Параметр", titles);
             ConsoleOutput.WriteLine("  " + new string('-', NameWidth) + string.Concat(widths.Select(w => "-+-" + new string('-', w))));
 
             foreach (var r in rows)
-                ConsoleOutput.WriteLine(Line(r.Name, r.Values));
+                Row(r.Name, r.Values);
 
-            ConsoleOutput.WriteLine("Различий: " + rows.Count);
+            ConsoleOutput.WriteLine("Различий: " + rows.Count, LogLevel.Warning);
         }
 
         private const int NameWidth = 38;
         private const int MaxValueWidth = 20;
         private const int MaxCompared = 5;
-        private const string Missing = "—";
+        private const string Missing = "-нет-";
 
-        private static List<Parameter> ReadParameters(Element element, bool useType)
+        private static List<Parameter> ReadParameters(Element element, bool useType, bool visibleOnly = false)
         {
-            var parameters = element.Parameters.Cast<Parameter>().ToList();
+            IEnumerable<Parameter> Of(Element e) =>
+                visibleOnly ? e.GetOrderedParameters() : e.Parameters.Cast<Parameter>();
+
+            var parameters = Of(element).ToList();
 
             if (useType)
             {
                 var type = element.ToElementType();
                 if (type != null)
-                    parameters.AddRange(type.Parameters.Cast<Parameter>());
+                    parameters.AddRange(Of(type));
             }
 
             return parameters.Where(p => p.Definition != null).ToList();
@@ -225,7 +244,9 @@ namespace RevitDevKit.Scripting
             try
             {
                 if (!p.HasValue) return "-";
-                return (p.StorageType == StorageType.String ? p.AsString() : p.AsValueString()) ?? "";
+
+                var text = p.StorageType == StorageType.String ? p.AsString() : p.AsValueString();
+                return string.IsNullOrEmpty(text) ? "-пусто-" : text;
             }
             catch
             {
@@ -261,8 +282,10 @@ namespace RevitDevKit.Scripting
         {
             try
             {
-                if (a.HasValue != b.HasValue) return false;
-                if (!a.HasValue) return true;
+                var blankA = IsBlank(a);
+                var blankB = IsBlank(b);
+                if (blankA || blankB) return blankA && blankB;
+
                 if (a.StorageType != b.StorageType) return ReadValue(a) == ReadValue(b);
 
                 switch (a.StorageType)
@@ -279,6 +302,8 @@ namespace RevitDevKit.Scripting
                 return ReadValue(a) == ReadValue(b);
             }
         }
+
+        private static bool IsBlank(Parameter p) => !p.HasValue || (p.StorageType == StorageType.String && p.AsString().IsNullOrEmpty());
 
         private static string Fit(string text, int width) =>
             text.Length <= width ? text : text.Substring(0, width - 1) + "…";
