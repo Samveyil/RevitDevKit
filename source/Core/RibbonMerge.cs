@@ -378,8 +378,37 @@ namespace RevitDevKit.Core
                 Copy(liveButton, draftButton, i => i.LargeImage, (i, v) => i.LargeImage = v);
             }
 
+            CopyAppearance(RibbonAccess.AdwItem(live), RibbonAccess.AdwItem(draft));
+
             if (live is PulldownButton livePulldown && draft is PulldownButton draftPulldown)
                 MergePulldown(livePulldown, draftPulldown);
+        }
+
+        // Not in Revit's API: add-ins set them on the AdWindows item directly (ShowText and the like).
+        private static readonly string[] AppearanceProperties =
+        {
+            "ShowText", "ShowImage", "Size", "Orientation", "ResizeStyle",
+            "Width", "MinWidth", "Height", "MinHeight", "MaxHeight",
+            "Description", "KeyTip", "Highlight", "GroupLocation",
+            "IsToolTipEnabled", "ShowToolTipOnDisabled", "HelpSource", "HelpTopic",
+            "IsSplit", "IsSynchronizedWithCurrentItem", "SynchronizeOption", "IsGrouping",
+            "ListButtonStyle", "ListStyle", "ListImageSize", "HighlightDropDown", "AllowOrientation"
+        };
+
+        private void CopyAppearance(Adw.RibbonItem live, Adw.RibbonItem draft)
+        {
+            if (live == null || draft == null || live.GetType() != draft.GetType()) return;
+
+            foreach (var name in AppearanceProperties)
+            {
+                PropertyInfo property;
+                try { property = live.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance); }
+                catch (AmbiguousMatchException) { continue; }
+
+                if (property == null || !property.CanRead || !property.CanWrite) continue;
+
+                Copy(live, draft, i => property.GetValue(i), (i, v) => property.SetValue(i, v));
+            }
         }
 
         private void Copy<TItem, TValue>(TItem live, TItem draft, Func<TItem, TValue> get, Action<TItem, TValue> set)
