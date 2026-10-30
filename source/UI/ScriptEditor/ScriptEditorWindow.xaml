@@ -91,56 +91,11 @@
                 <RowDefinition Height="240" MinHeight="80"/>
             </Grid.RowDefinitions>
 
-            <TabControl Grid.Row="0" Margin="5 0 5 5" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}">
-
-                <TabControl.Template>
-                    <ControlTemplate TargetType="TabControl">
-                        <Grid KeyboardNavigation.TabNavigation="Local">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <UniformGrid Grid.Row="0" Rows="1" IsItemsHost="True" Margin="-2 0"/>
-
-                            <ContentPresenter Grid.Row="1" x:Name="PART_SelectedContentHost" ContentSource="SelectedContent" Margin="1"/>
-
-                            <local:TabFrame Grid.RowSpan="2" Stroke="{StaticResource AccentBrush}" Radius="4"/>
-                        </Grid>
-                    </ControlTemplate>
-                </TabControl.Template>
+            <TabControl Grid.Row="0" Margin="5 0 5 5" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
+                        Style="{StaticResource FramedTabControl}">
 
                 <TabControl.ItemContainerStyle>
-                    <Style TargetType="TabItem">
-                        <Setter Property="Margin" Value="2 4 2 1"/>
-                        <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
-                        <Setter Property="Cursor" Value="Hand"/>
-
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="TabItem">
-                                    <Border x:Name="TabBorder" BorderThickness="1" CornerRadius="4" Padding="5" BorderBrush="{DynamicResource MaterialDesignDivider}">
-                                        <ContentPresenter ContentSource="Header" HorizontalAlignment="Stretch" VerticalAlignment="Center" />
-                                    </Border>
-
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="TabBorder" Property="BorderBrush" Value="Transparent"/>
-                                            <Setter TargetName="TabBorder" Property="CornerRadius" Value="4 4 0 0"/>
-                                            <Setter TargetName="TabBorder" Property="Background" Value="{StaticResource SelectedTabBrush}"/>
-                                        </Trigger>
-                                        <MultiTrigger>
-                                            <MultiTrigger.Conditions>
-                                                <Condition Property="IsMouseOver" Value="True"/>
-                                                <Condition Property="IsSelected" Value="False"/>
-                                            </MultiTrigger.Conditions>
-                                            <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource MaterialDesignSelection}"/>
-                                        </MultiTrigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-
+                    <Style TargetType="TabItem" BasedOn="{StaticResource FramedTabItem}">
                         <Setter Property="HeaderTemplate">
                             <Setter.Value>
                                 <DataTemplate>
@@ -174,11 +129,6 @@
                             </Setter.Value>
                         </Setter>
 
-                        <Style.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Margin" Value="2 4 2 0"/>
-                            </Trigger>
-                        </Style.Triggers>
                     </Style>
                 </TabControl.ItemContainerStyle>
 
