@@ -95,9 +95,10 @@ namespace RevitDevKit.Core
     internal sealed class RibbonMerge
     {
         private readonly List<Action> _undo = new List<Action>();
-        private readonly HashSet<string> _commandFiles;
+        private readonly Func<PushButton, bool> _isOwnCommand;
 
-        public RibbonMerge(HashSet<string> commandFiles) => _commandFiles = commandFiles;
+        // isOwnCommand tells a live button of this add-in from buttons of other add-ins.
+        public RibbonMerge(Func<PushButton, bool> isOwnCommand) => _isOwnCommand = isOwnCommand;
 
         // Draft buttons that are now on the live ribbon: their commands must come from the new build.
         public List<PushButton> Adopted { get; } = new List<PushButton>();
@@ -232,13 +233,14 @@ namespace RevitDevKit.Core
             }
 
             // Buttons the new build no longer creates go away; buttons of other add-ins stay.
+            // A button whose name the new build took for another type is replaced, not kept.
             foreach (var item in liveItems.Values)
             {
-                if (chosen.Values.Contains(item)) continue;
+                if (chosen.Values.Contains(item) || chosen.ContainsKey(item.Name)) continue;
 
                 if (IsOurs(item))
                 {
-                    if (!chosen.ContainsKey(item.Name)) Removed++;
+                    Removed++;
                     continue;
                 }
 
@@ -415,7 +417,7 @@ namespace RevitDevKit.Core
         private bool IsOurs(RibbonItem item)
         {
             if (item is PushButton button)
-                return _commandFiles.Contains(RibbonDraft.FileName(button.AssemblyName) ?? string.Empty);
+                return _isOwnCommand(button);
 
             if (item is PulldownButton pulldown)
                 return RibbonAccess.Items(pulldown).Values.Any(IsOurs);
@@ -460,45 +462,58 @@ namespace RevitDevKit.Core
         }
     }
 
-    // WPF resolves pack://application:,,,/Name;component/... to an assembly by name and caches
-    // the answer, so a rebuilt add-in would get the resources of the copy Revit loaded: old
-    // icons, and an exception for an icon that is new.
-    internal static class PackImages
+    // WPF resolves pack://application:,,,/Name;component/... (icons, and the BAML behind every
+    // InitializeComponent) through one resource wrapper per assembly name. Cached resource parts
+    // keep that wrapper, and LoadComponent refuses BAML from another copy than the component's.
+    // So the wrappers are never replaced, only pointed at the right copy of the assembly.
+    internal static class PackResources
     {
         private static readonly FieldInfo ResourceManagersField = typeof(System.Windows.Application).Assembly
             .GetType("MS.Internal.AppModel.ResourceContainer")?
             .GetField("_registeredResourceManagers", BindingFlags.NonPublic | BindingFlags.Static);
 
+        private static readonly Type WrapperType = ResourceManagersField?.FieldType.GetGenericArguments()[1];
+        private static readonly PropertyInfo WrapperAssembly =
+            WrapperType?.GetProperty("Assembly", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+
         private const string Component = ";component/";
 
-        // While the draft runs, pack URIs of these assemblies resolve anew - to the newest loaded
-        // copy, i.e. the fresh build. Afterwards the live add-in gets its own resources back.
-        public static IDisposable Isolate(IEnumerable<string> assemblyNames)
+        // While the draft runs, the resources of the fresh build come from its copy. Afterwards an
+        // assembly Revit loaded under the same name gets its own resources back.
+        public static IDisposable Pin(RibbonPreview.ShadowFolder folder)
         {
             var managers = ResourceManagersField?.GetValue(null) as IDictionary;
-            if (managers == null) return new Restore(null, null, null);
+            if (managers == null || WrapperAssembly == null) return new Unpin(null, null);
 
-            var names = assemblyNames.Select(n => n.ToLowerInvariant()).ToList();
-            var saved = Matching(managers, names);
+            try
+            {
+                foreach (var assembly in folder.Loaded)
+                {
+                    var key = assembly.GetName().Name.ToLowerInvariant();
+                    if (!managers.Contains(key))
+                        managers[key] = Activator.CreateInstance(WrapperType, BindingFlags.NonPublic | BindingFlags.Instance, null, new object[] { assembly }, null);
 
-            foreach (var entry in saved)
-                managers.Remove(entry.Key);
+                    Point(managers, assembly.GetName().Name, assembly);
+                }
+            }
+            catch (Exception ex)
+            {
+                ConsoleOutput.Debug("Ресурсы WPF не перенаправлены: " + ex.Message);
+            }
 
-            return new Restore(managers, names, saved);
+            return new Unpin(managers, folder);
         }
 
         // Keys are the lower-cased assembly name, followed by the version if the URI has one.
-        private static List<DictionaryEntry> Matching(IDictionary managers, List<string> names)
+        private static void Point(IDictionary managers, string name, Assembly assembly)
         {
-            var result = new List<DictionaryEntry>();
+            var lower = name.ToLowerInvariant();
 
             foreach (DictionaryEntry entry in managers)
             {
-                if (entry.Key is string key && names.Any(n => key == n || key.StartsWith(n) && char.IsDigit(key[n.Length])))
-                    result.Add(entry);
+                if (entry.Key is string key && (key == lower || key.StartsWith(lower) && char.IsDigit(key[lower.Length])))
+                    WrapperAssembly.SetValue(entry.Value, assembly);
             }
-
-            return result;
         }
 
         // WPF also caches decoded images by URI: an icon file that kept its name would stay old.
@@ -573,28 +588,33 @@ namespace RevitDevKit.Core
             return null;
         }
 
-        private sealed class Restore : IDisposable
+        private sealed class Unpin : IDisposable
         {
             private readonly IDictionary _managers;
-            private readonly List<string> _names;
-            private readonly List<DictionaryEntry> _saved;
+            private readonly RibbonPreview.ShadowFolder _folder;
 
-            public Restore(IDictionary managers, List<string> names, List<DictionaryEntry> saved)
+            public Unpin(IDictionary managers, RibbonPreview.ShadowFolder folder)
             {
                 _managers = managers;
-                _names = names;
-                _saved = saved;
+                _folder = folder;
             }
 
             public void Dispose()
             {
                 if (_managers == null) return;
 
-                foreach (var entry in Matching(_managers, _names))
-                    _managers.Remove(entry.Key);
-
-                foreach (var entry in _saved)
-                    _managers[entry.Key] = entry.Value;
+                try
+                {
+                    foreach (var name in _folder.Loaded.Select(a => a.GetName().Name).Distinct())
+                    {
+                        var live = RibbonPreview.LiveAssembly(name);
+                        if (live != null) Point(_managers, name, live);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ConsoleOutput.Debug("Ресурсы WPF не возвращены: " + ex.Message);
+                }
             }
         }
     }

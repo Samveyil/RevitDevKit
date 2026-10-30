@@ -99,9 +99,14 @@ namespace RevitDevKit.Core
                 return state;
             }
 
-            PackImages.Refresh(draft.Items(), folder);
+            PackResources.Refresh(draft.Items(), folder);
 
-            var merge = new RibbonMerge(draft.CommandFiles());
+            // The live add-in may be built under another name (BIMPlugins.dll vs Dbg_BIMPlugins.dll),
+            // so its buttons are recognised by their command class as well as by the DLL name.
+            var commandFiles = draft.CommandFiles();
+            var merge = new RibbonMerge(button =>
+                commandFiles.Contains(RibbonDraft.FileName(button.AssemblyName) ?? string.Empty) ||
+                folder.Loaded.Any(a => !string.IsNullOrEmpty(button.ClassName) && a.GetType(button.ClassName) != null));
             merge.Apply(draft);
             ProxyCommands.Rebind(merge.Adopted, folder, Path.GetDirectoryName(original));
 
@@ -117,7 +122,7 @@ namespace RevitDevKit.Core
             var instances = new List<IExternalApplication>();
             try
             {
-                using (PackImages.Isolate(folder.AssemblyNames()))
+                using (PackResources.Pin(folder))
                 {
                     return RibbonDraft.Run(() =>
                     {
@@ -143,6 +148,13 @@ namespace RevitDevKit.Core
                 }
             }
         }
+
+        // The copy of an assembly Revit itself loaded, not one of the shadow copies.
+        internal static Assembly LiveAssembly(string name) =>
+            AppDomain.CurrentDomain.GetAssemblies().LastOrDefault(a =>
+                !a.IsDynamic &&
+                string.Equals(a.GetName().Name, name, StringComparison.OrdinalIgnoreCase) &&
+                !Folders.Any(f => f.Contains(a)));
 
         public static void Revert(string path)
         {
@@ -259,8 +271,7 @@ namespace RevitDevKit.Core
 
             public bool Contains(Assembly assembly) => _loaded.Values.Contains(assembly);
 
-            public IEnumerable<string> AssemblyNames() =>
-                System.IO.Directory.GetFiles(Directory, "*.dll").Select(Path.GetFileNameWithoutExtension);
+            public IReadOnlyCollection<Assembly> Loaded => _loaded.Values;
 
             public bool Owns(string path) =>
                 !string.IsNullOrEmpty(path) &&
