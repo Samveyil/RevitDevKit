@@ -1,4 +1,5 @@
 using Autodesk.Revit.UI;
+using BIMPlugins.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -65,10 +66,6 @@ namespace RevitDevKit.Core
 
         public static Dictionary<string, PushButton> Items(PulldownButton button) =>
             (Dictionary<string, PushButton>)PulldownItemsField.GetValue(button);
-
-        public static Adw.RibbonPanel AdwPanel(RibbonPanel panel) => (Adw.RibbonPanel)PanelAdwField.GetValue(panel);
-
-        public static Adw.RibbonItem AdwItem(RibbonItem item) => (Adw.RibbonItem)ItemAdwField.GetValue(item);
 
         public static IEnumerable<PushButton> PushButtons(RibbonItem item)
         {
@@ -144,7 +141,7 @@ namespace RevitDevKit.Core
                     if (livePanels.TryGetValue(names[i], out var livePanel))
                     {
                         MergePanel(livePanel, draftPanel);
-                        RibbonAccess.Detach(RibbonAccess.AdwPanel(draftPanel));
+                        RibbonAccess.Detach(draftPanel.ToAWRibbonPanel());
                         continue;
                     }
 
@@ -179,10 +176,10 @@ namespace RevitDevKit.Core
         private void AdoptPanel(Adw.RibbonTab liveTab, Dictionary<string, RibbonPanel> livePanels, string name,
             RibbonPanel panel, RibbonPanel next)
         {
-            var adw = RibbonAccess.AdwPanel(panel);
+            var adw = panel.ToAWRibbonPanel();
             RibbonAccess.Detach(adw);
 
-            var index = next == null ? -1 : liveTab.Panels.IndexOf(RibbonAccess.AdwPanel(next));
+            var index = next == null ? -1 : liveTab.Panels.IndexOf(next.ToAWRibbonPanel());
             liveTab.Panels.Insert(index < 0 ? liveTab.Panels.Count : index, adw);
             livePanels[name] = panel;
 
@@ -198,8 +195,8 @@ namespace RevitDevKit.Core
 
         private void MergePanel(RibbonPanel live, RibbonPanel draft)
         {
-            var liveSource = RibbonAccess.AdwPanel(live).Source.Items;
-            var draftSource = RibbonAccess.AdwPanel(draft).Source.Items;
+            var liveSource = live.ToAWRibbonPanel().Source.Items;
+            var draftSource = draft.ToAWRibbonPanel().Source.Items;
             var liveItems = RibbonAccess.Items(live);
             var draftItems = RibbonAccess.Items(draft);
 
@@ -211,7 +208,7 @@ namespace RevitDevKit.Core
                 Replace(liveItems, oldItems);
             });
 
-            var draftByAdw = draftItems.Values.ToDictionary(RibbonAccess.AdwItem);
+            var draftByAdw = draftItems.Values.ToDictionary(d => d.ToAWRibbonItem());
             var liveRows = new Dictionary<Adw.RibbonItem, Adw.RibbonRowPanel>();
             foreach (var row in liveSource.OfType<Adw.RibbonRowPanel>())
             {
@@ -244,7 +241,7 @@ namespace RevitDevKit.Core
                     continue;
                 }
 
-                var adw = RibbonAccess.AdwItem(item);
+                var adw =item.ToAWRibbonItem();
                 var element = liveRows.TryGetValue(adw, out var row) ? row : adw;
                 if (!order.Contains(element)) order.Add(element);
                 if (!chosen.ContainsKey(item.Name)) chosen[item.Name] = item;
@@ -259,16 +256,16 @@ namespace RevitDevKit.Core
             Dictionary<Adw.RibbonItem, Adw.RibbonRowPanel> liveRows, Dictionary<string, RibbonItem> chosen)
         {
             if (liveItems.TryGetValue(draft.Name, out var live) && live.GetType() == draft.GetType() &&
-                !liveRows.ContainsKey(RibbonAccess.AdwItem(live)))
+                !liveRows.ContainsKey(live.ToAWRibbonItem()))
             {
                 Update(live, draft);
                 chosen[draft.Name] = live;
-                return RibbonAccess.AdwItem(live);
+                return live.ToAWRibbonItem();
             }
 
             Adopt(draft);
             chosen[draft.Name] = draft;
-            return RibbonAccess.AdwItem(draft);
+            return draft.ToAWRibbonItem();
         }
 
         // A stack is kept only when the same buttons are stacked the same way; otherwise the
@@ -288,10 +285,10 @@ namespace RevitDevKit.Core
                     .Select(d => liveItems.TryGetValue(d.Name, out var l) && l.GetType() == d.GetType() ? l : null)
                     .ToList();
 
-                var liveRow = lives.All(l => l != null) && liveRows.TryGetValue(RibbonAccess.AdwItem(lives[0]), out var r) ? r : null;
+                var liveRow = lives.All(l => l != null) && liveRows.TryGetValue(lives[0].ToAWRibbonItem(), out var r) ? r : null;
 
                 if (liveRow != null &&
-                    liveRow.Items.Where(e => !(e is Adw.RibbonRowBreak)).SequenceEqual(lives.Select(RibbonAccess.AdwItem)))
+                    liveRow.Items.Where(e => !(e is Adw.RibbonRowBreak)).SequenceEqual(lives.Select(l => l.ToAWRibbonItem())))
                 {
                     for (var i = 0; i < lives.Count; i++)
                     {
@@ -314,8 +311,8 @@ namespace RevitDevKit.Core
 
         private void MergePulldown(PulldownButton live, PulldownButton draft)
         {
-            var liveList = ((Adw.RibbonListButton)RibbonAccess.AdwItem(live)).Items;
-            var draftList = ((Adw.RibbonListButton)RibbonAccess.AdwItem(draft)).Items;
+            var liveList = ((Adw.RibbonListButton)live.ToAWRibbonItem()).Items;
+            var draftList = ((Adw.RibbonListButton)draft.ToAWRibbonItem()).Items;
             var liveItems = RibbonAccess.Items(live);
             var draftItems = RibbonAccess.Items(draft);
 
@@ -327,7 +324,7 @@ namespace RevitDevKit.Core
                 Replace(liveItems, oldItems);
             });
 
-            var draftByAdw = draftItems.Values.ToDictionary(b => RibbonAccess.AdwItem(b));
+            var draftByAdw = draftItems.Values.ToDictionary(b => b.ToAWRibbonItem());
             var chosen = new Dictionary<string, PushButton>();
             var order = new List<Adw.RibbonItem>();
 
@@ -343,13 +340,13 @@ namespace RevitDevKit.Core
                 {
                     Update(existing, child);
                     chosen[child.Name] = existing;
-                    order.Add(RibbonAccess.AdwItem(existing));
+                    order.Add(existing.ToAWRibbonItem());
                 }
                 else
                 {
                     Adopt(child);
                     chosen[child.Name] = child;
-                    order.Add(RibbonAccess.AdwItem(child));
+                    order.Add(child.ToAWRibbonItem());
                 }
             }
 
@@ -378,7 +375,7 @@ namespace RevitDevKit.Core
                 Copy(liveButton, draftButton, i => i.LargeImage, (i, v) => i.LargeImage = v);
             }
 
-            CopyAppearance(RibbonAccess.AdwItem(live), RibbonAccess.AdwItem(draft));
+            CopyAppearance(live.ToAWRibbonItem(), draft.ToAWRibbonItem());
 
             if (live is PulldownButton livePulldown && draft is PulldownButton draftPulldown)
                 MergePulldown(livePulldown, draftPulldown);
