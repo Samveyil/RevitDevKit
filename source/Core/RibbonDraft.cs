@@ -1,4 +1,5 @@
 using Autodesk.Revit.UI;
+using BIMPlugins.UI;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
@@ -91,7 +92,7 @@ namespace RevitDevKit.Core
         public void Discard()
         {
             foreach (var panel in Registry.Values.SelectMany(p => p.Values))
-                RibbonAccess.Detach(RibbonAccess.AdwPanel(panel));
+                RibbonAccess.Detach(panel.ToAWRibbonPanel());
 
             foreach (var tab in NewTabs)
                 RibbonAccess.Ribbon.Tabs.Remove(tab);
