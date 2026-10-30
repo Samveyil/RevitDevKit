@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace RevitDevKit.UI.ScriptEditor
+namespace RevitDevKit.UI.Shared
 {
     // Draws the selected tab and the editor frame as a single outline, so the rounded
     // corners and the concave joints match exactly.

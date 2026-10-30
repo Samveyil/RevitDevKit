@@ -11,17 +11,42 @@
         Height="720" Width="520" MinHeight="320" MinWidth="520">
 
     <Window.Resources>
-        <ResourceDictionary Source="pack://application:,,,/RevitDevKit;component/UI/Shared/Theme.xaml" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/RevitDevKit;component/UI/Shared/Theme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="CommandsToolbar" TargetType="StackPanel">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding SelectedTabIndex}" Value="1">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="AppsToolbar" TargetType="StackPanel">
+                <Setter Property="Visibility" Value="Collapsed"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding SelectedTabIndex}" Value="1">
+                        <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <DataTemplate x:Key="TabHeader">
+                <TextBlock Text="{Binding}" FontSize="14" FontWeight="DemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </DataTemplate>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Window.InputBindings>
-        <KeyBinding Key="F5" Command="{Binding RunCommand}"/>
-        <KeyBinding Key="O" Modifiers="Control" Command="{Binding AddAssemblyCommand}"/>
-        <KeyBinding Key="R" Modifiers="Control" Command="{Binding ReloadAssemblyCommand}"/>
+        <KeyBinding Key="F5" Command="{Binding RunHotkeyCommand}"/>
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding AddHotkeyCommand}"/>
+        <KeyBinding Key="R" Modifiers="Control" Command="{Binding ReloadHotkeyCommand}"/>
     </Window.InputBindings>
 
     <DockPanel>
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource CommandsToolbar}">
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding RunCommand}"
                     ToolTip="Выполнить выбранную команду (F5 или двойной щелчок)">
                 <StackPanel Orientation="Horizontal">
@@ -55,112 +80,226 @@
                       ToolTip="Очищать консоль перед каждым запуском"/>
         </StackPanel>
 
-        <Border Margin="5 0 5 5" BorderThickness="1" BorderBrush="{StaticResource AccentBrush}" CornerRadius="4">
-            <DockPanel>
-                <DockPanel DockPanel.Dock="Top" Margin="4 2">
-                    <Button DockPanel.Dock="Right" Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding CollapseAllCommand}"
-                            Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Свернуть всё">
-                        <materialDesign:PackIcon Kind="ArrowExpand" Width="22" Height="22" Foreground="{StaticResource IconBrush}"/>
-                    </Button>
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource AppsToolbar}">
+            <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding Apps.ApplyCommand}"
+                    ToolTip="Обновить кнопки на ленте по свежей сборке DLL (F5 или двойной щелчок)">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
+                                             VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
+                    <TextBlock Text="Обновить (F5)" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
 
-                    <materialDesign:PackIcon DockPanel.Dock="Left" Kind="Magnify" Width="20" Height="20" Foreground="Gray"
-                                             VerticalAlignment="Center" Margin="0 0 6 0"/>
+            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding Apps.AddAssemblyCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Добавить собранную DLL и сразу обновить по ней ленту (Ctrl+O)">
+                <materialDesign:PackIcon Kind="FolderOpenOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+            </Button>
 
-                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Padding="5 2"
-                             materialDesign:HintAssist.Hint="Поиск" Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             materialDesign:TextFieldAssist.HasClearButton="True" materialDesign:HintAssist.IsFloating="False"/>
-                </DockPanel>
+            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Apps.RevertCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Вернуть как было: лента снова такая, как её создал .addin">
+                <materialDesign:PackIcon Kind="Restore" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+            </Button>
 
+            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Apps.RevealInExplorerCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике DLL">
+                <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Apps.RemoveCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Вернуть ленту и убрать DLL из списка">
+                <materialDesign:PackIcon Kind="DeleteOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+        </StackPanel>
+
+        <TabControl Margin="5 0 5 5" Style="{StaticResource FramedTabControl}" SelectedIndex="{Binding SelectedTabIndex}">
+            <TabItem Header="Команды" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
+                    <DockPanel>
+                        <DockPanel DockPanel.Dock="Top" Margin="4 2">
+                            <Button DockPanel.Dock="Right" Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding CollapseAllCommand}"
+                                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Свернуть всё">
+                                <materialDesign:PackIcon Kind="ArrowExpand" Width="22" Height="22" Foreground="{StaticResource IconBrush}"/>
+                            </Button>
+
+                            <materialDesign:PackIcon DockPanel.Dock="Left" Kind="Magnify" Width="20" Height="20" Foreground="Gray"
+                                                     VerticalAlignment="Center" Margin="0 0 6 0"/>
+
+                            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Padding="5 2"
+                                     materialDesign:HintAssist.Hint="Поиск" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:TextFieldAssist.HasClearButton="True" materialDesign:HintAssist.IsFloating="False"/>
+                        </DockPanel>
+
+                        <Grid>
+                            <TreeView ItemsSource="{Binding Assemblies}" Margin="2">
+                                <TreeView.Resources>
+                                    <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+
+                                    <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+                                        <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}"/>
+                                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                                        <Setter Property="Focusable" Value="{Binding IsSelectable}"/>
+                                        <Setter Property="Padding" Value="4 1"/>
+                                        <Setter Property="MinHeight" Value="0"/>
+                                    </Style>
+
+                                    <HierarchicalDataTemplate DataType="{x:Type local:AssemblyNodeVM}" ItemsSource="{Binding Children}">
+                                        <StackPanel Orientation="Horizontal" ToolTip="{Binding FilePath}" Background="Transparent"
+                                                    Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TreeView}}">
+                                            <StackPanel.ContextMenu>
+                                                <ContextMenu materialDesign:MenuAssist.MenuItemsPresenterMargin="0">
+                                                    <MenuItem Header="Обновить список команд" CommandParameter="{Binding}"
+                                                              Command="{Binding PlacementTarget.Tag.ReloadAssemblyCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                    <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
+                                                              Command="{Binding PlacementTarget.Tag.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                    <MenuItem Header="Убрать из списка" CommandParameter="{Binding}"
+                                                              Command="{Binding PlacementTarget.Tag.RemoveAssemblyCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                </ContextMenu>
+                                            </StackPanel.ContextMenu>
+
+                                            <materialDesign:PackIcon Kind="PackageVariantClosed" Width="18" Height="18" Foreground="{StaticResource AccentBrush}"
+                                                                     VerticalAlignment="Center" Margin="0 0 6 0"/>
+                                            <TextBlock Text="{Binding DisplayName}" FontWeight="DemiBold" VerticalAlignment="Center"/>
+                                            <TextBlock Text="   — нет IExternalCommand" Foreground="Gray" VerticalAlignment="Center">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasTargets}" Value="False">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </HierarchicalDataTemplate>
+
+                                    <HierarchicalDataTemplate DataType="{x:Type local:NamespaceNodeVM}" ItemsSource="{Binding Targets}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="FolderOutline" Width="16" Height="16" Foreground="{StaticResource IconBrush}"
+                                                                     VerticalAlignment="Center" Margin="0 0 6 0"/>
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </HierarchicalDataTemplate>
+
+                                    <DataTemplate DataType="{x:Type local:TargetNodeVM}">
+                                        <StackPanel Orientation="Horizontal" ToolTip="{Binding TypeName}" Background="Transparent">
+                                            <StackPanel.InputBindings>
+                                                <MouseBinding Gesture="LeftDoubleClick" CommandParameter="{Binding}"
+                                                              Command="{Binding DataContext.RunCommand, RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                            </StackPanel.InputBindings>
+
+                                            <materialDesign:PackIcon Kind="LanguageCsharp" Width="16" Height="16" Foreground="{StaticResource IconBrush}"
+                                                                     VerticalAlignment="Center" Margin="0 0 6 0"/>
+                                            <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </TreeView.Resources>
+                            </TreeView>
+
+                            <TextBlock Text="Добавьте DLL кнопкой с папкой или Ctrl+O" Foreground="Gray"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Assemblies.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+
+                            <TextBlock Text="Ничего не найдено" Foreground="Gray"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsNothingFound}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                    </DockPanel>
+            </TabItem>
+
+            <TabItem Header="Приложения" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
                 <Grid>
-                    <TreeView ItemsSource="{Binding Assemblies}" Margin="2">
-                        <TreeView.Resources>
-                            <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
-
-                            <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
-                                <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}"/>
-                                <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
-                                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
-                                <Setter Property="Focusable" Value="{Binding IsSelectable}"/>
-                                <Setter Property="Padding" Value="4 1"/>
-                                <Setter Property="MinHeight" Value="0"/>
+                    <ListBox ItemsSource="{Binding Apps.Items}" SelectedItem="{Binding Apps.SelectedItem}" Margin="2"
+                             HorizontalContentAlignment="Stretch">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                <Setter Property="Padding" Value="6 3"/>
                             </Style>
+                        </ListBox.ItemContainerStyle>
 
-                            <HierarchicalDataTemplate DataType="{x:Type local:AssemblyNodeVM}" ItemsSource="{Binding Children}">
-                                <StackPanel Orientation="Horizontal" ToolTip="{Binding FilePath}" Background="Transparent"
-                                            Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TreeView}}">
-                                    <StackPanel.ContextMenu>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ToolTip="{Binding FilePath}" Background="Transparent"
+                                      Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ListBox}}">
+                                    <Grid.InputBindings>
+                                        <MouseBinding Gesture="LeftDoubleClick" CommandParameter="{Binding}"
+                                                      Command="{Binding DataContext.Apps.ApplyCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"/>
+                                    </Grid.InputBindings>
+
+                                    <Grid.ContextMenu>
                                         <ContextMenu materialDesign:MenuAssist.MenuItemsPresenterMargin="0">
-                                            <MenuItem Header="Обновить список команд" CommandParameter="{Binding}"
-                                                      Command="{Binding PlacementTarget.Tag.ReloadAssemblyCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            <MenuItem Header="Обновить" CommandParameter="{Binding}"
+                                                      Command="{Binding PlacementTarget.Tag.Apps.ApplyCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            <MenuItem Header="Вернуть как было" CommandParameter="{Binding}"
+                                                      Command="{Binding PlacementTarget.Tag.Apps.RevertCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                             <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
-                                                      Command="{Binding PlacementTarget.Tag.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                      Command="{Binding PlacementTarget.Tag.Apps.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                             <MenuItem Header="Убрать из списка" CommandParameter="{Binding}"
-                                                      Command="{Binding PlacementTarget.Tag.RemoveAssemblyCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                      Command="{Binding PlacementTarget.Tag.Apps.RemoveCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                         </ContextMenu>
-                                    </StackPanel.ContextMenu>
+                                    </Grid.ContextMenu>
 
-                                    <materialDesign:PackIcon Kind="PackageVariantClosed" Width="18" Height="18" Foreground="{StaticResource AccentBrush}"
-                                                             VerticalAlignment="Center" Margin="0 0 6 0"/>
-                                    <TextBlock Text="{Binding DisplayName}" FontWeight="DemiBold" VerticalAlignment="Center"/>
-                                    <TextBlock Text="   — нет IExternalCommand" Foreground="Gray" VerticalAlignment="Center">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <materialDesign:PackIcon Grid.RowSpan="2" Kind="PackageVariantClosed" Width="18" Height="18"
+                                                             VerticalAlignment="Center" Margin="0 0 8 0">
+                                        <materialDesign:PackIcon.Style>
+                                            <Style TargetType="materialDesign:PackIcon">
+                                                <Setter Property="Foreground" Value="Gray"/>
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding HasTargets}" Value="False">
-                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    <DataTrigger Binding="{Binding IsApplied}" Value="True">
+                                                        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </StackPanel>
-                            </HierarchicalDataTemplate>
+                                        </materialDesign:PackIcon.Style>
+                                    </materialDesign:PackIcon>
 
-                            <HierarchicalDataTemplate DataType="{x:Type local:NamespaceNodeVM}" ItemsSource="{Binding Targets}">
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="FolderOutline" Width="16" Height="16" Foreground="{StaticResource IconBrush}"
-                                                             VerticalAlignment="Center" Margin="0 0 6 0"/>
-                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </HierarchicalDataTemplate>
-
-                            <DataTemplate DataType="{x:Type local:TargetNodeVM}">
-                                <StackPanel Orientation="Horizontal" ToolTip="{Binding TypeName}" Background="Transparent">
-                                    <StackPanel.InputBindings>
-                                        <MouseBinding Gesture="LeftDoubleClick" CommandParameter="{Binding}"
-                                                      Command="{Binding DataContext.RunCommand, RelativeSource={RelativeSource AncestorType=TreeView}}"/>
-                                    </StackPanel.InputBindings>
-
-                                    <materialDesign:PackIcon Kind="LanguageCsharp" Width="16" Height="16" Foreground="{StaticResource IconBrush}"
-                                                             VerticalAlignment="Center" Margin="0 0 6 0"/>
-                                    <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"/>
-                                </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontWeight="DemiBold" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Status}" Foreground="Gray" Margin="8 0 0 0"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding ApplicationsText}"
+                                               Foreground="Gray" TextTrimming="CharacterEllipsis"/>
+                                </Grid>
                             </DataTemplate>
-                        </TreeView.Resources>
-                    </TreeView>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
 
-                    <TextBlock Text="Добавьте DLL кнопкой с папкой или Ctrl+O" Foreground="Gray"
+                    <TextBlock Text="Добавьте DLL с IExternalApplication кнопкой с папкой или Ctrl+O" Foreground="Gray"
                                HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Collapsed"/>
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Assemblies.Count}" Value="0">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-
-                    <TextBlock Text="Ничего не найдено" Foreground="Gray"
-                               HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsNothingFound}" Value="True">
+                                    <DataTrigger Binding="{Binding Apps.Items.Count}" Value="0">
                                         <Setter Property="Visibility" Value="Visible"/>
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -168,7 +307,7 @@
                         </TextBlock.Style>
                     </TextBlock>
                 </Grid>
-            </DockPanel>
-        </Border>
+            </TabItem>
+        </TabControl>
     </DockPanel>
 </Window>
