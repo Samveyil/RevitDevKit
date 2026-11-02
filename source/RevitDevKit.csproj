@@ -4,6 +4,7 @@
 		<UseWPF>true</UseWPF>
 		<LangVersion>latest</LangVersion>
 		<Configurations>Debug R2019;Debug R2020;Debug R2021;Debug R2022;Debug R2023;Debug R2024;R2019;R2020;R2021;R2022;R2023;R2024</Configurations>
+		<SatelliteResourceLanguages>ru</SatelliteResourceLanguages>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
 	</PropertyGroup>
