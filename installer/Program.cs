@@ -10,16 +10,13 @@ var contentRoot = manifestFile.Directory!;
 var installOrder = new MediaLayout(manifest.Content);
 var revitSearch = new RevitSearch(manifest.Content);
 
-var project = new Project(manifest.ProductName,
-    new CloseApplication("Revit.exe")
-    {
-        Description = "Close Revit and click Retry.",
-        PromptToContinue = true,
-        RebootPrompt = false
-    })
+// No check for a running Revit: every version is Revit.exe, so it would also block the versions not being installed.
+// Windows Installer itself asks to close the Revit that holds the files it replaces.
+var project = new Project
 {
+    Name = manifest.ProductName,
     OutDir = manifest.OutputDirectory,
-    OutFileName = $"{manifest.PackageName}-{manifest.ReleaseVersion}",
+    OutFileName = $"{manifest.ProductName}-{manifest.ReleaseVersion}",
     GUID = manifest.UpgradeCode,
     // A new product code for every build lets a rebuild of the same version replace the installed one.
     ProductId = Guid.NewGuid(),
