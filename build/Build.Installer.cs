@@ -1,0 +1,87 @@
+using System;
+using System.Linq;
+using System.Text.Json;
+using Nuke.Common;
+using Nuke.Common.IO;
+using Nuke.Common.Tooling;
+using Nuke.Common.Tools.DotNet;
+using static Nuke.Common.Tools.DotNet.DotNetTasks;
+
+public partial class Build
+{
+    const string WixVersion = "6.0.2";
+
+    static readonly Guid UpgradeCode = new("FF3A455E-3A4A-4D45-9BF6-000F63522155");
+
+    static readonly JsonSerializerOptions ManifestOptions = new()
+    {
+        WriteIndented = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    AbsolutePath OutputDirectory => RootDirectory / "output";
+
+    Target Installer => _ => _
+        .DependsOn(Compile)
+        .Executes(() =>
+        {
+            var wixFolder = InstallWix();
+            var manifestFile = WriteInstallerManifest();
+
+            DotNetRun(s => s
+                .SetProjectFile(RootDirectory / "installer" / "Installer.csproj")
+                .SetConfiguration("Release")
+                .SetApplicationArguments(manifestFile)
+                .SetProcessWorkingDirectory(RootDirectory)
+                .SetProcessEnvironmentVariable("PATH", $"{wixFolder};{EnvironmentInfo.GetVariable("PATH")}"));
+        });
+
+    AbsolutePath InstallWix()
+    {
+        var folder = TemporaryDirectory / "wix" / WixVersion;
+        if (!(folder / "wix.exe").FileExists())
+            DotNetToolInstall(s => s
+                .SetPackageName("wix")
+                .SetVersion(WixVersion)
+                .SetToolInstallationPath(folder));
+
+        return folder;
+    }
+
+    AbsolutePath WriteInstallerManifest()
+    {
+        var version = $"{MajorVersion}.{MinorVersion}.{MaintenanceVersion}";
+        var addin = RootDirectory / "source" / $"{ProjectName}.addin";
+
+        var builds = (RootDirectory / "source" / "bin" / "Release").GetDirectories()
+            .Where(folder => int.TryParse(folder.Name, out _))
+            .OrderBy(folder => folder.Name)
+            .ToArray();
+
+        Assert.NotEmpty(builds, "No Release builds to pack into the installer");
+
+        var manifest = new
+        {
+            ProductName = ProjectName,
+            ProductVersion = version,
+            UpgradeCode,
+            ReleaseVersion = version,
+            OutputDirectory = OutputDirectory.ToString(),
+            Content = builds.Select(folder => new
+            {
+                RevitVersion = int.Parse(folder.Name),
+                Files = new[]
+                {
+                    new { Role = "payload", Source = OutputDirectory.GetRelativePathTo(folder).ToString(), TargetPath = ProjectName },
+                    new { Role = "addin", Source = OutputDirectory.GetRelativePathTo(addin).ToString(), TargetPath = "" }
+                }
+            })
+        };
+
+        var manifestFile = OutputDirectory / "installer.manifest.json";
+        OutputDirectory.CreateDirectory();
+        manifestFile.WriteAllText(JsonSerializer.Serialize(manifest, ManifestOptions));
+
+        return manifestFile;
+    }
+}
