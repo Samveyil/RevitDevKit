@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>RevitDevKit</Name>
+    <Assembly>RevitDevKit\RevitDevKit.dll</Assembly>
+    <AddInId>C70C4651-A1FD-4D74-89AB-F030527228EE</AddInId>
+    <FullClassName>RevitDevKit.App</FullClassName>
+    <VendorId>Samir Shibliev</VendorId>
+    <VendorDescription>Samir Shibliev</VendorDescription>
+  </AddIn>
+</RevitAddIns>
