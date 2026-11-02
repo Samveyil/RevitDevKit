@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
@@ -16,6 +18,7 @@ namespace Installer
     internal static class Program
     {
         private const string Name = "RevitDevKit";
+        private const string Title = "Revit DevKit";
         private const string Manufacturer = "Samir Shibliev";
 
         // Windows Installer finds the installed version by this code, so it must never change.
@@ -32,7 +35,7 @@ namespace Installer
                 var builds = FindBuilds(Path.Combine(root, "source", "bin", "Release"));
 
                 foreach (var build in builds)
-                    Console.WriteLine($"Revit {build.Year}: {build.Version}, собрано {build.BuiltAt:dd.MM.yyyy HH:mm}");
+                    Console.WriteLine($"Revit {build.Year}: {build.Version}, built {build.BuiltAt:yyyy-MM-dd HH:mm}");
 
                 var built = SameVersion(builds);
                 var version = args.Length > 0 ? ParseVersion(args[0]) : built;
@@ -48,11 +51,12 @@ namespace Installer
         private static Project CreateProject(string root, RevitBuild[] builds, Version version)
         {
             var addin = Path.Combine(root, "source", Name + ".addin");
+            var resources = Path.Combine(root, "install", "Resources");
 
             // One feature per Revit version. It is checked by default when that Revit is installed.
             var years = builds.Select(build =>
             {
-                var feature = new Feature("Revit " + build.Year, "Надстройка для Revit " + build.Year, false)
+                var feature = new Feature("Revit " + build.Year, $"{Title} for Revit {build.Year}", false)
                 {
                     Id = "R" + build.Year,
                     Condition = new FeatureCondition(RevitFound(build.Year), 1)
@@ -63,11 +67,11 @@ namespace Installer
                     new Dir(feature, Name, new Files(feature, Path.Combine(build.Folder, "*.*"), IsPayload)));
             });
 
-            var project = new Project(Name,
+            var project = new Project(Title,
                 new Dir(@"%AppDataFolder%\Autodesk\Revit\Addins", years.Cast<WixEntity>().ToArray()),
                 new CloseApplication("Revit.exe")
                 {
-                    Description = "Закройте Revit и нажмите «Повторить».",
+                    Description = "Close Revit and click Retry.",
                     PromptToContinue = true,
                     RebootPrompt = false
                 })
@@ -81,17 +85,18 @@ namespace Installer
                 MajorUpgrade = new MajorUpgrade
                 {
                     AllowSameVersionUpgrades = true,
-                    DowngradeErrorMessage = "Уже установлена более новая версия [ProductName]."
+                    DowngradeErrorMessage = "A newer version of [ProductName] is already installed."
                 },
                 UI = WUI.WixUI_FeatureTree,
-                Language = "ru-RU",
+                BannerImage = ToBmp(Path.Combine(resources, "BannerImage.png")),
+                BackgroundImage = ToBmp(Path.Combine(resources, "BackgroundImage.png")),
                 OutDir = Path.Combine(root, "output"),
                 OutFileName = Name + "-" + version.ToString(3)
             };
 
             project.ControlPanelInfo.Manufacturer = Manufacturer;
             project.ControlPanelInfo.UrlInfoAbout = "https://github.com/Samveyil/RevitDevKit";
-            project.ControlPanelInfo.ProductIcon = MakeIcon(Path.Combine(root, "source", "Resources", "DevKit_32.png"));
+            project.ControlPanelInfo.ProductIcon = Path.Combine(resources, "ShellIcon.ico");
 
             // Welcome, then straight to the choice of Revit versions.
             project.RemoveDialogsBetween(NativeDialogs.WelcomeDlg, NativeDialogs.CustomizeDlg);
@@ -133,7 +138,7 @@ namespace Installer
                 if (System.IO.File.Exists(Path.Combine(dir.FullName, Name + ".sln")))
                     return dir.FullName;
 
-            throw new SetupError("Не найден " + Name + ".sln в папках над установщиком.");
+            throw new SetupError(Name + ".sln was not found above the installer folder.");
         }
 
         private static RevitBuild[] FindBuilds(string releaseFolder)
@@ -147,7 +152,7 @@ namespace Installer
                 .ToArray();
 
             if (builds.Length == 0)
-                throw new SetupError("В " + releaseFolder + " нет сборок. Соберите конфигурации R2019–R2024.");
+                throw new SetupError("No builds in " + releaseFolder + ". Build the R2019-R2024 configurations first.");
 
             return builds;
         }
@@ -157,7 +162,7 @@ namespace Installer
         {
             var versions = builds.Select(build => build.Version).Distinct().ToArray();
             if (versions.Length > 1)
-                throw new SetupError("Сборки разных версий. Пересоберите все конфигурации R2019–R2024.");
+                throw new SetupError("The builds have different versions. Rebuild all R2019-R2024 configurations.");
 
             return versions[0];
         }
@@ -165,33 +170,21 @@ namespace Installer
         private static Version ParseVersion(string text)
         {
             if (!Version.TryParse(text, out var version))
-                throw new SetupError("Неверная версия: " + text);
+                throw new SetupError("Invalid version: " + text);
 
             return new Version(version.Major, version.Minor, Math.Max(version.Build, 0));
         }
 
-        // An .ico file may hold a PNG image as is, so the ribbon icon also serves Programs and Features.
-        private static string MakeIcon(string png)
+        // Setup dialogs show BMP only, so the PNGs kept in the repository are converted on every build.
+        private static string ToBmp(string png)
         {
-            var image = System.IO.File.ReadAllBytes(png);
-            var ico = Path.Combine(Path.GetTempPath(), Name + ".ico");
+            var bmp = Path.Combine(Path.GetTempPath(), Name + "-" + Path.GetFileNameWithoutExtension(png) + ".bmp");
 
-            using (var writer = new BinaryWriter(System.IO.File.Create(ico)))
-            {
-                writer.Write((short)0);     // reserved
-                writer.Write((short)1);     // icon
-                writer.Write((short)1);     // one image
-                writer.Write(image[19]);    // width and height: low bytes of the PNG header fields
-                writer.Write(image[23]);
-                writer.Write((short)0);     // no palette, reserved
-                writer.Write((short)1);     // color planes
-                writer.Write((short)32);    // bits per pixel
-                writer.Write(image.Length);
-                writer.Write(22);           // the image follows the 6-byte header and one 16-byte entry
-                writer.Write(image);
-            }
+            using (var image = new Bitmap(png))
+            using (var rgb = image.Clone(new Rectangle(0, 0, image.Width, image.Height), PixelFormat.Format24bppRgb))
+                rgb.Save(bmp, ImageFormat.Bmp);
 
-            return ico;
+            return bmp;
         }
 
         private sealed class RevitBuild
