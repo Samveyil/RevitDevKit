@@ -2,7 +2,7 @@ using BIMPlugins.Nuke;
 using Nuke.Common;
 using Nuke.Common.ProjectModel;
 
-public class Build : BIMPluginsBuild
+public partial class Build : BIMPluginsBuild
 {
     protected override int MajorVersion => 1;
     protected override int MinorVersion => 0;
