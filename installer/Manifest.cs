@@ -10,14 +10,9 @@ namespace Installer;
 public sealed record Manifest
 {
     /// <summary>
-    ///     Gets the product name shown by the setup dialogs and Programs and Features.
+    ///     Gets the name of the product the package installs.
     /// </summary>
     public required string ProductName { get; init; }
-
-    /// <summary>
-    ///     Gets the name the package file starts with.
-    /// </summary>
-    public required string PackageName { get; init; }
 
     /// <summary>
     ///     Gets the version Windows Installer compares against the installed package when it resolves an upgrade.
@@ -69,7 +64,7 @@ public sealed record Manifest
     }
 
     /// <summary>
-    ///     Represents a set of files selected from a source directory.
+    ///     Represents a directory or a single file the package installs.
     /// </summary>
     public sealed record FileSet
     {
@@ -83,27 +78,16 @@ public sealed record Manifest
         public required string Role { get; init; }
 
         /// <summary>
-        ///     Gets the source directory the patterns are matched against.
+        ///     Gets the directory or file to install.
         /// </summary>
         /// <value>A path relative to the directory holding the manifest file.</value>
-        public required string BasePath { get; init; }
+        /// <remarks>A directory installs with everything it holds, subdirectories included.</remarks>
+        public required string Source { get; init; }
 
         /// <summary>
         ///     Gets the directory the files are installed to.
         /// </summary>
         /// <value>A path relative to the Revit version directory. Defaults to the version directory itself.</value>
         public string TargetPath { get; init; } = string.Empty;
-
-        /// <summary>
-        ///     Gets the glob patterns selecting the files.
-        /// </summary>
-        /// <remarks>The patterns follow the <see href="https://learn.microsoft.com/dotnet/core/extensions/file-globbing">.NET file globbing</see> format.</remarks>
-        public required IReadOnlyList<string> Include { get; init; }
-
-        /// <summary>
-        ///     Gets the glob patterns excluding files from the selection.
-        /// </summary>
-        /// <value>Defaults to an empty list.</value>
-        public IReadOnlyList<string> Exclude { get; init; } = [];
     }
 }

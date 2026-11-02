@@ -54,8 +54,11 @@ public partial class Build
     AbsolutePath WriteInstallerManifest()
     {
         var version = $"{MajorVersion}.{MinorVersion}.{MaintenanceVersion}";
+        var addin = RootDirectory / "source" / $"{ProjectName}.addin";
+
+        // source\bin\Release\<year> is installed as is, everything it holds goes to Addins\<year>\RevitDevKit.
         var builds = (RootDirectory / "source" / "bin" / "Release").GetDirectories()
-            .Where(folder => int.TryParse(folder.Name, out _) && (folder / $"{ProjectName}.dll").FileExists())
+            .Where(folder => int.TryParse(folder.Name, out _))
             .OrderBy(folder => folder.Name)
             .ToArray();
 
@@ -63,8 +66,7 @@ public partial class Build
 
         var manifest = new
         {
-            ProductName = "Revit DevKit",
-            PackageName = ProjectName,
+            ProductName = ProjectName,
             ProductVersion = version,
             UpgradeCode,
             ReleaseVersion = version,
@@ -72,22 +74,10 @@ public partial class Build
             Content = builds.Select(folder => new
             {
                 RevitVersion = int.Parse(folder.Name),
-                Files = new object[]
+                Files = new[]
                 {
-                    new
-                    {
-                        Role = "payload",
-                        BasePath = OutputDirectory.GetRelativePathTo(folder).ToString(),
-                        TargetPath = ProjectName,
-                        Include = new[] { "**" },
-                        Exclude = new[] { "**/*.pdb" }
-                    },
-                    new
-                    {
-                        Role = "addin",
-                        BasePath = OutputDirectory.GetRelativePathTo(RootDirectory / "source").ToString(),
-                        Include = new[] { $"{ProjectName}.addin" }
-                    }
+                    new { Role = "payload", Source = OutputDirectory.GetRelativePathTo(folder).ToString(), TargetPath = ProjectName },
+                    new { Role = "addin", Source = OutputDirectory.GetRelativePathTo(addin).ToString(), TargetPath = "" }
                 }
             })
         };
