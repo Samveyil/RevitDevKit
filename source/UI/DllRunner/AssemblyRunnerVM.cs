@@ -206,22 +206,24 @@ namespace RevitDevKit.UI.DllRunner
             node ??= SelectedNode as TargetNodeVM;
             if (node == null) return;
 
+            var path = node.Owner.FilePath;
+            var typeName = node.TypeName;
+            var missing = "В актуальной " + node.Owner.DisplayName + " нет команды " + typeName + ".";
+
             RunTarget target;
             try
             {
-                var loaded = CachedAssemblyLoader.Load(node.Owner.FilePath);
-                target = EntryPointResolver.FindAll(loaded.Assembly, includeMethods: false)
-                    .FirstOrDefault(t => t.TypeName == node.TypeName);
+                target = Resolve(path, typeName);
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Не удалось загрузить " + node.Owner.FilePath + ":");
+                ConsoleOutput.Exception(ex, "Не удалось загрузить " + path + ":");
                 return;
             }
 
             if (target == null)
             {
-                ConsoleOutput.Error("В актуальной " + node.Owner.DisplayName + " нет команды " + node.TypeName + ". Обновите список команд.");
+                ConsoleOutput.Error(missing + " Обновите список команд.");
                 return;
             }
 
@@ -237,7 +239,10 @@ namespace RevitDevKit.UI.DllRunner
                 {
                     // The window closes on run; showing the console pane needs an API context, i.e. here.
                     ConsolePane.TryShow(RevitAPI.UIApplication);
-                    return target.Invoke();
+
+                    // Run Again repeats this request, and the DLL may have been rebuilt since.
+                    var current = Resolve(path, typeName) ?? throw new InvalidOperationException(missing);
+                    return current.Invoke();
                 },
                 Completed = error => _dispatcher.Invoke(() => IsRunning = false)
             };
@@ -253,6 +258,10 @@ namespace RevitDevKit.UI.DllRunner
                 IsRunning = false;
             }
         }
+
+        private static RunTarget Resolve(string path, string typeName) =>
+            EntryPointResolver.FindAll(CachedAssemblyLoader.Load(path).Assembly, includeMethods: false)
+                .FirstOrDefault(t => t.TypeName == typeName);
 
         // Format: DLL path at line start, its command type names below, indented.
         private static string StorePath => Path.Combine(App.DataDirectory, "assemblies.txt");
