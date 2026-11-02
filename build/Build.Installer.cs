@@ -9,10 +9,8 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
 
 public partial class Build
 {
-    // WiX 7 needs its OSMF EULA accepted; 6.0.2 is the last release that does not.
     const string WixVersion = "6.0.2";
 
-    // Windows Installer finds the installed version by this code, so it must never change.
     static readonly Guid UpgradeCode = new("FF3A455E-3A4A-4D45-9BF6-000F63522155");
 
     static readonly JsonSerializerOptions ManifestOptions = new()
@@ -23,7 +21,6 @@ public partial class Build
 
     AbsolutePath OutputDirectory => RootDirectory / "output";
 
-    // Packs the Release builds of every Revit version into output\RevitDevKit-<version>.msi.
     Target Installer => _ => _
         .DependsOn(Compile)
         .Executes(() =>
@@ -56,7 +53,6 @@ public partial class Build
         var version = $"{MajorVersion}.{MinorVersion}.{MaintenanceVersion}";
         var addin = RootDirectory / "source" / $"{ProjectName}.addin";
 
-        // source\bin\Release\<year> is installed as is, everything it holds goes to Addins\<year>\RevitDevKit.
         var builds = (RootDirectory / "source" / "bin" / "Release").GetDirectories()
             .Where(folder => int.TryParse(folder.Name, out _))
             .OrderBy(folder => folder.Name)
