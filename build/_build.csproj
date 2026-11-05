@@ -12,7 +12,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BIMPlugins.Nuke" Version="1.1.2" />
+		<PackageReference Include="BIMPlugins.Nuke" Version="1.1.5" />
 		<PackageReference Include="Nuke.Common" Version="9.0.4" />
 	</ItemGroup>
 
