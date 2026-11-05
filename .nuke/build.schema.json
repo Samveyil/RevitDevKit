@@ -28,7 +28,8 @@
         "Compile",
         "CopyDllsToRevitFolder",
         "Installer",
-        "PushToNugetRepositiry"
+        "PushToNugetRepositiry",
+        "ReleasePackage"
       ]
     },
     "Verbosity": {
@@ -104,22 +105,34 @@
       "properties": {
         "Configurations": {
           "type": "array",
-          "description": "Имена конфигураций для сборки (перечислить через запятую)",
+          "description": "Configurations to build",
           "items": {
             "type": "string"
           }
         },
         "FolderName": {
           "type": "string",
-          "description": "Имя папки для копирования"
+          "description": "Name of the Revit add-in folder to copy into"
+        },
+        "NugetSource": {
+          "type": "string",
+          "description": "NuGet source URL"
+        },
+        "NugetUser": {
+          "type": "string",
+          "description": "nuget.org user for Trusted Publishing from GitHub Actions (--nuget-user or env NUGET_USER)"
         },
         "ProjectName": {
           "type": "string",
-          "description": "Имя проекта для сборки"
+          "description": "Name of the project to build"
         },
         "Solution": {
           "type": "string",
           "description": "Path to a solution file that is automatically loaded. Default is RevitDevKit.sln"
+        },
+        "VersionSuffix": {
+          "type": "string",
+          "description": "Pre-release suffix, e.g. beta.1 => 1.2.0-beta.1"
         }
       }
     },
