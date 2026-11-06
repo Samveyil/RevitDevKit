@@ -29,6 +29,8 @@ namespace RevitDevKit.Scripting
         public void Fail(string text) => ConsoleOutput.Error(text);
         public void Clear() => ConsoleOutput.Clear();
 
+        // Every column is as wide as its longest value, up to MaxTableWidth, so the separators line up
+        // in the console's monospaced font. Line breaks inside a value would split the row, so they become spaces.
         public void Table<T>(IEnumerable<T> items, params Func<T, object>[] columns)
         {
             if (items == null)
@@ -36,18 +38,30 @@ namespace RevitDevKit.Scripting
                 Print("null");
                 return;
             }
-            
-            foreach (var item in items)
+
+            if (columns == null || columns.Length == 0)
             {
-                if (columns == null || columns.Length == 0)
-                {
+                foreach (var item in items)
                     Print(item);
-                    continue;
-                }
-                var cells = columns.Select(c =>
+                return;
+            }
+
+            var rows = items.Select(item => columns.Select(c =>
+            {
+                try { return ConsoleOutput.Format(c(item)).Replace("\r\n", " ").Replace('\n', ' ').Replace('\r', ' '); }
+                catch (Exception ex) { return "<" + ex.GetType().Name + ">"; }
+            }).ToList()).ToList();
+
+            var widths = Enumerable.Range(0, columns.Length)
+                .Select(i => Math.Min(MaxTableWidth, rows.Select(r => r[i].Length).DefaultIfEmpty(0).Max()))
+                .ToList();
+
+            foreach (var row in rows)
+            {
+                var cells = row.Select((cell, i) =>
                 {
-                    try { return ConsoleOutput.Format(c(item)); }
-                    catch (Exception ex) { return "<" + ex.GetType().Name + ">"; }
+                    var text = Fit(cell, widths[i]);
+                    return i < row.Count - 1 ? text.PadRight(widths[i]) : text;
                 });
                 ConsoleOutput.WriteLine(string.Join("  |  ", cells));
             }
@@ -219,6 +233,7 @@ namespace RevitDevKit.Scripting
 
         private const int NameWidth = 38;
         private const int MaxValueWidth = 20;
+        private const int MaxTableWidth = 50;
         private const int MaxCompared = 5;
         private const string Missing = "-нет-";
 
