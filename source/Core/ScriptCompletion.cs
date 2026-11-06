@@ -58,8 +58,8 @@ namespace RevitDevKit.Core
         // Types for the argument of a generic method or type: the editor then closes '<' with '>'.
         public bool IsTypeArguments { get; set; }
 
-        // Time per step, written to the console at debug level.
-        public string Timing { get; set; }
+        // Speed check, turned off: time per step, written to the debug console by CompletionController.Show.
+        // public string Timing { get; set; }
     }
 
     // IntelliSense for scripts on the compiler's SemanticModel only, without Roslyn Features.
@@ -104,14 +104,14 @@ namespace RevitDevKit.Core
             if (!explicitRequest && !afterDot && column == wordStart)
                 return null;
 
-            var watch = Stopwatch.StartNew();
+            // var watch = Stopwatch.StartNew();
             if (!afterDot)
             {
                 var typeArguments = TypeArguments(userCode, line, lineText, wordStart, token);
                 if (typeArguments != null)
                 {
                     typeArguments.WordStart = wordStart;
-                    typeArguments.Timing = "типы " + watch.ElapsedMilliseconds + " мс";
+                    // typeArguments.Timing = "типы " + watch.ElapsedMilliseconds + " мс";
                     return typeArguments;
                 }
             }
@@ -125,7 +125,7 @@ namespace RevitDevKit.Core
             if (IsInCommentOrLiteral(root, position))
                 return null;
 
-            var analyzed = watch.ElapsedMilliseconds;
+            // var analyzed = watch.ElapsedMilliseconds;
 
             List<CompletionEntry> entries;
             if (afterDot)
@@ -146,7 +146,7 @@ namespace RevitDevKit.Core
                 entries.AddRange(Keywords.Select(k => new CompletionEntry { Name = k, Kind = CompletionKind.Keyword }));
             }
 
-            var looked = watch.ElapsedMilliseconds;
+            // var looked = watch.ElapsedMilliseconds;
             token.ThrowIfCancellationRequested();
 
             if (entries.Count == 0)
@@ -154,8 +154,8 @@ namespace RevitDevKit.Core
 
             entries.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
 
-            var timing = "разбор " + analyzed + ", поиск " + (looked - analyzed) + ", сортировка " + (watch.ElapsedMilliseconds - looked) + " мс";
-            return new ScriptCompletionList { WordStart = wordStart, Entries = entries, Timing = timing };
+            // var timing = "разбор " + analyzed + ", поиск " + (looked - analyzed) + ", сортировка " + (watch.ElapsedMilliseconds - looked) + " мс";
+            return new ScriptCompletionList { WordStart = wordStart, Entries = entries /*, Timing = timing */ };
         }
 
         // The user's line, without the line break; null past the end of the script.
