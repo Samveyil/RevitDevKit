@@ -1,6 +1,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -31,6 +32,18 @@ namespace RevitDevKit.Core
         public string Name { get; set; }
         public CompletionKind Kind { get; set; }
         public string Description { get; set; }
+    }
+
+    internal sealed class ScriptAnalysis
+    {
+        public PreparedSource Prepared { get; set; }
+        public SourceText Text { get; set; }
+        public SyntaxNode Root { get; set; }
+        public CSharpCompilation Compilation { get; set; }
+        public SemanticModel Model { get; set; }
+
+        // Where the caret line starts in the prepared code.
+        public int LineStart { get; set; }
     }
 
     public sealed class ScriptCompletionList
@@ -65,11 +78,10 @@ namespace RevitDevKit.Core
         // Without an explicit request (Ctrl+Space) the list is offered only after a '.' or on the first letter of a name.
         public static ScriptCompletionList Get(string userCode, int line, int column, bool explicitRequest, CancellationToken token)
         {
-            var lines = (userCode ?? string.Empty).Replace("\r\n", "\n").Split('\n');
-            if (line < 1 || line > lines.Length || column > lines[line - 1].Length)
+            var lineText = LineAt(userCode, line);
+            if (lineText == null || column > lineText.Length)
                 return null;
 
-            var lineText = lines[line - 1];
             var wordStart = column;
             while (wordStart > 0 && IsIdentifierChar(lineText[wordStart - 1]))
                 wordStart--;
@@ -81,41 +93,33 @@ namespace RevitDevKit.Core
                 return null;
 
             var watch = Stopwatch.StartNew();
-            var prepared = ScriptSource.Prepare(userCode);
-            var tree = CSharpSyntaxTree.ParseText(prepared.Code, ScriptCompiler.CreateParseOptions(), cancellationToken: token);
-            var text = tree.GetText(token);
-
-            // #r and hoisted using lines are blank in the prepared code, there is nothing to complete on them.
-            var preparedLine = line - 1 + prepared.LineOffset;
-            if (preparedLine >= text.Lines.Count || text.ToString(text.Lines[preparedLine].Span) != lineText)
+            var script = Analyze(userCode, line, lineText, token);
+            if (script == null)
                 return null;
 
-            var position = text.Lines[preparedLine].Start + wordStart;
-            var root = tree.GetRoot(token);
+            var position = script.LineStart + wordStart;
+            var root = script.Root;
             if (IsInCommentOrLiteral(root, position))
                 return null;
 
-            var parsed = watch.ElapsedMilliseconds;
-            var compilation = BaseCompilation(prepared.ExtraReferences).AddSyntaxTrees(tree);
-            var model = compilation.GetSemanticModel(tree);
-            var referenced = watch.ElapsedMilliseconds;
+            var analyzed = watch.ElapsedMilliseconds;
 
             List<CompletionEntry> entries;
             if (afterDot)
             {
-                var members = MemberSymbols(model, root, position - 1, token);
+                var members = MemberSymbols(script.Model, root, position - 1, token);
                 if (members == null)
                     return null;
-                entries = ToEntries(members);
+                entries = ToEntries(members, token);
             }
             else
             {
                 if (!explicitRequest && IsDeclaredName(root, position))
                     return null;
 
-                entries = prepared.LineOffset > 0
-                    ? ScriptScope(model, root, position, text.Lines[0].ToString())
-                    : ToEntries(model.LookupSymbols(position));
+                entries = script.Prepared.LineOffset > 0
+                    ? ScriptScope(script.Model, root, position, script.Text.Lines[0].ToString(), token)
+                    : ToEntries(script.Model.LookupSymbols(position), token);
                 entries.AddRange(Keywords.Select(k => new CompletionEntry { Name = k, Kind = CompletionKind.Keyword }));
             }
 
@@ -127,9 +131,39 @@ namespace RevitDevKit.Core
 
             entries.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
 
-            var timing = "разбор " + parsed + ", ссылки " + (referenced - parsed) + ", поиск " + (looked - referenced) +
-                         ", сортировка " + (watch.ElapsedMilliseconds - looked) + " мс";
+            var timing = "разбор " + analyzed + ", поиск " + (looked - analyzed) + ", сортировка " + (watch.ElapsedMilliseconds - looked) + " мс";
             return new ScriptCompletionList { WordStart = wordStart, Entries = entries, Timing = timing };
+        }
+
+        // The user's line, without the line break; null past the end of the script.
+        internal static string LineAt(string userCode, int line)
+        {
+            var lines = (userCode ?? string.Empty).Replace("\r\n", "\n").Split('\n');
+            return line < 1 || line > lines.Length ? null : lines[line - 1];
+        }
+
+        // The script prepared, parsed and bound exactly as for compilation, with the caret line found in the prepared code.
+        // Null on #r and hoisted using lines: they are blank in the prepared code, there is nothing to analyze there.
+        internal static ScriptAnalysis Analyze(string userCode, int line, string lineText, CancellationToken token)
+        {
+            var prepared = ScriptSource.Prepare(userCode);
+            var tree = CSharpSyntaxTree.ParseText(prepared.Code, ScriptCompiler.CreateParseOptions(), cancellationToken: token);
+            var text = tree.GetText(token);
+
+            var preparedLine = line - 1 + prepared.LineOffset;
+            if (preparedLine >= text.Lines.Count || text.ToString(text.Lines[preparedLine].Span) != lineText)
+                return null;
+
+            var compilation = BaseCompilation(prepared.ExtraReferences).AddSyntaxTrees(tree);
+            return new ScriptAnalysis
+            {
+                Prepared = prepared,
+                Text = text,
+                Root = tree.GetRoot(token),
+                Compilation = compilation,
+                Model = compilation.GetSemanticModel(tree),
+                LineStart = text.Lines[preparedLine].Start
+            };
         }
 
         // Loads the referenced assemblies, Revit API included, and the script scope,
@@ -170,7 +204,7 @@ namespace RevitDevKit.Core
         // Everything a script sees apart from its own locals (ScriptBase members, types and namespaces from the usings)
         // stays the same while typing, and looking it up is the slow part with hundreds of assemblies loaded in Revit.
         // So it is looked up once per set of usings (tabs may differ), and on each keystroke only the script's own names.
-        private static List<CompletionEntry> ScriptScope(SemanticModel model, SyntaxNode root, int position, string usings)
+        private static List<CompletionEntry> ScriptScope(SemanticModel model, SyntaxNode root, int position, string usings, CancellationToken token)
         {
             List<CompletionEntry> scope;
             lock (Sync)
@@ -181,23 +215,29 @@ namespace RevitDevKit.Core
             {
                 var all = model.LookupSymbols(position);
                 locals = all.Where(IsLocal).ToList();
-                scope = ToEntries(all.Where(s => !IsLocal(s)));
+                scope = ToEntries(all.Where(s => !IsLocal(s)), token);
 
                 lock (Sync)
                     Scopes[usings] = scope;
             }
             else
             {
-                locals = DeclaredNames(root)
-                    .SelectMany(name => model.LookupSymbols(position, name: name))
-                    .Where(IsLocal)
-                    .ToList();
+                locals = LocalsInScope(model, root, position);
             }
 
-            var entries = ToEntries(locals);
+            var entries = ToEntries(locals, token);
             var shadowed = new HashSet<string>(entries.Select(e => e.Name));
             entries.AddRange(scope.Where(e => !shadowed.Contains(e.Name)));
             return entries;
+        }
+
+        // The script's own variables, parameters and local functions visible at the position.
+        internal static List<ISymbol> LocalsInScope(SemanticModel model, SyntaxNode root, int position)
+        {
+            return DeclaredNames(root)
+                .SelectMany(name => model.LookupSymbols(position, name: name))
+                .Where(IsLocal)
+                .ToList();
         }
 
         private static bool IsLocal(ISymbol symbol)
@@ -231,12 +271,12 @@ namespace RevitDevKit.Core
             return names;
         }
 
-        private static List<CompletionEntry> ToEntries(IEnumerable<ISymbol> symbols)
+        private static List<CompletionEntry> ToEntries(IEnumerable<ISymbol> symbols, CancellationToken token)
         {
             return symbols
                 .Where(IsShown)
                 .GroupBy(s => s.Name)
-                .Select(group => ToEntry(group.First(), group.Count()))
+                .Select(group => ToEntry(group.First(), group.Count(), token))
                 .ToList();
         }
 
@@ -285,7 +325,7 @@ namespace RevitDevKit.Core
                 .Where(s => !s.IsStatic && !(s is ITypeSymbol));
         }
 
-        private static bool IsShown(ISymbol symbol)
+        internal static bool IsShown(ISymbol symbol)
         {
             return symbol.CanBeReferencedByName
                 && !symbol.IsImplicitlyDeclared
@@ -328,19 +368,23 @@ namespace RevitDevKit.Core
             }
         }
 
-        private static CompletionEntry ToEntry(ISymbol symbol, int overloads)
+        internal static CompletionEntry ToEntry(ISymbol symbol, int overloads, CancellationToken token)
         {
             var description = symbol is INamespaceSymbol || symbol is ITypeSymbol
                 ? KindWord(symbol) + " " + symbol.ToDisplayString()
                 : symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
 
             if (overloads > 1)
-                description += "\n(перегрузок: " + overloads + ")";
+                description += " (+" + (overloads - 1) + " перегр.)";
+
+            var summary = SymbolDocumentation.Summary(symbol, token);
+            if (summary != null)
+                description += "\n" + summary;
 
             return new CompletionEntry { Name = symbol.Name, Kind = KindOf(symbol), Description = description };
         }
 
-        private static CompletionKind KindOf(ISymbol symbol)
+        internal static CompletionKind KindOf(ISymbol symbol)
         {
             switch (symbol)
             {

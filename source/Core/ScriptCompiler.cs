@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.Emit;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -293,7 +294,9 @@ namespace RevitDevKit.Core
 
                 try
                 {
-                    cached = MetadataReference.CreateFromFile(path);
+                    var documentation = FindDocumentation(path);
+                    cached = MetadataReference.CreateFromFile(path,
+                        documentation: documentation == null ? null : new XmlDocumentation(documentation));
                 }
                 catch
                 {
@@ -303,6 +306,28 @@ namespace RevitDevKit.Core
                 ReferenceCache[path] = cached;
                 return cached;
             }
+        }
+
+        // XML documentation for the editor's tooltips: next to the assembly (Revit API, NuGet packages),
+        // or for .NET in the reference assemblies, in the UI language first. It is read only when a tooltip needs it.
+        private static string FindDocumentation(string assemblyPath)
+        {
+            var fileName = Path.GetFileNameWithoutExtension(assemblyPath) + ".xml";
+            var language = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+
+            foreach (var dir in new[] { Path.GetDirectoryName(assemblyPath) }.Concat(PlatformSearchDirectories()))
+            {
+                if (dir.IsNullOrEmpty())
+                    continue;
+
+                foreach (var candidate in new[] { Path.Combine(dir, language, fileName), Path.Combine(dir, fileName) })
+                {
+                    if (File.Exists(candidate))
+                        return candidate;
+                }
+            }
+
+            return null;
         }
 
         private static IEnumerable<string> PlatformAssemblies()
