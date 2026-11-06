@@ -48,6 +48,7 @@ namespace RevitDevKit.UI.ScriptEditor
         {
             var editor = EditorFactory.Create();
             editor.Document = tab.Document;
+            BracketController.Attach(editor);
             CompletionController.Attach(editor);
 
             tab.NavigateRequested += (line, column) =>

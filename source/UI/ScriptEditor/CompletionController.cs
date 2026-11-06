@@ -2,11 +2,13 @@ using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.CodeCompletion;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
+using ICSharpCode.AvalonEdit.Rendering;
 using RevitDevKit.Core;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -15,7 +17,9 @@ using System.Windows.Media;
 
 namespace RevitDevKit.UI.ScriptEditor
 {
-    // The completion list of the script editor: opens after '.', on the first letter of a name, or on Ctrl+Space.
+    // IntelliSense of the script editor. The completion list opens after '.', on the first letter of a name, or on Ctrl+Space.
+    // After '(' and ',' (or on Ctrl+Shift+Space) the overloads of the call show above the line, and when variables
+    // of the argument's type are in scope, the completion list opens below with them on top.
     // Only members available in AvalonEdit 4.3 are used, as Revit may have that one loaded (see EditorFactory).
     internal sealed class CompletionController
     {
@@ -23,7 +27,9 @@ namespace RevitDevKit.UI.ScriptEditor
 
         private readonly TextEditor _editor;
         private CompletionWindow _window;
+        private OverloadInsightWindow _insight;
         private CancellationTokenSource _pending;
+        private CancellationTokenSource _pendingSignatures;
 
         private CompletionController(TextEditor editor)
         {
@@ -43,19 +49,37 @@ namespace RevitDevKit.UI.ScriptEditor
 
         private void OnPreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key != Key.Space || Keyboard.Modifiers != ModifierKeys.Control)
+            if (e.Key != Key.Space)
+                return;
+
+            if (Keyboard.Modifiers == ModifierKeys.Control)
+                Request(true);
+            else if (Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift))
+                RequestSignatures();
+            else
                 return;
 
             e.Handled = true;
-            Request(true);
         }
 
         private void OnTextEntered(object sender, TextCompositionEventArgs e)
         {
-            if (_window != null || e.Text.Length != 1)
+            if (e.Text.Length != 1)
                 return;
 
             var c = e.Text[0];
+            if (c == '(' || c == ',')
+            {
+                RequestSignatures();
+                return;
+            }
+
+            if (c == ')')
+                _insight?.Close();
+
+            if (_window != null)
+                return;
+
             var caret = _editor.TextArea.Caret.Offset;
             var firstLetter = (char.IsLetter(c) || c == '_') && (caret < 2 || !IsIdentifierChar(_editor.Document.GetCharAt(caret - 2)));
 
@@ -146,14 +170,28 @@ namespace RevitDevKit.UI.ScriptEditor
                 ConsoleOutput.Debug("Подсказки открылись за " + watch.ElapsedMilliseconds + " мс (" + list.Entries.Count + " шт.; " + list.Timing + ")");
         }
 
-        private void ShowWindow(IList<CompletionEntry> entries, int wordStart, string typed)
+        // Suggested names go first and are preferred when typed letters match several items equally.
+        private void ShowWindow(IList<CompletionEntry> entries, int wordStart, string typed, IList<string> suggested = null)
         {
             var window = new CompletionWindow(_editor.TextArea) { Width = 320 };
             window.StartOffset = wordStart;
 
             var data = window.CompletionList.CompletionData;
+            if (suggested != null)
+            {
+                foreach (var name in suggested)
+                {
+                    var entry = entries.FirstOrDefault(e => e.Name == name)
+                                ?? new CompletionEntry { Name = name, Kind = CompletionKind.Local };
+                    data.Add(new CompletionItem(entry, 1));
+                }
+            }
+
             foreach (var entry in entries)
-                data.Add(new CompletionItem(entry));
+            {
+                if (suggested == null || !suggested.Contains(entry.Name))
+                    data.Add(new CompletionItem(entry, 0));
+            }
 
             window.Closed += (s, e) =>
             {
@@ -166,6 +204,122 @@ namespace RevitDevKit.UI.ScriptEditor
 
             if (typed.Length > 0)
                 window.CompletionList.SelectItem(typed);
+            else if (suggested != null && data.Count > 0)
+                window.CompletionList.SelectedItem = data[0];
+        }
+
+        private async void RequestSignatures()
+        {
+            _pendingSignatures?.Cancel();
+            var pending = _pendingSignatures = new CancellationTokenSource();
+
+            var document = _editor.Document;
+            var caret = _editor.TextArea.Caret.Offset;
+            var line = document.GetLineByOffset(caret);
+            var code = document.Text;
+            var lineNumber = line.LineNumber;
+            var column = caret - line.Offset;
+
+            ScriptSignatures signatures;
+            ScriptCompletionList list;
+            try
+            {
+                (signatures, list) = await Task.Run(() =>
+                {
+                    var found = ScriptSignatureHelp.Get(code, lineNumber, column, pending.Token);
+                    var scope = found != null && found.Suggestions.Count > 0
+                        ? ScriptCompletion.Get(code, lineNumber, column, true, pending.Token)
+                        : null;
+                    return (found, scope);
+                }, pending.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                ConsoleOutput.Debug("Подсказка параметров недоступна: " + ex.Message);
+                return;
+            }
+
+            _editor.Dispatcher.BeginInvoke(new Action(() => ShowSignatures(signatures, list, pending)));
+        }
+
+        private void ShowSignatures(ScriptSignatures signatures, ScriptCompletionList list, CancellationTokenSource pending)
+        {
+            if (pending != _pendingSignatures)
+                return;
+
+            // ',' outside of a call, or the call is gone already.
+            if (signatures == null)
+            {
+                _insight?.Close();
+                return;
+            }
+
+            int start, end;
+            try
+            {
+                start = _editor.Document.GetOffset(signatures.StartLine, signatures.StartColumn + 1);
+                end = Math.Max(_editor.Document.GetOffset(signatures.EndLine, signatures.EndColumn + 1), _editor.TextArea.Caret.Offset);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return; // the text changed under the request
+            }
+
+            var caret = _editor.TextArea.Caret.Offset;
+            if (caret < start || caret > end)
+                return;
+
+            var provider = new SignatureProvider(signatures);
+            if (_insight != null)
+            {
+                _insight.Provider = provider;
+                _insight.StartOffset = start;
+                _insight.EndOffset = end;
+            }
+            else
+            {
+                var insight = new OverloadInsightWindow(_editor.TextArea) { Provider = provider, StartOffset = start, EndOffset = end };
+                insight.Closed += (s, e) =>
+                {
+                    if (_insight == insight)
+                        _insight = null;
+                };
+
+                _insight = insight;
+                insight.Show();
+                KeepAboveLine(insight);
+            }
+
+            // Opened after the overloads, so the list gets Up/Down first while both are shown.
+            if (list != null && _window == null)
+                ShowWindow(list.Entries, caret, string.Empty, signatures.Suggestions);
+        }
+
+        // The overloads sit above the caret line, as in Visual Studio, so they do not cover the completion list below it.
+        // AvalonEdit places them below and moves them back on scrolling, hence the handlers.
+        private void KeepAboveLine(Window window)
+        {
+            void Place()
+            {
+                var textView = _editor.TextArea.TextView;
+                var source = PresentationSource.FromVisual(textView);
+                if (source?.CompositionTarget == null || !window.IsVisible)
+                    return;
+
+                var lineTop = textView.GetVisualPosition(_editor.TextArea.Caret.Position, VisualYPosition.LineTop) - textView.ScrollOffset;
+                var screen = source.CompositionTarget.TransformFromDevice.Transform(textView.PointToScreen(lineTop));
+                var top = screen.Y - window.ActualHeight;
+                if (top >= SystemParameters.VirtualScreenTop && Math.Abs(window.Top - top) > 0.5)
+                    window.Top = top;
+            }
+
+            window.SizeChanged += (s, e) => Place();
+            window.LocationChanged += (s, e) => Place();
+            Place();
         }
 
         private static void Safe(Action action)
@@ -187,13 +341,17 @@ namespace RevitDevKit.UI.ScriptEditor
     {
         private readonly CompletionEntry _entry;
 
-        public CompletionItem(CompletionEntry entry) => _entry = entry;
+        public CompletionItem(CompletionEntry entry, double priority)
+        {
+            _entry = entry;
+            Priority = priority;
+        }
 
         public ImageSource Image => CompletionIcons.For(_entry.Kind);
         public string Text => _entry.Name;
         public object Content => _entry.Name;
         public object Description => _entry.Description;
-        public double Priority => 0;
+        public double Priority { get; }
 
         public void Complete(TextArea textArea, ISegment completionSegment, EventArgs insertionRequestEventArgs)
         {

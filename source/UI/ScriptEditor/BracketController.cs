@@ -1,0 +1,143 @@
+using ICSharpCode.AvalonEdit;
+using ICSharpCode.AvalonEdit.Document;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows.Input;
+
+namespace RevitDevKit.UI.ScriptEditor
+{
+    // Brackets as in Visual Studio: ( [ { insert their closing bracket, typing that closing bracket steps over it,
+    // Backspace between an empty pair removes both, and Enter between {} opens a block with { on its own line.
+    // Only brackets inserted here are stepped over, so a closing bracket typed anywhere else is inserted as usual.
+    internal sealed class BracketController
+    {
+        private static readonly Dictionary<char, char> Pairs = new Dictionary<char, char> { { '(', ')' }, { '[', ']' }, { '{', '}' } };
+
+        private readonly TextEditor _editor;
+        private readonly List<TextAnchor> _inserted = new List<TextAnchor>();
+
+        private BracketController(TextEditor editor)
+        {
+            _editor = editor;
+            editor.TextArea.TextEntering += OnTextEntering;
+            editor.TextArea.TextEntered += OnTextEntered;
+            editor.TextArea.PreviewKeyDown += OnPreviewKeyDown;
+        }
+
+        // Attach before CompletionController: the overloads window must open with the caret already between the brackets.
+        public static void Attach(TextEditor editor)
+        {
+            new BracketController(editor);
+        }
+
+        private TextDocument Document => _editor.Document;
+
+        private int Caret
+        {
+            get => _editor.TextArea.Caret.Offset;
+            set => _editor.TextArea.Caret.Offset = value;
+        }
+
+        private void OnTextEntered(object sender, TextCompositionEventArgs e)
+        {
+            if (e.Text.Length != 1 || !Pairs.TryGetValue(e.Text[0], out var closing))
+                return;
+
+            // Only before whitespace, a line end or another closing character, so ( typed in front of a word stays alone.
+            var caret = Caret;
+            if (caret < Document.TextLength && !ClosesHere(Document.GetCharAt(caret)))
+                return;
+
+            Document.Insert(caret, closing.ToString());
+            _inserted.Add(Document.CreateAnchor(caret));
+            Caret = caret;
+        }
+
+        private void OnTextEntering(object sender, TextCompositionEventArgs e)
+        {
+            if (e.Text.Length != 1 || !Pairs.ContainsValue(e.Text[0]))
+                return;
+
+            var caret = Caret;
+            var inserted = InsertedAt(caret);
+            if (inserted == null || Document.GetCharAt(caret) != e.Text[0])
+                return;
+
+            _inserted.Remove(inserted);
+            Caret = caret + 1;
+            e.Handled = true;
+        }
+
+        private void OnPreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (Keyboard.Modifiers != ModifierKeys.None)
+                return;
+
+            if (e.Key == Key.Back)
+                e.Handled = RemoveEmptyPair();
+            else if (e.Key == Key.Enter)
+                e.Handled = OpenBlock();
+        }
+
+        private bool RemoveEmptyPair()
+        {
+            var caret = Caret;
+            if (caret == 0 || caret >= Document.TextLength || !_editor.TextArea.Selection.IsEmpty)
+                return false;
+
+            if (!Pairs.TryGetValue(Document.GetCharAt(caret - 1), out var closing)
+                || Document.GetCharAt(caret) != closing || InsertedAt(caret) == null)
+                return false;
+
+            Document.Remove(caret - 1, 2);
+            return true;
+        }
+
+        // "if (x) {|}" becomes
+        //   if (x)
+        //   {
+        //       |
+        //   }
+        private bool OpenBlock()
+        {
+            var caret = Caret;
+            if (caret == 0 || caret >= Document.TextLength || Document.GetCharAt(caret - 1) != '{' || Document.GetCharAt(caret) != '}')
+                return false;
+
+            var line = Document.GetLineByOffset(caret);
+            var lineText = Document.GetText(line.Offset, line.Length);
+            var indent = lineText.Substring(0, lineText.Length - lineText.TrimStart().Length);
+            var head = Document.GetText(line.Offset, caret - 1 - line.Offset).TrimEnd();
+            var newLine = NewLine(line);
+            var unit = _editor.Options.IndentationString;
+
+            var braceOnItsOwnLine = head.Trim().Length == 0;
+            var start = braceOnItsOwnLine ? caret - 1 : line.Offset + head.Length;
+            var opening = braceOnItsOwnLine ? "{" : newLine + indent + "{";
+
+            Document.Replace(start, caret + 1 - start, opening + newLine + indent + unit + newLine + indent + "}");
+            Caret = start + opening.Length + newLine.Length + indent.Length + unit.Length;
+            return true;
+        }
+
+        private string NewLine(DocumentLine line)
+        {
+            var delimited = line.DelimiterLength > 0 ? line : line.PreviousLine;
+            return delimited == null || delimited.DelimiterLength == 0
+                ? Environment.NewLine
+                : Document.GetText(delimited.EndOffset, delimited.DelimiterLength);
+        }
+
+        private TextAnchor InsertedAt(int offset)
+        {
+            _inserted.RemoveAll(a => a.IsDeleted);
+            return _inserted.FirstOrDefault(a => a.Offset == offset);
+        }
+
+        private static bool ClosesHere(char next)
+        {
+            return char.IsWhiteSpace(next) || next == ')' || next == ']' || next == '}' || next == ';' || next == ',';
+        }
+    }
+}
