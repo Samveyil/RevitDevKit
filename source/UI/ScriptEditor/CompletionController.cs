@@ -5,6 +5,7 @@ using ICSharpCode.AvalonEdit.Editing;
 using RevitDevKit.Core;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -97,6 +98,7 @@ namespace RevitDevKit.UI.ScriptEditor
             var code = document.Text;
             var lineNumber = line.LineNumber;
             var column = caret - line.Offset;
+            var watch = Stopwatch.StartNew();
 
             ScriptCompletionList list;
             try
@@ -115,10 +117,10 @@ namespace RevitDevKit.UI.ScriptEditor
             }
 
             // Not every caller has a WPF synchronization context, so return to the editor's thread explicitly.
-            _editor.Dispatcher.BeginInvoke(new Action(() => Show(list, pending, line)));
+            _editor.Dispatcher.BeginInvoke(new Action(() => Show(list, pending, line, watch)));
         }
 
-        private void Show(ScriptCompletionList list, CancellationTokenSource pending, DocumentLine line)
+        private void Show(ScriptCompletionList list, CancellationTokenSource pending, DocumentLine line, Stopwatch watch)
         {
             if (pending != _pending || list == null || _window != null)
                 return;
@@ -138,6 +140,10 @@ namespace RevitDevKit.UI.ScriptEditor
             }
 
             ShowWindow(list.Entries, wordStart, typed);
+
+            // Only slow lists are logged, so the debug console does not fill up on every keystroke.
+            if (watch.ElapsedMilliseconds > 150)
+                ConsoleOutput.Debug("Подсказки открылись за " + watch.ElapsedMilliseconds + " мс (" + list.Entries.Count + " шт.; " + list.Timing + ")");
         }
 
         private void ShowWindow(IList<CompletionEntry> entries, int wordStart, string typed)
