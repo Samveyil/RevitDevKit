@@ -20,12 +20,14 @@ namespace RevitDevKit.UI.ScriptEditor
     // IntelliSense of the script editor. The completion list opens after '.', on the first letter of a name, or on Ctrl+Space.
     // After '(' and ',' (or on Ctrl+Shift+Space) the overloads of the call show above the line, and when variables
     // of the argument's type are in scope, the completion list opens below with them on top.
+    // After '<' of a generic (All<, walls.OfType<) the '<' gets its '>' and the list holds the types that fit.
     // Only members available in AvalonEdit 4.3 are used, as Revit may have that one loaded (see EditorFactory).
     internal sealed class CompletionController
     {
         private static int _warmed;
 
         private readonly TextEditor _editor;
+        private readonly BracketController _brackets;
         private CompletionWindow _window;
         private OverloadInsightWindow _insight;
         private CancellationTokenSource _pending;
@@ -37,6 +39,9 @@ namespace RevitDevKit.UI.ScriptEditor
             editor.TextArea.TextEntering += OnTextEntering;
             editor.TextArea.TextEntered += OnTextEntered;
             editor.TextArea.PreviewKeyDown += OnPreviewKeyDown;
+
+            // After the handlers above, so an open list accepts its name before a closing bracket is stepped over.
+            _brackets = BracketController.Attach(editor);
         }
 
         public static void Attach(TextEditor editor)
@@ -80,6 +85,13 @@ namespace RevitDevKit.UI.ScriptEditor
             if (_window != null)
                 return;
 
+            // Whether '<' opens a generic or compares is known only after binding the name before it.
+            if (c == '<')
+            {
+                Request(true, afterAngle: true);
+                return;
+            }
+
             var caret = _editor.TextArea.Caret.Offset;
             var firstLetter = (char.IsLetter(c) || c == '_') && (caret < 2 || !IsIdentifierChar(_editor.Document.GetCharAt(caret - 2)));
 
@@ -87,14 +99,14 @@ namespace RevitDevKit.UI.ScriptEditor
                 Request(false);
         }
 
-        // '.' and '(' accept the selected name as in Visual Studio; any other character just closes the list,
+        // '.', '(', '<' and '>' accept the selected name as in Visual Studio; any other character just closes the list,
         // so typing a new name does not get replaced by a suggestion.
         private void OnTextEntering(object sender, TextCompositionEventArgs e)
         {
             if (_window == null || e.Text.Length == 0 || IsIdentifierChar(e.Text[0]))
                 return;
 
-            if ((e.Text[0] == '.' || e.Text[0] == '(') && SelectionMatchesTypedText())
+            if (".(<>".IndexOf(e.Text[0]) >= 0 && SelectionMatchesTypedText())
                 _window.CompletionList.RequestInsertion(e);
             else
                 _window.Close();
@@ -111,7 +123,7 @@ namespace RevitDevKit.UI.ScriptEditor
             return selected.Text.StartsWith(typed, StringComparison.OrdinalIgnoreCase);
         }
 
-        private async void Request(bool explicitRequest)
+        private async void Request(bool explicitRequest, bool afterAngle = false)
         {
             _pending?.Cancel();
             var pending = _pending = new CancellationTokenSource();
@@ -141,12 +153,16 @@ namespace RevitDevKit.UI.ScriptEditor
             }
 
             // Not every caller has a WPF synchronization context, so return to the editor's thread explicitly.
-            _editor.Dispatcher.BeginInvoke(new Action(() => Show(list, pending, line, watch)));
+            _editor.Dispatcher.BeginInvoke(new Action(() => Show(list, pending, line, watch, afterAngle)));
         }
 
-        private void Show(ScriptCompletionList list, CancellationTokenSource pending, DocumentLine line, Stopwatch watch)
+        private void Show(ScriptCompletionList list, CancellationTokenSource pending, DocumentLine line, Stopwatch watch, bool afterAngle)
         {
             if (pending != _pending || list == null || _window != null)
+                return;
+
+            // After '<' only a generic gets a list: for a comparison the request returns the plain scope.
+            if (afterAngle && !list.IsTypeArguments)
                 return;
 
             // The user may have kept typing: show the list only while the caret is still in the same name.
@@ -163,7 +179,14 @@ namespace RevitDevKit.UI.ScriptEditor
                     return;
             }
 
-            ShowWindow(list.Entries, wordStart, typed);
+            if (afterAngle)
+            {
+                var next = caretNow < document.TextLength ? document.GetCharAt(caretNow) : '\n';
+                if (next != '>' && (next == '(' || BracketController.ClosesHere(next)))
+                    _brackets.Close('>');
+            }
+
+            ShowWindow(list.Entries, wordStart, typed, list.Suggestions.Count > 0 ? list.Suggestions : null);
 
             // Only slow lists are logged, so the debug console does not fill up on every keystroke.
             if (watch.ElapsedMilliseconds > 150)

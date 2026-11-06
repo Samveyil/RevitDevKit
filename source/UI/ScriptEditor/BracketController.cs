@@ -10,9 +10,11 @@ namespace RevitDevKit.UI.ScriptEditor
     // Brackets as in Visual Studio: ( [ { insert their closing bracket, typing that closing bracket steps over it,
     // Backspace between an empty pair removes both, and Enter between {} opens a block with { on its own line.
     // Only brackets inserted here are stepped over, so a closing bracket typed anywhere else is inserted as usual.
+    // '<' is closed by CompletionController through Close, once it knows the '<' opens a generic and is not a comparison.
     internal sealed class BracketController
     {
         private static readonly Dictionary<char, char> Pairs = new Dictionary<char, char> { { '(', ')' }, { '[', ']' }, { '{', '}' } };
+        private static readonly Dictionary<char, char> AllPairs = new Dictionary<char, char> { { '(', ')' }, { '[', ']' }, { '{', '}' }, { '<', '>' } };
 
         private readonly TextEditor _editor;
         private readonly List<TextAnchor> _inserted = new List<TextAnchor>();
@@ -25,10 +27,19 @@ namespace RevitDevKit.UI.ScriptEditor
             editor.TextArea.PreviewKeyDown += OnPreviewKeyDown;
         }
 
-        // Attach before CompletionController: the overloads window must open with the caret already between the brackets.
-        public static void Attach(TextEditor editor)
+        // Attached by CompletionController, after its own handlers.
+        public static BracketController Attach(TextEditor editor)
         {
-            new BracketController(editor);
+            return new BracketController(editor);
+        }
+
+        // Inserts a closing bracket at the caret that is stepped over and removed with its pair like the ones inserted here.
+        public void Close(char closing)
+        {
+            var caret = Caret;
+            Document.Insert(caret, closing.ToString());
+            _inserted.Add(Document.CreateAnchor(caret));
+            Caret = caret;
         }
 
         private TextDocument Document => _editor.Document;
@@ -45,18 +56,15 @@ namespace RevitDevKit.UI.ScriptEditor
                 return;
 
             // Only before whitespace, a line end or another closing character, so ( typed in front of a word stays alone.
-            var caret = Caret;
-            if (caret < Document.TextLength && !ClosesHere(Document.GetCharAt(caret)))
+            if (Caret < Document.TextLength && !ClosesHere(Document.GetCharAt(Caret)))
                 return;
 
-            Document.Insert(caret, closing.ToString());
-            _inserted.Add(Document.CreateAnchor(caret));
-            Caret = caret;
+            Close(closing);
         }
 
         private void OnTextEntering(object sender, TextCompositionEventArgs e)
         {
-            if (e.Text.Length != 1 || !Pairs.ContainsValue(e.Text[0]))
+            if (e.Text.Length != 1 || !AllPairs.ContainsValue(e.Text[0]))
                 return;
 
             var caret = Caret;
@@ -86,7 +94,7 @@ namespace RevitDevKit.UI.ScriptEditor
             if (caret == 0 || caret >= Document.TextLength || !_editor.TextArea.Selection.IsEmpty)
                 return false;
 
-            if (!Pairs.TryGetValue(Document.GetCharAt(caret - 1), out var closing)
+            if (!AllPairs.TryGetValue(Document.GetCharAt(caret - 1), out var closing)
                 || Document.GetCharAt(caret) != closing || InsertedAt(caret) == null)
                 return false;
 
@@ -135,7 +143,7 @@ namespace RevitDevKit.UI.ScriptEditor
             return _inserted.FirstOrDefault(a => a.Offset == offset);
         }
 
-        private static bool ClosesHere(char next)
+        internal static bool ClosesHere(char next)
         {
             return char.IsWhiteSpace(next) || next == ')' || next == ']' || next == '}' || next == ';' || next == ',';
         }

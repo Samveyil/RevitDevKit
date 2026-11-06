@@ -52,6 +52,12 @@ namespace RevitDevKit.Core
         public int WordStart { get; set; }
         public IList<CompletionEntry> Entries { get; set; }
 
+        // Names shown first and preselected, e.g. element classes for walls.OfType<.
+        public IList<string> Suggestions { get; set; } = new List<string>();
+
+        // Types for the argument of a generic method or type: the editor then closes '<' with '>'.
+        public bool IsTypeArguments { get; set; }
+
         // Time per step, written to the console at debug level.
         public string Timing { get; set; }
     }
@@ -72,7 +78,13 @@ namespace RevitDevKit.Core
         private static CSharpCompilation _baseCompilation;
         private static string _baseKey;
         private static string _requestKey;
-        private static readonly Dictionary<string, List<CompletionEntry>> Scopes = new Dictionary<string, List<CompletionEntry>>();
+        private static readonly Dictionary<string, Scope> Scopes = new Dictionary<string, Scope>();
+
+        private sealed class Scope
+        {
+            public List<CompletionEntry> Entries;
+            public List<INamedTypeSymbol> Types;
+        }
 
         // line is 1-based, column is the caret's 0-based index in that line.
         // Without an explicit request (Ctrl+Space) the list is offered only after a '.' or on the first letter of a name.
@@ -93,6 +105,17 @@ namespace RevitDevKit.Core
                 return null;
 
             var watch = Stopwatch.StartNew();
+            if (!afterDot)
+            {
+                var typeArguments = TypeArguments(userCode, line, lineText, wordStart, token);
+                if (typeArguments != null)
+                {
+                    typeArguments.WordStart = wordStart;
+                    typeArguments.Timing = "типы " + watch.ElapsedMilliseconds + " мс";
+                    return typeArguments;
+                }
+            }
+
             var script = Analyze(userCode, line, lineText, token);
             if (script == null)
                 return null;
@@ -206,29 +229,186 @@ namespace RevitDevKit.Core
         // So it is looked up once per set of usings (tabs may differ), and on each keystroke only the script's own names.
         private static List<CompletionEntry> ScriptScope(SemanticModel model, SyntaxNode root, int position, string usings, CancellationToken token)
         {
-            List<CompletionEntry> scope;
+            var scope = CachedScope(model, position, usings, token);
+
+            var entries = ToEntries(LocalsInScope(model, root, position), token);
+            var shadowed = new HashSet<string>(entries.Select(e => e.Name));
+            entries.AddRange(scope.Entries.Where(e => !shadowed.Contains(e.Name)));
+            return entries;
+        }
+
+        private static Scope CachedScope(SemanticModel model, int position, string usings, CancellationToken token)
+        {
             lock (Sync)
-                Scopes.TryGetValue(usings, out scope);
-
-            List<ISymbol> locals;
-            if (scope == null)
             {
-                var all = model.LookupSymbols(position);
-                locals = all.Where(IsLocal).ToList();
-                scope = ToEntries(all.Where(s => !IsLocal(s)), token);
+                if (Scopes.TryGetValue(usings, out var cached))
+                    return cached;
+            }
 
-                lock (Sync)
-                    Scopes[usings] = scope;
+            var all = model.LookupSymbols(position).Where(s => !IsLocal(s)).ToList();
+            var scope = new Scope { Entries = ToEntries(all, token), Types = all.OfType<INamedTypeSymbol>().ToList() };
+
+            lock (Sync)
+                Scopes[usings] = scope;
+            return scope;
+        }
+
+        // Inside <...> of a generic method or type (All<|, walls.OfType<W|, Dictionary<string, |) the list holds
+        // only the types that fit the type parameter's constraints: Element subclasses for All<T> where T : Element.
+        // The name before '<' is bound on a copy of the line cut at '<': with nothing after '>', "All<W>" followed by
+        // the next line would parse as comparisons.
+        private static ScriptCompletionList TypeArguments(string userCode, int line, string lineText, int wordStart, CancellationToken token)
+        {
+            var open = TypeArgumentListStart(lineText, wordStart, out var argumentIndex);
+            if (open < 0)
+                return null;
+
+            var nameEnd = open;
+            while (nameEnd > 0 && lineText[nameEnd - 1] == ' ')
+                nameEnd--;
+            if (nameEnd == 0 || !IsIdentifierChar(lineText[nameEnd - 1]))
+                return null;
+
+            var probeLine = lineText.Substring(0, nameEnd);
+            var lines = userCode.Replace("\r\n", "\n").Split('\n');
+            lines[line - 1] = probeLine;
+
+            var script = Analyze(string.Join("\n", lines), line, probeLine, token);
+            if (script == null)
+                return null;
+
+            var position = script.LineStart + nameEnd;
+            if (!(script.Root.FindToken(position - 1).Parent is SimpleNameSyntax name) || name.Span.End != position)
+                return null;
+
+            var parameters = TypeParameters(script.Model, name, argumentIndex, position, token);
+            if (parameters.Count == 0)
+                return null;
+
+            // Wrapped scripts reuse the cached scope, entries included, so a thousand types are not described again.
+            var scope = script.Prepared.LineOffset > 0 ? CachedScope(script.Model, position, script.Text.Lines[0].ToString(), token) : null;
+            var types = scope?.Types ?? script.Model.LookupSymbols(position).OfType<INamedTypeSymbol>().ToList();
+
+            var fitting = types.Where(t => parameters.Any(p => Satisfies(script.Compilation, t, p))).ToList();
+            var names = new HashSet<string>(fitting.Select(t => t.Name));
+            var entries = scope != null
+                ? scope.Entries.Where(e => names.Contains(e.Name) && e.Kind != CompletionKind.Namespace).ToList()
+                : ToEntries(fitting, token);
+            entries.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+
+            return entries.Count == 0 ? null : new ScriptCompletionList
+            {
+                Entries = entries,
+                Suggestions = PreferredTypes(script, name, parameters, fitting).Where(names.Contains).ToList(),
+                IsTypeArguments = true
+            };
+        }
+
+        // The '<' of the type argument list the word is in, scanning back over names, dots, commas and nested <...>.
+        private static int TypeArgumentListStart(string lineText, int wordStart, out int argumentIndex)
+        {
+            argumentIndex = 0;
+            var depth = 0;
+            for (var i = wordStart - 1; i >= 0; i--)
+            {
+                var c = lineText[i];
+                if (c == '>')
+                {
+                    depth++;
+                }
+                else if (c == '<')
+                {
+                    if (depth == 0)
+                        return i;
+                    depth--;
+                }
+                else if (c == ',')
+                {
+                    if (depth == 0)
+                        argumentIndex++;
+                }
+                else if (!IsIdentifierChar(c) && c != '.' && c != ' ' && c != '[' && c != ']' && c != '?')
+                {
+                    return -1;
+                }
+            }
+
+            return -1;
+        }
+
+        private static List<ITypeParameterSymbol> TypeParameters(SemanticModel model, SimpleNameSyntax name, int index, int position, CancellationToken token)
+        {
+            var candidates = new List<ISymbol>();
+            INamespaceOrTypeSymbol container = null;
+
+            if (name.Parent is MemberAccessExpressionSyntax access && access.Name == name)
+            {
+                candidates.AddRange(model.GetMemberGroup(access, token));
+                container = model.GetSymbolInfo(access.Expression, token).Symbol as INamespaceOrTypeSymbol;
+            }
+            else if (name.Parent is QualifiedNameSyntax qualified && qualified.Right == name)
+            {
+                container = model.GetSymbolInfo(qualified.Left, token).Symbol as INamespaceOrTypeSymbol;
             }
             else
             {
-                locals = LocalsInScope(model, root, position);
+                candidates.AddRange(model.GetMemberGroup(name, token));
             }
 
-            var entries = ToEntries(locals, token);
-            var shadowed = new HashSet<string>(entries.Select(e => e.Name));
-            entries.AddRange(scope.Where(e => !shadowed.Contains(e.Name)));
-            return entries;
+            // Generic types too: List<, Dictionary<string, .
+            candidates.AddRange(model.LookupSymbols(position, container, name.Identifier.ValueText).OfType<INamedTypeSymbol>());
+
+            return candidates
+                .Select(c => c is IMethodSymbol method && method.Arity > index ? method.TypeParameters[index]
+                    : c is INamedTypeSymbol type && type.Arity > index ? type.TypeParameters[index]
+                    : null)
+                .Where(p => p != null)
+                .ToList();
+        }
+
+        private static bool Satisfies(CSharpCompilation compilation, INamedTypeSymbol type, ITypeParameterSymbol parameter)
+        {
+            if (type.IsStatic || type.TypeKind == TypeKind.Error)
+                return false;
+            if (parameter.HasReferenceTypeConstraint && !type.IsReferenceType)
+                return false;
+            if (parameter.HasValueTypeConstraint && !type.IsValueType)
+                return false;
+            if (parameter.HasConstructorConstraint && !type.IsValueType
+                && (type.IsAbstract || !type.InstanceConstructors.Any(c => c.Parameters.Length == 0 && c.DeclaredAccessibility == Accessibility.Public)))
+                return false;
+
+            // A constraint on another type parameter (where T : U) cannot be checked here and is taken as met.
+            return parameter.ConstraintTypes.All(constraint =>
+                constraint.TypeKind == TypeKind.TypeParameter || compilation.ClassifyConversion(type, constraint).IsImplicit);
+        }
+
+        // For an unconstrained parameter called on a collection (walls.OfType<, elements.Cast<) the element type
+        // and its subclasses come first: for a list of Element that is Wall, Floor, FamilyInstance and so on.
+        private static IEnumerable<string> PreferredTypes(ScriptAnalysis script, SimpleNameSyntax name, List<ITypeParameterSymbol> parameters, List<INamedTypeSymbol> fitting)
+        {
+            if (parameters.Any(p => p.ConstraintTypes.Length > 0) || !(name.Parent is MemberAccessExpressionSyntax access))
+                return Enumerable.Empty<string>();
+
+            var element = ElementType(script.Model.GetTypeInfo(access.Expression).Type);
+            if (element == null || element.SpecialType == SpecialType.System_Object)
+                return Enumerable.Empty<string>();
+
+            return fitting
+                .Where(t => script.Compilation.ClassifyConversion(t, element).IsImplicit)
+                .Select(t => t.Name)
+                .Distinct()
+                .OrderBy(n => n, StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static ITypeSymbol ElementType(ITypeSymbol collection)
+        {
+            if (!(collection is INamedTypeSymbol named))
+                return null;
+
+            var enumerable = new[] { named }.Concat(named.AllInterfaces)
+                .FirstOrDefault(i => i.OriginalDefinition.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T);
+            return enumerable?.TypeArguments[0];
         }
 
         // The script's own variables, parameters and local functions visible at the position.
