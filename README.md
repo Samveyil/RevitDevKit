@@ -87,3 +87,11 @@ DLL может называться иначе, чем установленна�
 ![Консоль](assets/console.png)
 
 Сюда попадает всё, что пишут скрипты и команды из DLL: `Console.WriteLine`, `Debug.WriteLine`, `Trace` и исключения со стеком вызовов. Консоль открывается отдельной панелью Revit и дублируется внизу редактора скриптов. Её можно очистить и скопировать, а время и строки отладки включаются галочками.
+
+## License
+
+This project is [licensed](https://github.com/Samveyil/RevitDevKit/blob/master/LICENSE.txt) under the [MIT License](https://en.wikipedia.org/wiki/MIT_License).
+
+---
+
+Do you like this project? Please [star this project on GitHub](https://github.com/Samveyil/RevitDevKit/stargazers)!
