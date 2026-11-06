@@ -134,7 +134,7 @@ namespace RevitDevKit.UI.ScriptEditor
             var code = document.Text;
             var lineNumber = line.LineNumber;
             var column = caret - line.Offset;
-            var watch = Stopwatch.StartNew();
+            // var watch = Stopwatch.StartNew();
 
             ScriptCompletionList list;
             try
@@ -153,10 +153,10 @@ namespace RevitDevKit.UI.ScriptEditor
             }
 
             // Not every caller has a WPF synchronization context, so return to the editor's thread explicitly.
-            _editor.Dispatcher.BeginInvoke(new Action(() => Show(list, pending, line, watch, afterAngle)));
+            _editor.Dispatcher.BeginInvoke(new Action(() => Show(list, pending, line, afterAngle)));
         }
 
-        private void Show(ScriptCompletionList list, CancellationTokenSource pending, DocumentLine line, Stopwatch watch, bool afterAngle)
+        private void Show(ScriptCompletionList list, CancellationTokenSource pending, DocumentLine line, bool afterAngle)
         {
             if (pending != _pending || list == null || _window != null)
                 return;
@@ -188,9 +188,11 @@ namespace RevitDevKit.UI.ScriptEditor
 
             ShowWindow(list.Entries, wordStart, typed, list.Suggestions.Count > 0 ? list.Suggestions : null);
 
-            // Only slow lists are logged, so the debug console does not fill up on every keystroke.
-            if (watch.ElapsedMilliseconds > 150)
-                ConsoleOutput.Debug("Подсказки открылись за " + watch.ElapsedMilliseconds + " мс (" + list.Entries.Count + " шт.; " + list.Timing + ")");
+            // Speed check, turned off. To turn it back on, uncomment the watch in Request, pass it here as a Stopwatch watch
+            // parameter, and uncomment the timing in ScriptCompletion.Get. Only slow lists were logged, so the debug console
+            // did not fill up on every keystroke.
+            // if (watch.ElapsedMilliseconds > 150)
+            //     ConsoleOutput.Debug("Подсказки открылись за " + watch.ElapsedMilliseconds + " мс (" + list.Entries.Count + " шт.; " + list.Timing + ")");
         }
 
         // Suggested names go first and are preferred when typed letters match several items equally.
