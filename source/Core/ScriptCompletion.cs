@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 
@@ -37,6 +38,9 @@ namespace RevitDevKit.Core
         // Column in the caret line where the name being completed starts.
         public int WordStart { get; set; }
         public IList<CompletionEntry> Entries { get; set; }
+
+        // Time per step, written to the console at debug level.
+        public string Timing { get; set; }
     }
 
     // IntelliSense for scripts on the compiler's SemanticModel only, without Roslyn Features.
@@ -54,6 +58,8 @@ namespace RevitDevKit.Core
         private static readonly object Sync = new object();
         private static CSharpCompilation _baseCompilation;
         private static string _baseKey;
+        private static string _requestKey;
+        private static readonly Dictionary<string, List<CompletionEntry>> Scopes = new Dictionary<string, List<CompletionEntry>>();
 
         // line is 1-based, column is the caret's 0-based index in that line.
         // Without an explicit request (Ctrl+Space) the list is offered only after a '.' or on the first letter of a name.
@@ -74,6 +80,7 @@ namespace RevitDevKit.Core
             if (!explicitRequest && !afterDot && column == wordStart)
                 return null;
 
+            var watch = Stopwatch.StartNew();
             var prepared = ScriptSource.Prepare(userCode);
             var tree = CSharpSyntaxTree.ParseText(prepared.Code, ScriptCompiler.CreateParseOptions(), cancellationToken: token);
             var text = tree.GetText(token);
@@ -88,63 +95,149 @@ namespace RevitDevKit.Core
             if (IsInCommentOrLiteral(root, position))
                 return null;
 
+            var parsed = watch.ElapsedMilliseconds;
             var compilation = BaseCompilation(prepared.ExtraReferences).AddSyntaxTrees(tree);
             var model = compilation.GetSemanticModel(tree);
+            var referenced = watch.ElapsedMilliseconds;
 
-            IEnumerable<ISymbol> symbols;
+            List<CompletionEntry> entries;
             if (afterDot)
             {
-                symbols = MemberSymbols(model, root, position - 1, token);
+                var members = MemberSymbols(model, root, position - 1, token);
+                if (members == null)
+                    return null;
+                entries = ToEntries(members);
             }
             else
             {
                 if (!explicitRequest && IsDeclaredName(root, position))
                     return null;
-                symbols = model.LookupSymbols(position);
+
+                entries = prepared.LineOffset > 0
+                    ? ScriptScope(model, root, position, text.Lines[0].ToString())
+                    : ToEntries(model.LookupSymbols(position));
+                entries.AddRange(Keywords.Select(k => new CompletionEntry { Name = k, Kind = CompletionKind.Keyword }));
             }
 
-            if (symbols == null)
-                return null;
-
+            var looked = watch.ElapsedMilliseconds;
             token.ThrowIfCancellationRequested();
-
-            var entries = symbols
-                .Where(IsShown)
-                .GroupBy(s => s.Name)
-                .Select(group => ToEntry(group.First(), group.Count()))
-                .ToList();
-
-            if (!afterDot)
-                entries.AddRange(Keywords.Select(k => new CompletionEntry { Name = k, Kind = CompletionKind.Keyword }));
 
             if (entries.Count == 0)
                 return null;
 
             entries.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
-            return new ScriptCompletionList { WordStart = wordStart, Entries = entries };
+
+            var timing = "разбор " + parsed + ", ссылки " + (referenced - parsed) + ", поиск " + (looked - referenced) +
+                         ", сортировка " + (watch.ElapsedMilliseconds - looked) + " мс";
+            return new ScriptCompletionList { WordStart = wordStart, Entries = entries, Timing = timing };
         }
 
-        // Loads the referenced assemblies, Revit API included, so the first list in the editor does not wait for them.
+        // Loads the referenced assemblies, Revit API included, and the script scope,
+        // so the first list in the editor does not wait for them.
         public static void Warm()
         {
             Get("Doc.", 1, 4, true, CancellationToken.None);
+            Get("D", 1, 1, true, CancellationToken.None);
         }
 
         // References are bound once per set: a compilation derived with AddSyntaxTrees reuses them.
+        // Listing the hundreds of assemblies loaded in Revit is itself slow, so it is redone only when one is added.
         private static CSharpCompilation BaseCompilation(IList<string> extraReferences)
         {
+            var requestKey = AppDomain.CurrentDomain.GetAssemblies().Length + "|" + string.Join("|", extraReferences);
+            lock (Sync)
+            {
+                if (_baseCompilation != null && _requestKey == requestKey)
+                    return _baseCompilation;
+            }
+
             var references = ScriptCompiler.BuildReferences(extraReferences, new List<CompileMessage>());
             var key = string.Join("|", references.Select(r => r.Display));
 
             lock (Sync)
             {
+                _requestKey = requestKey;
                 if (_baseCompilation == null || _baseKey != key)
                 {
                     _baseCompilation = ScriptCompiler.CreateCompilation("RevitScriptCompletion", new SyntaxTree[0], references);
                     _baseKey = key;
+                    Scopes.Clear();
                 }
                 return _baseCompilation;
             }
+        }
+
+        // Everything a script sees apart from its own locals (ScriptBase members, types and namespaces from the usings)
+        // stays the same while typing, and looking it up is the slow part with hundreds of assemblies loaded in Revit.
+        // So it is looked up once per set of usings (tabs may differ), and on each keystroke only the script's own names.
+        private static List<CompletionEntry> ScriptScope(SemanticModel model, SyntaxNode root, int position, string usings)
+        {
+            List<CompletionEntry> scope;
+            lock (Sync)
+                Scopes.TryGetValue(usings, out scope);
+
+            List<ISymbol> locals;
+            if (scope == null)
+            {
+                var all = model.LookupSymbols(position);
+                locals = all.Where(IsLocal).ToList();
+                scope = ToEntries(all.Where(s => !IsLocal(s)));
+
+                lock (Sync)
+                    Scopes[usings] = scope;
+            }
+            else
+            {
+                locals = DeclaredNames(root)
+                    .SelectMany(name => model.LookupSymbols(position, name: name))
+                    .Where(IsLocal)
+                    .ToList();
+            }
+
+            var entries = ToEntries(locals);
+            var shadowed = new HashSet<string>(entries.Select(e => e.Name));
+            entries.AddRange(scope.Where(e => !shadowed.Contains(e.Name)));
+            return entries;
+        }
+
+        private static bool IsLocal(ISymbol symbol)
+        {
+            return symbol is ILocalSymbol
+                || symbol is IParameterSymbol
+                || symbol is IRangeVariableSymbol
+                || symbol is IMethodSymbol method && method.MethodKind == MethodKind.LocalFunction;
+        }
+
+        // Names the script declares anywhere; LookupSymbols then keeps those in scope at the caret.
+        private static HashSet<string> DeclaredNames(SyntaxNode root)
+        {
+            var names = new HashSet<string>();
+            foreach (var node in root.DescendantNodes())
+            {
+                switch (node)
+                {
+                    case VariableDeclaratorSyntax variable: names.Add(variable.Identifier.ValueText); break;
+                    case ParameterSyntax parameter: names.Add(parameter.Identifier.ValueText); break;
+                    case ForEachStatementSyntax forEach: names.Add(forEach.Identifier.ValueText); break;
+                    case SingleVariableDesignationSyntax designation: names.Add(designation.Identifier.ValueText); break;
+                    case CatchDeclarationSyntax catchDeclaration: names.Add(catchDeclaration.Identifier.ValueText); break;
+                    case LocalFunctionStatementSyntax function: names.Add(function.Identifier.ValueText); break;
+                    case FromClauseSyntax from: names.Add(from.Identifier.ValueText); break;
+                    case LetClauseSyntax let: names.Add(let.Identifier.ValueText); break;
+                }
+            }
+
+            names.Remove(string.Empty);
+            return names;
+        }
+
+        private static List<CompletionEntry> ToEntries(IEnumerable<ISymbol> symbols)
+        {
+            return symbols
+                .Where(IsShown)
+                .GroupBy(s => s.Name)
+                .Select(group => ToEntry(group.First(), group.Count()))
+                .ToList();
         }
 
         private static IEnumerable<ISymbol> MemberSymbols(SemanticModel model, SyntaxNode root, int dotPosition, CancellationToken token)
