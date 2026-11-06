@@ -52,26 +52,11 @@ namespace RevitDevKit.Core
             var prepared = ScriptSource.Prepare(userCode);
             var assemblyName = "RevitScript_" + Guid.NewGuid().ToString("N");
 
-            // Build options via Default + With* rather than constructors: Revit may load another
-            // Roslyn version, and constructors with many optional parameters break across versions.
-            // DEBUG/TRACE are required, otherwise [Conditional] Debug.* and Trace.* calls are removed.
-            var parseOptions = CSharpParseOptions.Default
-                .WithLanguageVersion(LanguageVersion.Latest)
-                .WithDocumentationMode(DocumentationMode.None)
-                .WithPreprocessorSymbols("DEBUG", "TRACE");
-
-            var syntaxTree = CSharpSyntaxTree.ParseText(prepared.Code, parseOptions, assemblyName + ".cs", Encoding.UTF8);
+            var syntaxTree = CSharpSyntaxTree.ParseText(prepared.Code, CreateParseOptions(), assemblyName + ".cs", Encoding.UTF8);
 
             var references = BuildReferences(prepared.ExtraReferences, messages);
 
-            var compilation = CSharpCompilation.Create(assemblyName, new[] { syntaxTree }, references, null);
-
-            compilation = compilation.WithOptions(compilation.Options
-                .WithOutputKind(OutputKind.DynamicallyLinkedLibrary)
-                .WithOptimizationLevel(OptimizationLevel.Debug)
-                .WithAllowUnsafe(true)
-                .WithPlatform(Platform.X64)
-                .WithAssemblyIdentityComparer(DesktopAssemblyIdentityComparer.Default));
+            var compilation = CreateCompilation(assemblyName, new[] { syntaxTree }, references);
 
             using (var peStream = new MemoryStream())
             using (var pdbStream = new MemoryStream())
@@ -147,6 +132,28 @@ namespace RevitDevKit.Core
             }
         }
 
+        // Build options via Default + With* rather than constructors: Revit may load another
+        // Roslyn version, and constructors with many optional parameters break across versions.
+        // DEBUG/TRACE are required, otherwise [Conditional] Debug.* and Trace.* calls are removed.
+        internal static CSharpParseOptions CreateParseOptions() =>
+            CSharpParseOptions.Default
+                .WithLanguageVersion(LanguageVersion.Latest)
+                .WithDocumentationMode(DocumentationMode.None)
+                .WithPreprocessorSymbols("DEBUG", "TRACE");
+
+        // Shared with ScriptCompletion, so completion sees the same code the compiler does.
+        internal static CSharpCompilation CreateCompilation(string assemblyName, IEnumerable<SyntaxTree> syntaxTrees, IEnumerable<MetadataReference> references)
+        {
+            var compilation = CSharpCompilation.Create(assemblyName, syntaxTrees, references, null);
+
+            return compilation.WithOptions(compilation.Options
+                .WithOutputKind(OutputKind.DynamicallyLinkedLibrary)
+                .WithOptimizationLevel(OptimizationLevel.Debug)
+                .WithAllowUnsafe(true)
+                .WithPlatform(Platform.X64)
+                .WithAssemblyIdentityComparer(DesktopAssemblyIdentityComparer.Default));
+        }
+
         private static CompileResult Failed(List<CompileMessage> messages, long ms)
         {
             return new CompileResult
@@ -181,7 +188,7 @@ namespace RevitDevKit.Core
             };
         }
 
-        private static List<MetadataReference> BuildReferences(IList<string> extra, List<CompileMessage> messages)
+        internal static List<MetadataReference> BuildReferences(IList<string> extra, List<CompileMessage> messages)
         {
             var paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
