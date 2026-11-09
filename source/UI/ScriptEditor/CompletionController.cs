@@ -52,9 +52,12 @@ namespace RevitDevKit.UI.ScriptEditor
                 Task.Run(() => Safe(ScriptCompletion.Warm));
         }
 
+        // No lists while a box is selected (Alt + drag): a name chosen from one would go into one line of the box only.
+        private bool InBoxSelection => BracketController.IsBoxSelection(_editor.TextArea);
+
         private void OnPreviewKeyDown(KeyEventArgs e)
         {
-            if (e.Key != Key.Space)
+            if (e.Key != Key.Space || InBoxSelection)
                 return;
 
             if (Keyboard.Modifiers == ModifierKeys.Control)
@@ -69,7 +72,7 @@ namespace RevitDevKit.UI.ScriptEditor
 
         private void OnTextEntered(TextCompositionEventArgs e)
         {
-            if (e.Text.Length != 1)
+            if (e.Text.Length != 1 || InBoxSelection)
                 return;
 
             var c = e.Text[0];
@@ -158,7 +161,8 @@ namespace RevitDevKit.UI.ScriptEditor
 
         private void Show(ScriptCompletionList list, CancellationTokenSource pending, DocumentLine line, bool afterAngle)
         {
-            if (pending != _pending || list == null || _window != null)
+            // A box may have been selected while the list was being looked up.
+            if (pending != _pending || list == null || _window != null || InBoxSelection)
                 return;
 
             // After '<' only a generic gets a list: for a comparison the request returns the plain scope.
@@ -273,7 +277,7 @@ namespace RevitDevKit.UI.ScriptEditor
 
         private void ShowSignatures(ScriptSignatures signatures, ScriptCompletionList list, CancellationTokenSource pending)
         {
-            if (pending != _pendingSignatures)
+            if (pending != _pendingSignatures || InBoxSelection)
                 return;
 
             // ',' outside of a call, or the call is gone already.

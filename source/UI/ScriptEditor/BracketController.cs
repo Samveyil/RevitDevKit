@@ -1,5 +1,6 @@
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
+using ICSharpCode.AvalonEdit.Editing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,6 +46,11 @@ namespace RevitDevKit.UI.ScriptEditor
             return new BracketController(editor);
         }
 
+        // Alt + drag selects a box, and what is typed goes into every line of it. A pair closed, stepped over or
+        // removed at the caret would change one line only, so nothing of the kind happens while a box is selected;
+        // CompletionController opens no lists then either.
+        internal static bool IsBoxSelection(TextArea area) => area.Selection is RectangleSelection;
+
         // Inserts a closing bracket at the caret that is stepped over and removed with its pair like the ones inserted here.
         public void Close(char closing)
         {
@@ -72,7 +78,7 @@ namespace RevitDevKit.UI.ScriptEditor
 
         private void OnTextEntered(TextCompositionEventArgs e)
         {
-            if (e.Text.Length != 1)
+            if (e.Text.Length != 1 || IsBoxSelection(_editor.TextArea))
                 return;
 
             var typed = e.Text[0];
@@ -92,7 +98,7 @@ namespace RevitDevKit.UI.ScriptEditor
 
         private void OnTextEntering(TextCompositionEventArgs e)
         {
-            if (e.Text.Length != 1 || !AllPairs.ContainsValue(e.Text[0]))
+            if (e.Text.Length != 1 || !AllPairs.ContainsValue(e.Text[0]) || IsBoxSelection(_editor.TextArea))
                 return;
 
             var caret = Caret;
@@ -110,7 +116,7 @@ namespace RevitDevKit.UI.ScriptEditor
 
         private void OnPreviewKeyDown(KeyEventArgs e)
         {
-            if (Keyboard.Modifiers != ModifierKeys.None)
+            if (Keyboard.Modifiers != ModifierKeys.None || IsBoxSelection(_editor.TextArea))
                 return;
 
             if (e.Key == Key.Back)
