@@ -10,7 +10,9 @@ namespace RevitDevKit.UI.ScriptEditor
     // Indent Rainbow as in the Visual Studio extension: every indentation level of the visible lines gets its own
     // faint colour, and indentation that is not a whole number of levels is red. On top of the colours, a thin line
     // runs down the left edge of each level, where the { of that block stands, as Visual Studio's indent guides do.
-    // A blank line takes the indentation of the next line with code, so bands and lines do not break inside a block.
+    // The colours show a line's own leading spaces and tabs: an empty line has none, and a line of only whitespace is
+    // coloured as far as its whitespace goes, red when that is not whole levels, so stray spaces are easy to see.
+    // The thin lines of a blank line follow the next line with code, so they do not break inside a block.
     // Only the lines on screen are drawn, on every redraw of the editor; it costs a few rectangles per line.
     internal sealed class IndentRainbowRenderer : IBackgroundRenderer
     {
@@ -53,14 +55,13 @@ namespace RevitDevKit.UI.ScriptEditor
             {
                 var line = visualLine.FirstDocumentLine;
                 var indent = Indent(document, line, out var blank);
-                if (blank)
-                    indent = NextCodeIndent(document, line);
-                if (indent == 0)
+                var guides = blank ? NextCodeIndent(document, line) : indent;
+                if (indent == 0 && guides == 0)
                     continue;
 
                 var top = visualLine.VisualTop - textView.VerticalOffset;
 
-                if (!blank && indent % levelSize != 0)
+                if (indent % levelSize != 0)
                 {
                     drawingContext.DrawRectangle(Misaligned, null, new Rect(left, top, indent * columnWidth, visualLine.Height));
                 }
@@ -74,7 +75,7 @@ namespace RevitDevKit.UI.ScriptEditor
                 }
 
                 // A line at every level the text starts to the right of; snapped to a pixel so it stays one pixel thin.
-                for (var column = 0; column < indent; column += levelSize)
+                for (var column = 0; column < guides; column += levelSize)
                 {
                     var x = Math.Floor(left + column * columnWidth) + 0.5;
                     drawingContext.DrawLine(Guide, new Point(x, top), new Point(x, top + visualLine.Height));
