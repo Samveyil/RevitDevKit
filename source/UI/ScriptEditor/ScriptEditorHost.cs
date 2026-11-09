@@ -86,6 +86,7 @@ namespace RevitDevKit.UI.ScriptEditor
 
             editor.Options.ConvertTabsToSpaces = true;
             editor.Options.IndentationSize = 4;
+            editor.TextArea.TextView.BackgroundRenderers.Add(new IndentRainbowRenderer(editor));
 
             editor.TextArea.PreviewKeyDown += (s, e) =>
             {
