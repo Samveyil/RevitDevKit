@@ -6,89 +6,100 @@
 [![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/Samveyil/BIMPlugins.ExtStorage/blob/master/LICENSE)
 [![Release](https://img.shields.io/github/v/release/Samveyil/RevitDevKit?label=Release&color=blue)](https://github.com/Samveyil/RevitDevKit/releases/latest)
 
-Надстройка для Revit 2019–2024, которая помогает при разработке плагинов. В ней редактор C#-скриптов, запуск команд из DLL без перезапуска Revit, обновление кнопок на ленте по новой сборке и консоль для вывода.
+**English** | [Русский](README.ru.md)
 
-На вкладке «Надстройки» появляется панель DevKit с выпадающей кнопкой:
+A Revit 2019–2024 add-in that helps while developing plugins. It has a C# script editor, runs commands from a DLL without restarting Revit, updates ribbon buttons from a new build and has a console for output.
 
-- Script Editor открывает редактор скриптов;
-- DLL Runner открывает окно с командами и приложениями из DLL;
-- Run Again повторяет последний запуск;
-- Console показывает панель консоли.
+The add-in's interface is in Russian; the names of its menus and buttons are given below with a translation.
+
+The Add-Ins tab gets a DevKit panel with a pulldown button:
+
+- Script Editor opens the script editor;
+- DLL Runner opens a window with the commands and applications of a DLL;
+- Run Again repeats the last run;
+- Console shows the console pane.
 
 ## Script Editor
 
 ![Script Editor](assets/script-editor.png)
 
-Пишете код, нажимаете F5, и он выполняется в текущем документе. Можно написать просто несколько строк, как на скриншоте. Плагин сам обернёт их в класс и подключит основные `using` для System, LINQ и Revit API. Если в файле объявлен класс, он компилируется как есть: так можно проверить обычный `IExternalCommand` или класс с методом `Main(Document doc, UIApplication uiapp)`.
+Write code, press F5, and it runs in the current document. A few lines are enough, as in the screenshot: the add-in wraps them in a class and adds the main `using` directives for System, LINQ and the Revit API. If the file declares a class, it is compiled as it is, so you can try a regular `IExternalCommand` or a class with a `Main(Document doc, UIApplication uiapp)` method.
 
-Сборку, которой нет в Revit, можно подключить через `#r`:
+An assembly that Revit does not load can be referenced with `#r`:
 
 ```csharp
 #r "D:\Libs\MyHelpers.dll"
 ```
 
-В меню «Примеры» лежит несколько готовых скриптов. Галочка «Автотранзакция» оборачивает запуск в транзакцию, если скрипт меняет модель и не открывает её сам.
+The **Примеры** (Samples) menu has a few ready-made scripts. The **Автотранзакция** (auto transaction) checkbox wraps the run in a transaction, for scripts that change the model without opening one themselves. If a script does not compile, the errors go to the console and the caret moves to the first of them.
 
-| Клавиши | |
+The editor suggests as you type: after a dot it lists the members of the type, after `(` it shows the method's overloads with parameter descriptions from the Revit API documentation. After `<` of a generic method the list keeps only the types that fit: `All<` offers element classes, and `walls.OfType<` puts the subclasses of the collection's element first. Brackets `()`, `[]`, `{}`, `<>` of generics and quotes close by themselves, and Enter between `{}` opens a block.
+
+Alt with a mouse selection, or Shift+Alt with the arrow keys, puts a caret on several lines at once, as in Visual Studio. Typed text goes into every line, Tab and Shift+Tab shift them together, and the arrow keys move all the carets. In this mode no suggestions open and no brackets close.
+
+Indentation is coloured by level, as the Indent Rainbow extension for Visual Studio does, with thin guide lines. Indentation that is not a multiple of four spaces is red, so stray spaces on blank lines show too.
+
+| Keys | |
 |---|---|
-| F5, Ctrl+Enter | запустить |
-| Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+W | новая вкладка, открыть, сохранить, закрыть |
-| Ctrl+Space | подсказки; список открывается и сам, после точки и на первой букве имени |
-| Ctrl+Shift+Space | перегрузки метода с описанием параметров; окно открывается и само, после `(` и `,` |
-| Ctrl+D | дублировать строку |
-| Ctrl+L | очистить консоль |
+| F5, Ctrl+Enter | run |
+| Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+W | new tab, open, save, close |
+| Ctrl+Space | suggestions; the list also opens by itself after a dot and on the first letter of a name |
+| Ctrl+Shift+Space | method overloads with parameter descriptions; the window also opens by itself after `(` and `,` |
+| Alt + mouse, Shift+Alt+arrows | carets on several lines |
+| Ctrl+D | duplicate the line |
+| Ctrl+L | clear the console |
 
-В коротких скриптах доступны:
+Short scripts can use:
 
 | | |
 |---|---|
-| `Doc`, `UIDoc`, `UIApp`, `App`, `ActiveView` | документ, приложение, активный вид |
-| `Print()`, `Ok()`, `Warn()`, `Fail()` | вывод в консоль обычным, зелёным, оранжевым и красным цветом |
-| `Table(items, x => ...)` | вывод списка таблицей |
-| `Tx("Имя", () => ...)` | транзакция |
-| `All<T>()`, `Instances(category)`, `Types(category)` | элементы по классу или категории, можно ограничить видом |
-| `Selection`, `S0`, `S1`, `S(i)` | выбранные элементы |
-| `Dump(element)` | все параметры элемента |
-| `Compare(a, b, ...)` | различия в параметрах у 2–5 элементов |
+| `Doc`, `UIDoc`, `UIApp`, `App`, `ActiveView` | the document, the application, the active view |
+| `Print()`, `Ok()`, `Warn()`, `Fail()` | console output in the normal colour, green, orange and red |
+| `Table(items, x => ...)` | a list printed as a table |
+| `Tx("Name", () => ...)` | a transaction |
+| `All<T>()`, `Instances(category)`, `Types(category)` | elements by class or category, optionally limited to a view |
+| `Selection`, `S0`, `S1`, `S(i)` | the selected elements |
+| `Dump(element)` | all parameters of an element |
+| `Compare(a, b, ...)` | differences in the parameters of 2–5 elements |
 
 ```csharp
 var walls = All<Wall>();
-Print($"Стен в модели: {walls.Count}");
+Print($"Walls in the model: {walls.Count}");
 
-Tx("Пометить стены", () =>
+Tx("Mark walls", () =>
 {
     foreach (var wall in walls)
-        wall.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)?.Set("проверено");
+        wall.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)?.Set("checked");
 });
 ```
 
-В выводе `Compare` надпись `-нет-` значит, что у элемента нет такого параметра, `-` значит, что у параметра нет значения, а `-пусто-` означает пустую строку.
+In the output of `Compare`, `-нет-` (none) means the element has no such parameter, `-` means the parameter has no value, and `-пусто-` (empty) means an empty string.
 
 ## DLL Runner
 
-### Команды
+### Commands
 
-<img src="assets/dll-runner-commands.png" width="520" alt="DLL Runner, вкладка Команды" />
+<img src="assets/dll-runner-commands.png" width="520" alt="DLL Runner, the Commands tab" />
 
-Добавляете собранную DLL, и в списке появляются её `IExternalCommand`, сгруппированные по пространствам имён. Двойной щелчок или F5 запускает команду. Файл DLL при этом не блокируется, поэтому проект можно пересобирать, не закрывая Revit. Команда каждый раз берётся из текущей DLL на диске, так что после сборки её достаточно просто запустить снова. Кнопка «Обновить» нужна, только если появились новые команды.
+Add a built DLL, and its `IExternalCommand` classes appear in the list, grouped by namespace. A double click or F5 runs a command. The DLL file is not locked, so the project can be rebuilt without closing Revit. The command is taken from the DLL on disk every time, so after a build just run it again. The **Обновить** (Refresh) button is needed only when new commands appear.
 
-Окно при запуске закрывается. Чтобы после правок запустить ту же команду ещё раз, не нужно снова открывать DLL Runner: соберите проект и нажмите на ленте Run Again. Команда запустится из свежей DLL. Кнопке Run Again можно назначить горячую клавишу в Revit.
+The window closes when a command runs. To run the same command again after changes, there is no need to open DLL Runner: build the project and press Run Again on the ribbon, and the command runs from the fresh DLL. Run Again can be given a keyboard shortcut in Revit.
 
-### Приложения
+### Applications
 
-<img src="assets/dll-runner-apps.png" width="520" alt="DLL Runner, вкладка Приложения" />
+<img src="assets/dll-runner-apps.png" width="520" alt="DLL Runner, the Applications tab" />
 
-Здесь можно посмотреть, как будут выглядеть кнопки надстройки после правок, не перезапуская Revit. Надстройка установлена как обычно через `.addin`. Сюда добавляется DLL из папки сборки проекта. После правок проект собирается, и по кнопке «Обновить» кнопки этой надстройки на ленте меняются: тексты, подсказки, иконки, `ShowText`. Новые кнопки и панели появляются, удалённые пропадают, а если обычная кнопка стала выпадающей, она меняется на том же месте.
+Here you can see what an add-in's buttons will look like after changes, without restarting Revit. The add-in is installed as usual with an `.addin` file, and the DLL from the project's build folder is added here. After changes, build the project and press **Обновить** (Refresh): the add-in's buttons on the ribbon change their texts, tooltips, icons and `ShowText`. New buttons and panels appear, removed ones disappear, and a button that became a pulldown is replaced in the same place.
 
-Старые кнопки продолжают запускать команды из версии, которую загрузил Revit, а новые запускают код из свежей сборки. После перезапуска Revit лента снова будет такой, как её создаёт `.addin`. Вернуть её без перезапуска можно кнопкой «Вернуть как было».
+The old buttons keep running commands from the version Revit loaded, and the new ones run code from the fresh build. After Revit restarts, the ribbon is again what the `.addin` creates. The **Вернуть как было** (Restore) button brings it back without a restart.
 
-DLL может называться иначе, чем установленная, например `Dbg_MyAddin.dll` вместо `MyAddin.dll`.
+The DLL may have a different name than the installed one, for example `Dbg_MyAddin.dll` instead of `MyAddin.dll`.
 
-## Консоль
+## Console
 
-![Консоль](assets/console.png)
+![Console](assets/console.png)
 
-Сюда попадает всё, что пишут скрипты и команды из DLL: `Console.WriteLine`, `Debug.WriteLine`, `Trace` и исключения со стеком вызовов. Консоль открывается отдельной панелью Revit и дублируется внизу редактора скриптов. Её можно очистить и скопировать, а время и строки отладки включаются галочками.
+Everything that scripts and DLL commands write goes here: `Console.WriteLine`, `Debug.WriteLine`, `Trace` and exceptions with their call stacks. The console opens as a separate Revit pane and is also shown at the bottom of the script editor. It can be cleared and copied, and checkboxes turn on timestamps and debug lines.
 
 ## License
 
