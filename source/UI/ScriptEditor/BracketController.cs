@@ -22,9 +22,10 @@ namespace RevitDevKit.UI.ScriptEditor
         private BracketController(TextEditor editor)
         {
             _editor = editor;
-            editor.TextArea.TextEntering += OnTextEntering;
-            editor.TextArea.TextEntered += OnTextEntered;
-            editor.TextArea.PreviewKeyDown += OnPreviewKeyDown;
+            editor.TextArea.TextEntering += (s, e) => EditorGuard.Run(() => OnTextEntering(e));
+            editor.TextArea.TextEntered += (s, e) => EditorGuard.Run(() => OnTextEntered(e));
+            editor.TextArea.PreviewKeyDown += (s, e) => EditorGuard.Run(() => OnPreviewKeyDown(e));
+            editor.Document.Changing += (s, e) => EditorGuard.Run(() => OnDocumentChanging(e));
         }
 
         // Attached by CompletionController, after its own handlers.
@@ -50,7 +51,15 @@ namespace RevitDevKit.UI.ScriptEditor
             set => _editor.TextArea.Caret.Offset = value;
         }
 
-        private void OnTextEntered(object sender, TextCompositionEventArgs e)
+        // A bracket deleted by hand is forgotten: otherwise its anchor would move on with the typed text
+        // and a later ')' would be taken for it.
+        private void OnDocumentChanging(DocumentChangeEventArgs e)
+        {
+            if (e.RemovalLength > 0)
+                _inserted.RemoveAll(a => a.IsDeleted || a.Offset >= e.Offset && a.Offset < e.Offset + e.RemovalLength);
+        }
+
+        private void OnTextEntered(TextCompositionEventArgs e)
         {
             if (e.Text.Length != 1 || !Pairs.TryGetValue(e.Text[0], out var closing))
                 return;
@@ -62,14 +71,14 @@ namespace RevitDevKit.UI.ScriptEditor
             Close(closing);
         }
 
-        private void OnTextEntering(object sender, TextCompositionEventArgs e)
+        private void OnTextEntering(TextCompositionEventArgs e)
         {
             if (e.Text.Length != 1 || !AllPairs.ContainsValue(e.Text[0]))
                 return;
 
             var caret = Caret;
-            var inserted = InsertedAt(caret);
-            if (inserted == null || Document.GetCharAt(caret) != e.Text[0])
+            var inserted = InsertedAt(caret, e.Text[0]);
+            if (inserted == null)
                 return;
 
             _inserted.Remove(inserted);
@@ -77,7 +86,7 @@ namespace RevitDevKit.UI.ScriptEditor
             e.Handled = true;
         }
 
-        private void OnPreviewKeyDown(object sender, KeyEventArgs e)
+        private void OnPreviewKeyDown(KeyEventArgs e)
         {
             if (Keyboard.Modifiers != ModifierKeys.None)
                 return;
@@ -94,8 +103,7 @@ namespace RevitDevKit.UI.ScriptEditor
             if (caret == 0 || caret >= Document.TextLength || !_editor.TextArea.Selection.IsEmpty)
                 return false;
 
-            if (!AllPairs.TryGetValue(Document.GetCharAt(caret - 1), out var closing)
-                || Document.GetCharAt(caret) != closing || InsertedAt(caret) == null)
+            if (!AllPairs.TryGetValue(Document.GetCharAt(caret - 1), out var closing) || InsertedAt(caret, closing) == null)
                 return false;
 
             Document.Remove(caret - 1, 2);
@@ -137,9 +145,13 @@ namespace RevitDevKit.UI.ScriptEditor
                 : Document.GetText(delimited.EndOffset, delimited.DelimiterLength);
         }
 
-        private TextAnchor InsertedAt(int offset)
+        // The bracket inserted here at the offset, if it is still that bracket.
+        private TextAnchor InsertedAt(int offset, char closing)
         {
             _inserted.RemoveAll(a => a.IsDeleted);
+            if (offset >= Document.TextLength || Document.GetCharAt(offset) != closing)
+                return null;
+
             return _inserted.FirstOrDefault(a => a.Offset == offset);
         }
 
