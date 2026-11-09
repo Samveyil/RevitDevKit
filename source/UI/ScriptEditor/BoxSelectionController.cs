@@ -14,7 +14,8 @@ namespace RevitDevKit.UI.ScriptEditor
     // Multi-line editing as in Visual Studio on top of AvalonEdit's box selection (Alt + drag, Shift+Alt+arrows).
     // AvalonEdit draws the caret on one line of the box only, so a caret is drawn on every other line too.
     // Tab adds spaces up to the next indentation stop at the caret of every line, Shift+Tab takes one level off the
-    // start of every line, and the box stays, so the group keeps typing together.
+    // start of every line, the arrow keys move all carets together, and the box stays, so the group keeps typing
+    // together.
     internal sealed class BoxSelectionController : IBackgroundRenderer
     {
         private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
@@ -169,15 +170,20 @@ namespace RevitDevKit.UI.ScriptEditor
 
         private void OnPreviewKeyDown(KeyEventArgs e)
         {
-            if (e.Key != Key.Tab || Box == null)
+            if (Box == null)
                 return;
 
-            if (Keyboard.Modifiers == ModifierKeys.None)
-                Indent();
-            else if (Keyboard.Modifiers == ModifierKeys.Shift)
-                Outdent();
-            else
-                return;
+            var plain = Keyboard.Modifiers == ModifierKeys.None;
+            switch (e.Key)
+            {
+                case Key.Tab when plain: Indent(); break;
+                case Key.Tab when Keyboard.Modifiers == ModifierKeys.Shift: Outdent(); break;
+                case Key.Left when plain: MoveColumn(-1); break;
+                case Key.Right when plain: MoveColumn(1); break;
+                case Key.Up when plain: MoveLine(-1); break;
+                case Key.Down when plain: MoveLine(1); break;
+                default: return;
+            }
 
             e.Handled = true;
         }
@@ -188,7 +194,14 @@ namespace RevitDevKit.UI.ScriptEditor
             var box = Box;
             var size = _editor.Options.IndentationSize;
             var column = Math.Min(Column(box.StartPosition), Column(box.EndPosition));
-            box.ReplaceSelectionWithText(new string(' ', size - column % size));
+            var spaces = size - column % size;
+            var startLine = box.StartPosition.Line;
+            var endLine = box.EndPosition.Line;
+            var caretAtStart = CaretAtStart(box);
+
+            box.ReplaceSelectionWithText(new string(' ', spaces));
+            // AvalonEdit's own box after the edit may lose the caret's line and column, so it is set again.
+            SetBox(At(startLine, column + spaces), At(endLine, column + spaces), caretAtStart);
         }
 
         // One indentation level off the start of every line of the box, as Shift+Tab does on a block of lines.
@@ -200,6 +213,10 @@ namespace RevitDevKit.UI.ScriptEditor
             var size = _editor.Options.IndentationSize;
             var start = box.StartPosition;
             var end = box.EndPosition;
+            // Columns are taken before the text changes: a position may know only its offset in the old text.
+            var startColumn = Column(start);
+            var endColumn = Column(end);
+            var caretAtStart = CaretAtStart(box);
             var caretLine = Area.Caret.Line;
             var shift = 0;
 
@@ -224,22 +241,89 @@ namespace RevitDevKit.UI.ScriptEditor
                 document.EndUpdate();
             }
 
-            var newStart = At(start.Line, Column(start) - shift);
-            var newEnd = At(end.Line, Column(end) - shift);
-            Area.Selection = new RectangleSelection(Area, newStart, newEnd);
-            Area.Caret.Position = newEnd;
+            SetBox(At(start.Line, startColumn - shift), At(end.Line, endColumn - shift), caretAtStart);
         }
 
-        // A position created without a visual column has -1 there; with tabs turned into spaces it equals the text column.
-        private static int Column(TextViewPosition position) =>
-            position.VisualColumn >= 0 ? position.VisualColumn : position.Column - 1;
+        // Left and Right move every caret one column, as in Visual Studio. A box with width collapses to its left or
+        // right edge first. To the right the carets go no further than the end of the box's longest line.
+        private void MoveColumn(int delta)
+        {
+            var box = Box;
+            var startColumn = Column(box.StartPosition);
+            var endColumn = Column(box.EndPosition);
+            int column;
+            if (startColumn != endColumn)
+            {
+                column = delta < 0 ? Math.Min(startColumn, endColumn) : Math.Max(startColumn, endColumn);
+            }
+            else
+            {
+                column = Math.Max(0, startColumn + delta);
+                if (delta > 0 && startColumn >= LongestLine(box))
+                    column = startColumn;
+            }
 
-        // A position by visual column, past the line's end too: a box may stand in virtual space.
+            SetBox(At(box.StartPosition.Line, column), At(box.EndPosition.Line, column), CaretAtStart(box));
+        }
+
+        // Up and Down move the whole box a line, keeping its columns; at the first or last line of the text it stays.
+        private void MoveLine(int delta)
+        {
+            var box = Box;
+            var start = box.StartPosition;
+            var end = box.EndPosition;
+            if (Math.Min(start.Line, end.Line) + delta < 1 || Math.Max(start.Line, end.Line) + delta > _editor.Document.LineCount)
+                return;
+
+            SetBox(At(start.Line + delta, Column(start)), At(end.Line + delta, Column(end)), CaretAtStart(box));
+        }
+
+        // TextArea keeps its selection when the new one equals it, and a RectangleSelection compares only offsets: a box
+        // moved within virtual space, or set again after an edit AvalonEdit already moved it for, would be ignored and
+        // the carets left where AvalonEdit put them. So the old box is cleared first then.
+        private void SetBox(TextViewPosition start, TextViewPosition end, bool caretAtStart)
+        {
+            var box = new RectangleSelection(Area, start, end);
+            if (Area.Selection.Equals(box))
+                Area.ClearSelection();
+
+            Area.Selection = box;
+            Area.Caret.Position = caretAtStart ? start : end;
+            Area.Caret.BringCaretToView();
+        }
+
+        // The caret stands on the end of the box it was dragged to: the start line when it was dragged upwards.
+        private bool CaretAtStart(RectangleSelection box) =>
+            box.StartPosition.Line != box.EndPosition.Line && Area.Caret.Line == box.StartPosition.Line;
+
+        private int LongestLine(RectangleSelection box)
+        {
+            var longest = 0;
+            for (var line = Math.Min(box.StartPosition.Line, box.EndPosition.Line); line <= Math.Max(box.StartPosition.Line, box.EndPosition.Line); line++)
+                longest = Math.Max(longest, VisualLineOf(line).VisualLength);
+            return longest;
+        }
+
+        // The visual column of a position; one created from a text location only has -1 there.
+        private int Column(TextViewPosition position)
+        {
+            if (position.VisualColumn >= 0)
+                return position.VisualColumn;
+
+            var visualLine = VisualLineOf(position.Line);
+            return visualLine.GetVisualColumn(_editor.Document.GetOffset(position.Location) - visualLine.FirstDocumentLine.Offset);
+        }
+
+        // A position at a visual column, past the line's end too: a box may stand in virtual space.
         private TextViewPosition At(int line, int visualColumn)
         {
             visualColumn = Math.Max(0, visualColumn);
-            var length = _editor.Document.GetLineByNumber(line).Length;
-            return new TextViewPosition(line, Math.Min(visualColumn, length) + 1, visualColumn);
+            var visualLine = VisualLineOf(line);
+            var offset = visualLine.FirstDocumentLine.Offset + visualLine.GetRelativeOffset(Math.Min(visualColumn, visualLine.VisualLength));
+            return new TextViewPosition(_editor.Document.GetLocation(offset), visualColumn);
         }
+
+        private VisualLine VisualLineOf(int line) =>
+            Area.TextView.GetOrConstructVisualLine(_editor.Document.GetLineByNumber(line));
     }
 }
