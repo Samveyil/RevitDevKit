@@ -1,4 +1,5 @@
 using ICSharpCode.AvalonEdit;
+using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Rendering;
 using System;
@@ -119,8 +120,9 @@ namespace RevitDevKit.UI.ScriptEditor
             }
         }
 
-        // A box of zero width is only carets, but AvalonEdit still outlines it with a line that merges with them,
-        // so the outline is taken off while the box has no width, as in Visual Studio. A wider box keeps it.
+        // A box of zero width is only carets, but AvalonEdit still draws it as a thin blue strip with an outline, which
+        // merges with the carets and stays visible while they blink off. So the fill and the outline are taken off
+        // while the box has no width, as in Visual Studio. A wider box keeps them.
         private void UpdateSelectionOutline()
         {
             var box = Box;
@@ -128,11 +130,14 @@ namespace RevitDevKit.UI.ScriptEditor
             {
                 if (Area.SelectionBorder != null)
                     Area.SelectionBorder = null;
+                if (Area.SelectionBrush != Brushes.Transparent)
+                    Area.SelectionBrush = Brushes.Transparent;
             }
             else
             {
-                // Back to the outline AvalonEdit's style gives.
+                // Back to the look AvalonEdit's style gives.
                 Area.ClearValue(TextArea.SelectionBorderProperty);
+                Area.ClearValue(TextArea.SelectionBrushProperty);
             }
         }
 
@@ -204,8 +209,9 @@ namespace RevitDevKit.UI.ScriptEditor
             SetBox(At(startLine, column + spaces), At(endLine, column + spaces), caretAtStart);
         }
 
-        // One indentation level off the start of every line of the box, as Shift+Tab does on a block of lines.
-        // The box moves left with the text of the caret's line.
+        // One indentation level off the start of every line of the box, as Shift+Tab does on a block of lines, but the
+        // same amount off every line: once a line has no indentation left, the group stays where it is, so the lines
+        // keep their indentation relative to each other. Blank lines do not hold it back, they lose what they have.
         private void Outdent()
         {
             var box = Box;
@@ -213,27 +219,39 @@ namespace RevitDevKit.UI.ScriptEditor
             var size = _editor.Options.IndentationSize;
             var start = box.StartPosition;
             var end = box.EndPosition;
+            var first = Math.Min(start.Line, end.Line);
+            var last = Math.Max(start.Line, end.Line);
+
+            int? textShift = null;
+            var blankShift = size;
+            for (var number = first; number <= last; number++)
+            {
+                var line = document.GetLineByNumber(number);
+                var spaces = LeadingSpaces(line, size);
+                if (spaces < line.Length)
+                    textShift = Math.Min(textShift ?? size, spaces);
+                else
+                    blankShift = Math.Min(blankShift, spaces);
+            }
+
+            var shift = textShift ?? blankShift;
+            if (shift == 0)
+                return;
+
             // Columns are taken before the text changes: a position may know only its offset in the old text.
             var startColumn = Column(start);
             var endColumn = Column(end);
             var caretAtStart = CaretAtStart(box);
-            var caretLine = Area.Caret.Line;
-            var shift = 0;
 
             document.BeginUpdate();
             try
             {
-                for (var number = Math.Min(start.Line, end.Line); number <= Math.Max(start.Line, end.Line); number++)
+                for (var number = first; number <= last; number++)
                 {
                     var line = document.GetLineByNumber(number);
-                    var spaces = 0;
-                    while (spaces < size && spaces < line.Length && document.GetCharAt(line.Offset + spaces) == ' ')
-                        spaces++;
-
+                    var spaces = Math.Min(shift, LeadingSpaces(line, size));
                     if (spaces > 0)
                         document.Remove(line.Offset, spaces);
-                    if (number == caretLine)
-                        shift = spaces;
                 }
             }
             finally
@@ -242,6 +260,14 @@ namespace RevitDevKit.UI.ScriptEditor
             }
 
             SetBox(At(start.Line, startColumn - shift), At(end.Line, endColumn - shift), caretAtStart);
+        }
+
+        private int LeadingSpaces(DocumentLine line, int limit)
+        {
+            var spaces = 0;
+            while (spaces < limit && spaces < line.Length && _editor.Document.GetCharAt(line.Offset + spaces) == ' ')
+                spaces++;
+            return spaces;
         }
 
         // Left and Right move every caret one column, as in Visual Studio. A box with width collapses to its left or
