@@ -36,9 +36,9 @@ namespace RevitDevKit.UI.ScriptEditor
         private CompletionController(TextEditor editor)
         {
             _editor = editor;
-            editor.TextArea.TextEntering += OnTextEntering;
-            editor.TextArea.TextEntered += OnTextEntered;
-            editor.TextArea.PreviewKeyDown += OnPreviewKeyDown;
+            editor.TextArea.TextEntering += (s, e) => EditorGuard.Run(() => OnTextEntering(e));
+            editor.TextArea.TextEntered += (s, e) => EditorGuard.Run(() => OnTextEntered(e));
+            editor.TextArea.PreviewKeyDown += (s, e) => EditorGuard.Run(() => OnPreviewKeyDown(e));
 
             // After the handlers above, so an open list accepts its name before a closing bracket is stepped over.
             _brackets = BracketController.Attach(editor);
@@ -52,9 +52,12 @@ namespace RevitDevKit.UI.ScriptEditor
                 Task.Run(() => Safe(ScriptCompletion.Warm));
         }
 
-        private void OnPreviewKeyDown(object sender, KeyEventArgs e)
+        // No lists while a box is selected (Alt + drag): a name chosen from one would go into one line of the box only.
+        private bool InBoxSelection => BracketController.IsBoxSelection(_editor.TextArea);
+
+        private void OnPreviewKeyDown(KeyEventArgs e)
         {
-            if (e.Key != Key.Space)
+            if (e.Key != Key.Space || InBoxSelection)
                 return;
 
             if (Keyboard.Modifiers == ModifierKeys.Control)
@@ -67,9 +70,9 @@ namespace RevitDevKit.UI.ScriptEditor
             e.Handled = true;
         }
 
-        private void OnTextEntered(object sender, TextCompositionEventArgs e)
+        private void OnTextEntered(TextCompositionEventArgs e)
         {
-            if (e.Text.Length != 1)
+            if (e.Text.Length != 1 || InBoxSelection)
                 return;
 
             var c = e.Text[0];
@@ -101,7 +104,7 @@ namespace RevitDevKit.UI.ScriptEditor
 
         // '.', '(', '<' and '>' accept the selected name as in Visual Studio; any other character just closes the list,
         // so typing a new name does not get replaced by a suggestion.
-        private void OnTextEntering(object sender, TextCompositionEventArgs e)
+        private void OnTextEntering(TextCompositionEventArgs e)
         {
             if (_window == null || e.Text.Length == 0 || IsIdentifierChar(e.Text[0]))
                 return;
@@ -153,12 +156,13 @@ namespace RevitDevKit.UI.ScriptEditor
             }
 
             // Not every caller has a WPF synchronization context, so return to the editor's thread explicitly.
-            _editor.Dispatcher.BeginInvoke(new Action(() => Show(list, pending, line, afterAngle)));
+            _editor.Dispatcher.BeginInvoke(new Action(() => EditorGuard.Run(() => Show(list, pending, line, afterAngle))));
         }
 
         private void Show(ScriptCompletionList list, CancellationTokenSource pending, DocumentLine line, bool afterAngle)
         {
-            if (pending != _pending || list == null || _window != null)
+            // A box may have been selected while the list was being looked up.
+            if (pending != _pending || list == null || _window != null || InBoxSelection)
                 return;
 
             // After '<' only a generic gets a list: for a comparison the request returns the plain scope.
@@ -268,12 +272,12 @@ namespace RevitDevKit.UI.ScriptEditor
                 return;
             }
 
-            _editor.Dispatcher.BeginInvoke(new Action(() => ShowSignatures(signatures, list, pending)));
+            _editor.Dispatcher.BeginInvoke(new Action(() => EditorGuard.Run(() => ShowSignatures(signatures, list, pending))));
         }
 
         private void ShowSignatures(ScriptSignatures signatures, ScriptCompletionList list, CancellationTokenSource pending)
         {
-            if (pending != _pendingSignatures)
+            if (pending != _pendingSignatures || InBoxSelection)
                 return;
 
             // ',' outside of a call, or the call is gone already.
@@ -342,8 +346,8 @@ namespace RevitDevKit.UI.ScriptEditor
                     window.Top = top;
             }
 
-            window.SizeChanged += (s, e) => Place();
-            window.LocationChanged += (s, e) => Place();
+            window.SizeChanged += (s, e) => EditorGuard.Run(Place);
+            window.LocationChanged += (s, e) => EditorGuard.Run(Place);
             Place();
         }
 

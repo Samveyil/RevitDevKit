@@ -256,7 +256,8 @@ namespace RevitDevKit.Core
         // Inside <...> of a generic method or type (All<|, walls.OfType<W|, Dictionary<string, |) the list holds
         // only the types that fit the type parameter's constraints: Element subclasses for All<T> where T : Element.
         // The name before '<' is bound on a copy of the line cut at '<': with nothing after '>', "All<W>" followed by
-        // the next line would parse as comparisons.
+        // the next line would parse as comparisons. The copy ends with ';' so the next line does not join it either:
+        // in a chain, ".Cast" followed by ".Where(...)" would read as a member of the method group and bind to nothing.
         private static ScriptCompletionList TypeArguments(string userCode, int line, string lineText, int wordStart, CancellationToken token)
         {
             var open = TypeArgumentListStart(lineText, wordStart, out var argumentIndex);
@@ -269,7 +270,7 @@ namespace RevitDevKit.Core
             if (nameEnd == 0 || !IsIdentifierChar(lineText[nameEnd - 1]))
                 return null;
 
-            var probeLine = lineText.Substring(0, nameEnd);
+            var probeLine = lineText.Substring(0, nameEnd) + ";";
             var lines = userCode.Replace("\r\n", "\n").Split('\n');
             lines[line - 1] = probeLine;
 
