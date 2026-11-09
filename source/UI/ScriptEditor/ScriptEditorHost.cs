@@ -1,5 +1,4 @@
 using ICSharpCode.AvalonEdit;
-using ICSharpCode.AvalonEdit.Highlighting;
 using RevitDevKit.Core;
 using System;
 using System.Runtime.CompilerServices;
@@ -49,6 +48,7 @@ namespace RevitDevKit.UI.ScriptEditor
             var editor = EditorFactory.Create();
             editor.Document = tab.Document;
             CompletionController.Attach(editor);
+            BoxSelectionController.Attach(editor);
 
             tab.NavigateRequested += (line, column) =>
             {
@@ -81,7 +81,7 @@ namespace RevitDevKit.UI.ScriptEditor
                 FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 ShowLineNumbers = true,
                 WordWrap = false,
-                SyntaxHighlighting = HighlightingManager.Instance.GetDefinition("C#")
+                SyntaxHighlighting = CSharpHighlighting.Definition
             };
 
             editor.Options.ConvertTabsToSpaces = true;
