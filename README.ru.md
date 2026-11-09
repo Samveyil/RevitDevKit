@@ -4,9 +4,8 @@
 [![Visual Studio 2022](https://img.shields.io/badge/Visual%20Studio-2022-blue)](https://github.com/Samveyil/RevitDevKit)
 [![Nuke](https://img.shields.io/badge/Nuke-Build-blue)](https://nuke.build/)
 [![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/Samveyil/BIMPlugins.ExtStorage/blob/master/LICENSE)
+[![README in English](https://img.shields.io/badge/README-in%20English-blue)](README.md)
 [![Release](https://img.shields.io/github/v/release/Samveyil/RevitDevKit?label=Release&color=blue)](https://github.com/Samveyil/RevitDevKit/releases/latest)
-
-[English](README.md) | **Русский**
 
 Надстройка для Revit 2019–2024, которая помогает при разработке плагинов. В ней редактор C#-скриптов, запуск команд из DLL без перезапуска Revit, обновление кнопок на ленте по новой сборке и консоль для вывода.
 
