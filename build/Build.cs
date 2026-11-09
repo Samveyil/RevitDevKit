@@ -6,7 +6,7 @@ public partial class Build : BIMPluginsBuild
 {
     protected override int MajorVersion => 0;
     protected override int MinorVersion => 9;
-    protected override int MaintenanceVersion => 0;
+    protected override int MaintenanceVersion => 1;
 
 
     [Solution("RevitDevKit.sln")]
