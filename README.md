@@ -96,7 +96,9 @@ The DLL may have a different name than the installed one, for example `Dbg_MyAdd
 
 ### Startup
 
-This tab lists the `.addin` files of the running Revit version: the current user's from `%AppData%\Autodesk\Revit\Addins\<year>` and those for all users from `%ProgramData%\Autodesk\Revit\Addins\<year>`. Clearing a checkbox renames `X.addin` to `X.addin.disable`, so Revit does not load the add-in on its next start, and ticking it renames the file back. Addin Manager uses the same convention, so both tools see the same state.
+<img src="assets/dll-runner-startup.png" width="520" alt="DLL Runner, the Startup tab" />
+
+This tab lists the `.addin` files of the running Revit version: the current user's from `%AppData%\Autodesk\Revit\Addins\<year>` and those for all users from `%ProgramData%\Autodesk\Revit\Addins\<year>`. Clearing a checkbox renames `X.addin` to `X.addin.disable`, so Revit does not load the add-in on its next start, and ticking it renames the file back.
 
 Under each name is what the file contains and its DLL, and in red what is wrong: a DLL that is not found or an `.addin` that cannot be read. Files that Windows does not let you rename, usually installers' files for all users, have a lock: changing them needs administrator rights. Before DevKit turns itself off, it asks.
 
