@@ -46,6 +46,26 @@
 
             <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
 
+            <!-- Rows of the Applications and Startup lists: a bold name and a small gray line under it, little padding. -->
+            <Style x:Key="CompactListBoxItem" TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                <Setter Property="Padding" Value="4 2"/>
+            </Style>
+
+            <Style x:Key="RowTitle" TargetType="TextBlock">
+                <Setter Property="FontWeight" Value="DemiBold"/>
+                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                <Setter Property="LineHeight" Value="15"/>
+                <Setter Property="LineStackingStrategy" Value="BlockLineHeight"/>
+            </Style>
+
+            <Style x:Key="RowDetails" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="Gray"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                <Setter Property="LineHeight" Value="14"/>
+                <Setter Property="LineStackingStrategy" Value="BlockLineHeight"/>
+            </Style>
+
             <DataTemplate x:Key="TabHeader">
                 <TextBlock Text="{Binding}" FontSize="14" FontWeight="DemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </DataTemplate>
@@ -265,12 +285,7 @@
             <TabItem Header="Приложения" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
                 <Grid>
                     <ListBox ItemsSource="{Binding Apps.Items}" SelectedItem="{Binding Apps.SelectedItem}" Margin="2"
-                             HorizontalContentAlignment="Stretch">
-                        <ListBox.ItemContainerStyle>
-                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
-                                <Setter Property="Padding" Value="6 3"/>
-                            </Style>
-                        </ListBox.ItemContainerStyle>
+                             HorizontalContentAlignment="Stretch" ItemContainerStyle="{StaticResource CompactListBoxItem}">
 
                         <ListBox.ItemTemplate>
                             <DataTemplate>
@@ -304,8 +319,8 @@
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
-                                    <materialDesign:PackIcon Grid.RowSpan="2" Kind="PackageVariantClosed" Width="18" Height="18"
-                                                             VerticalAlignment="Center" Margin="0 0 8 0">
+                                    <materialDesign:PackIcon Grid.RowSpan="2" Kind="PackageVariantClosed" Width="16" Height="16"
+                                                             VerticalAlignment="Center" Margin="0 0 6 0">
                                         <materialDesign:PackIcon.Style>
                                             <Style TargetType="materialDesign:PackIcon">
                                                 <Setter Property="Foreground" Value="Gray"/>
@@ -318,10 +333,9 @@
                                         </materialDesign:PackIcon.Style>
                                     </materialDesign:PackIcon>
 
-                                    <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontWeight="DemiBold" TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Grid.Column="2" Text="{Binding Status}" Foreground="Gray" Margin="8 0 0 0"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding ApplicationsText}"
-                                               Foreground="Gray" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding DisplayName}" Style="{StaticResource RowTitle}"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Status}" Style="{StaticResource RowDetails}" Margin="8 0 0 0" VerticalAlignment="Bottom"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding ApplicationsText}" Style="{StaticResource RowDetails}"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -356,7 +370,8 @@
 
                     <Grid>
                         <ListBox ItemsSource="{Binding Startup.View}" SelectedItem="{Binding Startup.SelectedItem}" Margin="2"
-                                 HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                 HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ItemContainerStyle="{StaticResource CompactListBoxItem}">
                             <ListBox.GroupStyle>
                                 <GroupStyle>
                                     <GroupStyle.HeaderTemplate>
@@ -383,13 +398,6 @@
                                     </GroupStyle.HeaderTemplate>
                                 </GroupStyle>
                             </ListBox.GroupStyle>
-
-                            <!-- Compact rows: two short lines and little padding, so more add-ins fit the window. -->
-                            <ListBox.ItemContainerStyle>
-                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
-                                    <Setter Property="Padding" Value="4 1"/>
-                                </Style>
-                            </ListBox.ItemContainerStyle>
 
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
@@ -439,10 +447,9 @@
                                             </materialDesign:PackIcon.Style>
                                         </materialDesign:PackIcon>
 
-                                        <TextBlock Grid.Column="2" Text="{Binding Name}" FontWeight="DemiBold" TextTrimming="CharacterEllipsis"
-                                                   LineHeight="15" LineStackingStrategy="BlockLineHeight">
+                                        <TextBlock Grid.Column="2" Text="{Binding Name}">
                                             <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource RowTitle}">
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsEnabled}" Value="False">
                                                             <Setter Property="Foreground" Value="Gray"/>
@@ -455,11 +462,9 @@
                                             </TextBlock.Style>
                                         </TextBlock>
 
-                                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Details}" TextTrimming="CharacterEllipsis"
-                                                   FontSize="11" LineHeight="13" LineStackingStrategy="BlockLineHeight">
+                                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Details}">
                                             <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Foreground" Value="Gray"/>
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource RowDetails}">
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding HasProblem}" Value="True">
                                                             <Setter Property="Foreground" Value="#C62828"/>
