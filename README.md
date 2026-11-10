@@ -14,7 +14,7 @@ The add-in's interface is in Russian; the names of its menus and buttons are giv
 The Add-Ins tab gets a DevKit panel with a pulldown button:
 
 - Script Editor opens the script editor;
-- DLL Runner opens a window with the commands and applications of a DLL and the add-ins Revit loads at startup;
+- DLL Runner opens a window with the commands and applications of a DLL, the add-ins Revit loads at startup and their DLLs;
 - Run Again repeats the last run;
 - Console shows the console pane.
 
@@ -101,6 +101,17 @@ The DLL may have a different name than the installed one, for example `Dbg_MyAdd
 This tab lists the `.addin` files of the running Revit version: the current user's from `%AppData%\Autodesk\Revit\Addins\<year>` and those for all users from `%ProgramData%\Autodesk\Revit\Addins\<year>`. Clearing a checkbox renames `X.addin` to `X.addin.disable`, so Revit does not load the add-in on its next start, and ticking it renames the file back.
 
 Under each name is what the file contains and its DLL, and in red what is wrong: a DLL that is not found or an `.addin` that cannot be read. Files that Windows does not let you rename, usually installers' files for all users, have a lock: changing them needs administrator rights. Before DevKit turns itself off, it asks.
+
+### Dependencies
+
+<img src="assets/dll-runner-dependencies.png" width="520" alt="DLL Runner, the Dependencies tab" />
+
+This tab checks the DLLs of the add-ins the running Revit version loads, together with Revit's own folder. All add-ins run in one Revit process, and a library is loaded once, usually from whichever add-in needs it first, so two kinds of problems show here:
+
+- **Missing DLLs**: an add-in references a library it does not ship. Red means it is nowhere, and the add-in fails when it gets to that code. Orange means it works only because another add-in has that library or has already loaded it.
+- **Different versions**: several add-ins, or an add-in and Revit, bring the same DLL in different versions. Red means the assembly versions differ, and the loaded copy may not suit the others. Orange means only the file version differs, which is usually harmless. The copy loaded in this session is marked.
+
+An add-in's DLLs are the ones in the folder of its assembly, and references are read from the DLL headers without loading them. The copy button puts a markdown report on the clipboard. A DLL that an add-in loads by path in its own code is not seen.
 
 ## Console
 

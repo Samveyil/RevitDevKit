@@ -44,7 +44,47 @@
                 </Style.Triggers>
             </Style>
 
+            <Style x:Key="DependenciesToolbar" TargetType="StackPanel">
+                <Setter Property="Visibility" Value="Collapsed"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding SelectedTabIndex}" Value="3">
+                        <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
             <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+
+            <!-- Red for what fails or may fail, orange for what works on someone else's or another copy. -->
+            <Style x:Key="SeverityText" TargetType="TextBlock">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Severity}" Value="Critical">
+                        <Setter Property="Foreground" Value="#C62828"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Severity}" Value="Minor">
+                        <Setter Property="Foreground" Value="#B26A00"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="SeverityIcon" TargetType="materialDesign:PackIcon">
+                <Setter Property="Width" Value="16"/>
+                <Setter Property="Height" Value="16"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="Margin" Value="0 0 6 0"/>
+                <Setter Property="Kind" Value="CheckCircleOutline"/>
+                <Setter Property="Foreground" Value="Gray"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Severity}" Value="Critical">
+                        <Setter Property="Kind" Value="AlertOutline"/>
+                        <Setter Property="Foreground" Value="#C62828"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Severity}" Value="Minor">
+                        <Setter Property="Kind" Value="InformationOutline"/>
+                        <Setter Property="Foreground" Value="#B26A00"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
 
             <!-- Rows of the Applications and Startup lists: a bold name and a small gray line under it, little padding. -->
             <Style x:Key="CompactListBoxItem" TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
@@ -64,6 +104,17 @@
                 <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
                 <Setter Property="LineHeight" Value="14"/>
                 <Setter Property="LineStackingStrategy" Value="BlockLineHeight"/>
+            </Style>
+
+            <Style x:Key="SeverityDetails" TargetType="TextBlock" BasedOn="{StaticResource RowDetails}">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Severity}" Value="Critical">
+                        <Setter Property="Foreground" Value="#C62828"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Severity}" Value="Minor">
+                        <Setter Property="Foreground" Value="#B26A00"/>
+                    </DataTrigger>
+                </Style.Triggers>
             </Style>
 
             <DataTemplate x:Key="TabHeader">
@@ -163,6 +214,30 @@
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Открыть .addin в Блокноте (Ctrl+O)">
                 <materialDesign:PackIcon Kind="FileDocumentOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource DependenciesToolbar}">
+            <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding Dependencies.RefreshCommand}"
+                    ToolTip="Проверить DLL надстроек этой версии Revit (F5)">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
+                                             VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
+                    <TextBlock Text="Проверить (F5)" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding Dependencies.CopyReportCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Копировать отчёт в markdown">
+                <materialDesign:PackIcon Kind="ContentCopy" Width="22" Height="22" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Dependencies.RevealInExplorerCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике выбранную DLL">
+                <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+
+            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Только проблемы" Margin="20 0 0 0" IsChecked="{Binding Dependencies.OnlyProblems}"
+                      ToolTip="Снимите, чтобы видеть и DLL, одинаковые у нескольких надстроек"/>
         </StackPanel>
 
         <TabControl Margin="5 0 5 5" Style="{StaticResource FramedTabControl}" SelectedIndex="{Binding SelectedTabIndex}">
@@ -491,6 +566,95 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
+                    </Grid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="Dependencies" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Top" Margin="4 2">
+                        <materialDesign:PackIcon DockPanel.Dock="Left" Kind="Magnify" Width="20" Height="20" Foreground="Gray"
+                                                 VerticalAlignment="Center" Margin="0 0 6 0"/>
+                        <TextBox Text="{Binding Dependencies.SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Padding="5 2"
+                                 materialDesign:HintAssist.Hint="Поиск по DLL или надстройке" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 materialDesign:TextFieldAssist.HasClearButton="True" materialDesign:HintAssist.IsFloating="False"/>
+                    </DockPanel>
+
+                    <TextBlock DockPanel.Dock="Bottom" Text="{Binding Dependencies.Status}" Style="{StaticResource RowDetails}" Margin="6 2"/>
+
+                    <Grid>
+                        <TreeView ItemsSource="{Binding Dependencies.Sections}" Margin="2" Grid.IsSharedSizeScope="True">
+                            <TreeView.Resources>
+                                <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+                                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                                    <Setter Property="Padding" Value="4 1"/>
+                                    <Setter Property="MinHeight" Value="0"/>
+                                </Style>
+
+                                <HierarchicalDataTemplate DataType="{x:Type local:DependencySectionVM}" ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Horizontal" Margin="0 2">
+                                        <materialDesign:PackIcon Kind="{Binding Icon}" Width="14" Height="14" Foreground="Gray"
+                                                                 VerticalAlignment="Center" Margin="0 0 6 0"/>
+                                        <TextBlock Text="{Binding Title}" Foreground="Gray" FontSize="11" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </HierarchicalDataTemplate>
+
+                                <DataTemplate DataType="{x:Type local:MissingNodeVM}">
+                                    <Grid ToolTip="{Binding ToolTip}" Background="Transparent">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <materialDesign:PackIcon Grid.RowSpan="2" Style="{StaticResource SeverityIcon}"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}" Style="{StaticResource RowTitle}"/>
+                                            <TextBlock Text="{Binding Version}" Style="{StaticResource RowDetails}" FontFamily="Consolas" Margin="8 0 0 0" VerticalAlignment="Bottom"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Details}" Style="{StaticResource SeverityDetails}"/>
+                                    </Grid>
+                                </DataTemplate>
+
+                                <HierarchicalDataTemplate DataType="{x:Type local:VersionGroupVM}" ItemsSource="{Binding Children}">
+                                    <Grid Background="Transparent">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <materialDesign:PackIcon Grid.RowSpan="2" Style="{StaticResource SeverityIcon}"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}" Style="{StaticResource RowTitle}"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Summary}" Style="{StaticResource RowDetails}"/>
+                                    </Grid>
+                                </HierarchicalDataTemplate>
+
+                                <!-- The add-ins of one DLL: the versions line up in a column across the whole tree. -->
+                                <DataTemplate DataType="{x:Type local:DllCopyVM}">
+                                    <Grid ToolTip="{Binding ToolTip}" Background="Transparent">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="DependencyOwner"/>
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="DependencyLoaded"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Owner}" Style="{StaticResource SeverityText}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="● загружена" FontSize="11" Foreground="{StaticResource AccentBrush}" Margin="8 0 0 0"
+                                                   VerticalAlignment="Center" Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibility}}"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding Version}" Style="{StaticResource SeverityText}" FontFamily="Consolas"
+                                                   Margin="12 0 0 0" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </TreeView.Resources>
+                        </TreeView>
+
+                        <TextBlock Text="Проблем не найдено" Foreground="Gray" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                                   Visibility="{Binding Dependencies.IsEmpty, Converter={StaticResource BoolToVisibility}}"/>
                     </Grid>
                 </DockPanel>
             </TabItem>
