@@ -38,10 +38,14 @@ namespace RevitDevKit.UI.DllRunner
 
         public AppListVM Apps { get; } = new AppListVM();
 
-        // 0 - commands, 1 - applications. The toolbar and hotkeys follow the open tab.
-        [ObservableProperty] private int _selectedTabIndex;
+        public StartupListVM Startup { get; } = new StartupListVM();
 
-        private bool IsAppsTab => SelectedTabIndex == 1;
+        public const int CommandsTab = 0;
+        public const int AppsTab = 1;
+        public const int StartupTab = 2;
+
+        // The toolbar and hotkeys follow the open tab.
+        [ObservableProperty] private int _selectedTabIndex;
 
         public event EventHandler CloseRequested;
 
@@ -49,14 +53,28 @@ namespace RevitDevKit.UI.DllRunner
 
         partial void OnSearchTextChanged(string value) => ApplySearch();
 
-        [RelayCommand]
-        private void RunHotkey() => Execute(IsAppsTab ? Apps.ApplyCommand : RunCommand);
+        // The .addin files are read again whenever the tab is opened: they may have changed outside DevKit.
+        partial void OnSelectedTabIndexChanged(int value)
+        {
+            if (value == StartupTab) Startup.Refresh();
+        }
+
+        public void OnWindowOpened()
+        {
+            if (SelectedTabIndex == StartupTab) Startup.Refresh();
+        }
+
+        private System.Windows.Input.ICommand ForTab(System.Windows.Input.ICommand commands, System.Windows.Input.ICommand apps, System.Windows.Input.ICommand startup) =>
+            SelectedTabIndex == AppsTab ? apps : SelectedTabIndex == StartupTab ? startup : commands;
 
         [RelayCommand]
-        private void AddHotkey() => Execute(IsAppsTab ? Apps.AddAssemblyCommand : AddAssemblyCommand);
+        private void RunHotkey() => Execute(ForTab(RunCommand, Apps.ApplyCommand, Startup.RefreshCommand));
 
         [RelayCommand]
-        private void ReloadHotkey() => Execute(IsAppsTab ? Apps.ApplyCommand : ReloadAssemblyCommand);
+        private void AddHotkey() => Execute(ForTab(AddAssemblyCommand, Apps.AddAssemblyCommand, Startup.OpenFileCommand));
+
+        [RelayCommand]
+        private void ReloadHotkey() => Execute(ForTab(ReloadAssemblyCommand, Apps.ApplyCommand, Startup.RefreshCommand));
 
         private static void Execute(System.Windows.Input.ICommand command)
         {

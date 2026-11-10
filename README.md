@@ -14,7 +14,7 @@ The add-in's interface is in Russian; the names of its menus and buttons are giv
 The Add-Ins tab gets a DevKit panel with a pulldown button:
 
 - Script Editor opens the script editor;
-- DLL Runner opens a window with the commands and applications of a DLL;
+- DLL Runner opens a window with the commands and applications of a DLL and the add-ins Revit loads at startup;
 - Run Again repeats the last run;
 - Console shows the console pane.
 
@@ -93,6 +93,12 @@ Here you can see what an add-in's buttons will look like after changes, without 
 The old buttons keep running commands from the version Revit loaded, and the new ones run code from the fresh build. After Revit restarts, the ribbon is again what the `.addin` creates. The **Вернуть как было** (Restore) button brings it back without a restart.
 
 The DLL may have a different name than the installed one, for example `Dbg_MyAddin.dll` instead of `MyAddin.dll`.
+
+### Startup
+
+This tab lists the `.addin` files of the running Revit version: the current user's from `%AppData%\Autodesk\Revit\Addins\<year>` and those for all users from `%ProgramData%\Autodesk\Revit\Addins\<year>`. Clearing a checkbox renames `X.addin` to `X.addin.disable`, so Revit does not load the add-in on its next start, and ticking it renames the file back. Addin Manager uses the same convention, so both tools see the same state.
+
+Under each name is what the file contains and its DLL, and in red what is wrong: a DLL that is not found or an `.addin` that cannot be read. Files that Windows does not let you rename, usually installers' files for all users, have a lock: changing them needs administrator rights. Before DevKit turns itself off, it asks.
 
 ## Console
 

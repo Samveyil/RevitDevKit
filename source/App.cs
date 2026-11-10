@@ -42,6 +42,7 @@ namespace RevitDevKit
 
                 ConsoleOutput.Install();
                 RevitTaskRunner.Initialize();
+                LocateAddinFolders(application);
 
                 BuildRibbon(application);
                 RegisterConsolePane(application);
@@ -95,6 +96,21 @@ namespace RevitDevKit
 
             pullBtn.CreatePushButton<ShowConsolePaneCmd>("Console")
                 .SetToolTip("Показать панель с консолью плагина.");
+        }
+
+        // The folders Revit loads .addin files from, for the Startup tab of DLL Runner.
+        private static void LocateAddinFolders(UIControlledApplication application)
+        {
+            var revit = application.ControlledApplication;
+            try
+            {
+                AddinManifests.Locate(revit.CurrentUserAddinsLocation, revit.AllUsersAddinsLocation, revit.VersionNumber);
+            }
+            catch (Exception ex)
+            {
+                ConsoleOutput.Debug("Папки надстроек Revit не определились: " + ex.Message);
+                AddinManifests.Locate(null, null, revit.VersionNumber);
+            }
         }
 
         private static void RegisterConsolePane(UIControlledApplication application)
