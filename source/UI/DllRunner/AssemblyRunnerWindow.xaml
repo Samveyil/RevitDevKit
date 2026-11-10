@@ -16,10 +16,12 @@
                 <ResourceDictionary Source="pack://application:,,,/RevitDevKit;component/UI/Shared/Theme.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
+            <!-- Each tab has its own toolbar: 0 - commands, 1 - applications, 2 - startup. -->
             <Style x:Key="CommandsToolbar" TargetType="StackPanel">
+                <Setter Property="Visibility" Value="Collapsed"/>
                 <Style.Triggers>
-                    <DataTrigger Binding="{Binding SelectedTabIndex}" Value="1">
-                        <Setter Property="Visibility" Value="Collapsed"/>
+                    <DataTrigger Binding="{Binding SelectedTabIndex}" Value="0">
+                        <Setter Property="Visibility" Value="Visible"/>
                     </DataTrigger>
                 </Style.Triggers>
             </Style>
@@ -32,6 +34,17 @@
                     </DataTrigger>
                 </Style.Triggers>
             </Style>
+
+            <Style x:Key="StartupToolbar" TargetType="StackPanel">
+                <Setter Property="Visibility" Value="Collapsed"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding SelectedTabIndex}" Value="2">
+                        <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
 
             <DataTemplate x:Key="TabHeader">
                 <TextBlock Text="{Binding}" FontSize="14" FontWeight="DemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -108,6 +121,27 @@
             <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Apps.RemoveCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Вернуть ленту и убрать DLL из списка">
                 <materialDesign:PackIcon Kind="DeleteOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource StartupToolbar}">
+            <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding Startup.RefreshCommand}"
+                    ToolTip="Перечитать папки надстроек (F5)">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
+                                             VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
+                    <TextBlock Text="Обновить (F5)" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding Startup.RevealInExplorerCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике .addin">
+                <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Startup.OpenFileCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Открыть .addin в Блокноте (Ctrl+O)">
+                <materialDesign:PackIcon Kind="FileDocumentOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
         </StackPanel>
 
@@ -307,6 +341,150 @@
                         </TextBlock.Style>
                     </TextBlock>
                 </Grid>
+            </TabItem>
+
+            <TabItem Header="Startup" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
+                <DockPanel>
+                    <Border DockPanel.Dock="Bottom" Margin="2" Padding="8 4" CornerRadius="4" Background="#FFF4E5"
+                            Visibility="{Binding Startup.IsRestartNeeded, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="InformationOutline" Width="18" Height="18" Foreground="{StaticResource AccentBrush}"
+                                                     VerticalAlignment="Center" Margin="0 0 6 0"/>
+                            <TextBlock Text="Изменения применятся при следующем запуске Revit" Foreground="#8A4B00" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Grid>
+                        <ListBox ItemsSource="{Binding Startup.View}" SelectedItem="{Binding Startup.SelectedItem}" Margin="2"
+                                 HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.GroupStyle>
+                                <GroupStyle>
+                                    <GroupStyle.HeaderTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#0A000000" Padding="8 4">
+                                                <DockPanel>
+                                                    <materialDesign:PackIcon DockPanel.Dock="Left" Width="16" Height="16" Foreground="Gray"
+                                                                             VerticalAlignment="Center" Margin="0 0 6 0">
+                                                        <materialDesign:PackIcon.Style>
+                                                            <Style TargetType="materialDesign:PackIcon">
+                                                                <Setter Property="Kind" Value="AccountOutline"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Items[0].IsAllUsers}" Value="True">
+                                                                        <Setter Property="Kind" Value="AccountMultipleOutline"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </materialDesign:PackIcon.Style>
+                                                    </materialDesign:PackIcon>
+                                                    <TextBlock Text="{Binding Name}" Foreground="Gray" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                                </DockPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </GroupStyle.HeaderTemplate>
+                                </GroupStyle>
+                            </ListBox.GroupStyle>
+
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                    <Setter Property="Padding" Value="6 3"/>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ToolTip="{Binding ToolTip}" Background="Transparent"
+                                          Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ListBox}}">
+                                        <Grid.ContextMenu>
+                                            <ContextMenu materialDesign:MenuAssist.MenuItemsPresenterMargin="0">
+                                                <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
+                                                          Command="{Binding PlacementTarget.Tag.Startup.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                <MenuItem Header="Открыть .addin" CommandParameter="{Binding}"
+                                                          Command="{Binding PlacementTarget.Tag.Startup.OpenFileCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            </ContextMenu>
+                                        </Grid.ContextMenu>
+
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- The box shows the file on disk: a rename that fails leaves it as it was. -->
+                                        <CheckBox Grid.RowSpan="2" VerticalAlignment="Center" Margin="0 0 6 0"
+                                                  IsChecked="{Binding IsEnabled, Mode=OneWay}" IsEnabled="{Binding CanChange}"
+                                                  Command="{Binding DataContext.Startup.ToggleCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                  CommandParameter="{Binding}" ToolTip="Загружать при запуске Revit"/>
+
+                                        <materialDesign:PackIcon Grid.Column="1" Grid.RowSpan="2" Width="18" Height="18"
+                                                                 VerticalAlignment="Center" Margin="0 0 8 0">
+                                            <materialDesign:PackIcon.Style>
+                                                <Style TargetType="materialDesign:PackIcon">
+                                                    <Setter Property="Kind" Value="PackageVariantClosed"/>
+                                                    <Setter Property="Foreground" Value="Gray"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsEnabled}" Value="True">
+                                                            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsLocked}" Value="True">
+                                                            <Setter Property="Kind" Value="LockOutline"/>
+                                                            <Setter Property="Foreground" Value="Gray"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </materialDesign:PackIcon.Style>
+                                        </materialDesign:PackIcon>
+
+                                        <TextBlock Grid.Column="2" Text="{Binding Name}" FontWeight="DemiBold" TextTrimming="CharacterEllipsis">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsEnabled}" Value="False">
+                                                            <Setter Property="Foreground" Value="Gray"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsLocked}" Value="True">
+                                                            <Setter Property="Foreground" Value="Gray"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+
+                                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Details}" TextTrimming="CharacterEllipsis">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="Gray"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasProblem}" Value="True">
+                                                            <Setter Property="Foreground" Value="#C62828"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <TextBlock Text="В папках надстроек этой версии Revit нет .addin" Foreground="Gray"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Startup.Items.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                </DockPanel>
             </TabItem>
         </TabControl>
     </DockPanel>
