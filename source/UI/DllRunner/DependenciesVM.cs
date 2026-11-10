@@ -1,0 +1,360 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using RevitDevKit.Core;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Threading;
+
+namespace RevitDevKit.UI.DllRunner
+{
+    public enum Severity
+    {
+        Normal,
+        Minor,
+        Critical
+    }
+
+    public abstract partial class DependencyNodeVM : ObservableObject
+    {
+        private readonly Action<DependencyNodeVM> _onSelected;
+
+        [ObservableProperty] private bool _isExpanded;
+        [ObservableProperty] private bool _isSelected;
+
+        protected DependencyNodeVM(Action<DependencyNodeVM> onSelected) => _onSelected = onSelected;
+
+        public ObservableCollection<DependencyNodeVM> Children { get; } = [];
+
+        // The file "Show in Explorer" goes to.
+        public virtual string FilePath => null;
+
+        partial void OnIsSelectedChanged(bool value)
+        {
+            if (value) _onSelected?.Invoke(this);
+        }
+    }
+
+    // "Не хватает DLL · 2", "Разные версии · 3": a gray heading over its items, always open.
+    public sealed class DependencySectionVM : DependencyNodeVM
+    {
+        public DependencySectionVM(string title, string icon) : base(null)
+        {
+            Title = title;
+            Icon = icon;
+            IsExpanded = true;
+        }
+
+        public string Title { get; }
+        public string Icon { get; }
+    }
+
+    public sealed class MissingNodeVM : DependencyNodeVM
+    {
+        public MissingNodeVM(MissingDll missing, Action<DependencyNodeVM> onSelected) : base(onSelected)
+        {
+            Missing = missing;
+        }
+
+        public MissingDll Missing { get; }
+        public string Name => Missing.Name + ".dll";
+        public string Version => Missing.Version?.ToString() ?? string.Empty;
+        public Severity Severity => Missing.Kind == MissingKind.Nowhere ? Severity.Critical : Severity.Minor;
+
+        public string Details
+        {
+            get
+            {
+                var where = Missing.Kind == MissingKind.Nowhere ? "не найдена нигде"
+                    : Missing.FoundOwner == null ? "рядом нет, сейчас загружена из " + Path.GetDirectoryName(Missing.FoundPath)
+                    : Missing.FoundLoaded ? "рядом нет, сейчас берётся у " + Missing.FoundOwner
+                    : "рядом нет, есть только у " + Missing.FoundOwner;
+                return "нужна " + Missing.Owner + " · " + where;
+            }
+        }
+
+        public string ToolTip => "Ссылается: " + Missing.ReferencedBy + (Missing.FoundPath == null ? string.Empty : "\nНайдена: " + Missing.FoundPath);
+        public override string FilePath => Missing.FoundPath ?? Missing.ReferencedBy;
+    }
+
+    public sealed class VersionGroupVM : DependencyNodeVM
+    {
+        private readonly Action<string, bool> _onExpanded;
+
+        public VersionGroupVM(VersionGroup group, bool expanded, Action<DependencyNodeVM> onSelected, Action<string, bool> onExpanded) : base(onSelected)
+        {
+            Group = group;
+            IsExpanded = expanded;
+            _onExpanded = onExpanded;
+
+            // Each copy is compared with the one loaded now, or with the newest when none is loaded yet.
+            var reference = group.Loaded.Count > 0 && File.Exists(group.Loaded[0].Path)
+                ? AddinDependencies.Read(group.Loaded[0].Path)
+                : group.Copies.Select(c => c.Dll).OrderByDescending(d => d.AssemblyVersion).ThenByDescending(d => d.FileVersion).First();
+            foreach (var copy in group.Copies)
+                Children.Add(new DllCopyVM(copy, Compare(copy.Dll, reference), onSelected));
+        }
+
+        public VersionGroup Group { get; }
+        public string Name => Group.FileName;
+
+        public Severity Severity => Group.Level == DependencyLevel.Assembly ? Severity.Critical
+            : Group.Level == DependencyLevel.FileOnly ? Severity.Minor
+            : Severity.Normal;
+
+        public string Summary
+        {
+            get
+            {
+                var dlls = Group.Copies.Select(c => c.Dll).ToList();
+                var versions = Group.Level == DependencyLevel.Assembly
+                    ? Plural(dlls.Select(d => d.AssemblyVersion).Distinct().Count(), "версия сборки", "версии сборки", "версий сборки")
+                    : Group.Level == DependencyLevel.FileOnly
+                        ? dlls.All(d => d.IsManaged) ? "одна версия сборки, разные файлы" : "разные версии файла"
+                        : "одинаковые версии";
+                var loaded = Group.Loaded.Count == 0
+                    ? "ещё не загружена"
+                    : "загружена " + string.Join(" и ", Group.Loaded.Select(l => l.FileVersion + " из " + (l.Owner ?? Path.GetDirectoryName(l.Path))));
+                return versions + " · " + loaded;
+            }
+        }
+
+        public override string FilePath => Group.Loaded.FirstOrDefault()?.Path ?? Group.Copies.First().Dll.Path;
+
+        // The open or closed state of each DLL is kept across checks and filtering.
+        protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            base.OnPropertyChanged(e);
+            if (e.PropertyName == nameof(IsExpanded)) _onExpanded?.Invoke(Name, IsExpanded);
+        }
+
+        private static Severity Compare(DllInfo copy, DllInfo reference)
+        {
+            if (string.Equals(copy.Path, reference.Path, StringComparison.OrdinalIgnoreCase)) return Severity.Normal;
+            if (copy.IsManaged && reference.IsManaged && copy.AssemblyVersion != reference.AssemblyVersion) return Severity.Critical;
+            return copy.FileVersion != reference.FileVersion ? Severity.Minor : Severity.Normal;
+        }
+
+        private static string Plural(int n, string one, string few, string many)
+        {
+            var tens = n % 100;
+            var units = n % 10;
+            var word = tens >= 11 && tens <= 14 ? many : units == 1 ? one : units >= 2 && units <= 4 ? few : many;
+            return n + " " + word;
+        }
+    }
+
+    public sealed class DllCopyVM : DependencyNodeVM
+    {
+        public DllCopyVM(DllCopy copy, Severity severity, Action<DependencyNodeVM> onSelected) : base(onSelected)
+        {
+            Copy = copy;
+            Severity = severity;
+        }
+
+        public DllCopy Copy { get; }
+        public Severity Severity { get; }
+        public string Owner => Copy.Owner;
+        public string Version => Copy.Dll.FileVersion;
+        public bool IsLoaded => Copy.IsLoaded;
+
+        public string ToolTip => Copy.Dll.Path + "\nВерсия файла " + Copy.Dll.FileVersion
+                                 + (Copy.Dll.IsManaged ? ", версия сборки " + Copy.Dll.AssemblyVersion : ", нативная DLL");
+
+        public override string FilePath => Copy.Dll.Path;
+    }
+
+    // DLLs the add-ins of this Revit version bring in different versions, and DLLs they use but do not ship.
+    // The check reads hundreds of DLL headers, so it runs in the background, on opening the tab and on F5.
+    public sealed partial class DependenciesVM : ObservableObject
+    {
+        private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
+        private readonly Dictionary<string, bool> _expanded = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        private DependencyReport _report;
+
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(RefreshCommand))]
+        [NotifyCanExecuteChangedFor(nameof(CopyReportCommand))]
+        private bool _isBusy;
+
+        [ObservableProperty] private string _status = "Нажмите «Проверить»";
+        [ObservableProperty] private string _searchText = string.Empty;
+        [ObservableProperty] private bool _onlyProblems = true;
+        [ObservableProperty] private bool _isEmpty;
+
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(RevealInExplorerCommand))]
+        private DependencyNodeVM _selectedNode;
+
+        public ObservableCollection<DependencyNodeVM> Sections { get; } = [];
+
+        public bool HasReport => _report != null;
+
+        partial void OnSearchTextChanged(string value) => Rebuild();
+
+        partial void OnOnlyProblemsChanged(bool value) => Rebuild();
+
+        // Once per window: later only F5 checks again, the check is not free.
+        public void EnsureChecked()
+        {
+            if (_report == null && !IsBusy) Refresh();
+        }
+
+        private bool CanRefresh() => !IsBusy;
+
+        [RelayCommand(CanExecute = nameof(CanRefresh))]
+        public void Refresh()
+        {
+            IsBusy = true;
+            Status = "Проверка…";
+
+            List<AddinManifest> manifests;
+            List<Tuple<string, string>> loaded;
+            try
+            {
+                manifests = AddinManifests.Scan();
+                loaded = LoadedAssemblies();
+            }
+            catch (Exception ex)
+            {
+                Failed(ex);
+                return;
+            }
+
+            Task.Run(() => AddinDependencies.Scan(manifests, loaded, LoadedModules(), CancellationToken.None))
+                .ContinueWith(task => _dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (task.IsFaulted) Failed(task.Exception?.GetBaseException());
+                    else Show(task.Result);
+                })));
+        }
+
+        private void Show(DependencyReport report)
+        {
+            _report = report;
+            OnPropertyChanged(nameof(HasReport));
+            CopyReportCommand.NotifyCanExecuteChanged();
+            IsBusy = false;
+
+            var problems = report.Missing.Count + report.Groups.Count(g => g.Level != DependencyLevel.None);
+            Status = "Проверено в " + report.CheckedAt.ToString("HH:mm:ss") + " · " + (problems == 0 ? "проблем нет" : "проблем: " + problems);
+            Rebuild();
+        }
+
+        private void Failed(Exception ex)
+        {
+            ConsoleOutput.Exception(ex, "Не удалось проверить зависимости надстроек:");
+            Status = "Проверка не удалась, подробности в консоли";
+            IsBusy = false;
+        }
+
+        private static List<Tuple<string, string>> LoadedAssemblies()
+        {
+            var result = new List<Tuple<string, string>>();
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                try
+                {
+                    if (assembly.IsDynamic || string.IsNullOrEmpty(assembly.Location)) continue;
+                    result.Add(Tuple.Create(assembly.GetName().Name, assembly.Location));
+                }
+                catch
+                {
+                    // An assembly loaded from bytes has no location: no file to compare with.
+                }
+            }
+
+            return result;
+        }
+
+        private static List<string> LoadedModules()
+        {
+            try
+            {
+                using (var process = Process.GetCurrentProcess())
+                    return process.Modules.Cast<ProcessModule>().Select(m => m.FileName).ToList();
+            }
+            catch
+            {
+                return new List<string>();
+            }
+        }
+
+        private void Rebuild()
+        {
+            Sections.Clear();
+            SelectedNode = null;
+            if (_report == null)
+            {
+                IsEmpty = false;
+                return;
+            }
+
+            var query = SearchText?.Trim() ?? string.Empty;
+            bool Matches(params string[] values) => query.Length == 0 || values.Any(v => v != null && v.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
+
+            var missing = _report.Missing.Where(m => Matches(m.Name, m.Owner, m.FoundOwner)).ToList();
+            if (missing.Count > 0)
+            {
+                var section = new DependencySectionVM("Не хватает DLL · " + missing.Count, "AlertCircleOutline");
+                foreach (var m in missing) section.Children.Add(new MissingNodeVM(m, Select));
+                Sections.Add(section);
+            }
+
+            AddGroups("Разные версии", "SourceBranch", g => g.Level != DependencyLevel.None, Matches);
+            if (!OnlyProblems)
+                AddGroups("Одинаковые у нескольких", "CheckAll", g => g.Level == DependencyLevel.None, Matches);
+
+            IsEmpty = Sections.Count == 0;
+        }
+
+        private void AddGroups(string title, string icon, Func<VersionGroup, bool> which, Func<string[], bool> matches)
+        {
+            var groups = _report.Groups.Where(which).Where(g => matches(new[] { g.FileName }.Concat(g.Copies.Select(c => c.Owner)).ToArray())).ToList();
+            if (groups.Count == 0) return;
+
+            var section = new DependencySectionVM(title + " · " + groups.Count, icon);
+            foreach (var group in groups)
+            {
+                var expanded = _expanded.TryGetValue(group.FileName, out var was) ? was : group.Level == DependencyLevel.Assembly;
+                section.Children.Add(new VersionGroupVM(group, expanded, Select, (name, value) => _expanded[name] = value));
+            }
+
+            Sections.Add(section);
+        }
+
+        private void Select(DependencyNodeVM node) => SelectedNode = node;
+
+        private bool CanCopy() => _report != null && !IsBusy;
+
+        [RelayCommand(CanExecute = nameof(CanCopy))]
+        private void CopyReport()
+        {
+            try
+            {
+                Clipboard.SetText(AddinDependencies.ToMarkdown(_report, OnlyProblems));
+                Status = "Отчёт скопирован";
+            }
+            catch (Exception ex)
+            {
+                ConsoleOutput.Exception(ex, "Не удалось скопировать отчёт:");
+            }
+        }
+
+        private bool HasFile() => SelectedNode?.FilePath != null;
+
+        [RelayCommand(CanExecute = nameof(HasFile))]
+        private void RevealInExplorer()
+        {
+            var path = SelectedNode?.FilePath;
+            if (path == null || !File.Exists(path)) return;
+            Process.Start("explorer.exe", "/select,\"" + path + "\"");
+        }
+    }
+}

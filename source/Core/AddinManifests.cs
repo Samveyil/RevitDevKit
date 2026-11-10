@@ -55,9 +55,11 @@ namespace RevitDevKit.Core
         // Set when DevKit starts, from Revit itself; without them the folders follow the standard layout.
         public static string CurrentUserFolder { get; set; }
         public static string AllUsersFolder { get; set; }
+        public static string RevitVersion { get; set; }
 
         public static void Locate(string currentUserFolder, string allUsersFolder, string revitVersion)
         {
+            RevitVersion = revitVersion;
             CurrentUserFolder = string.IsNullOrEmpty(currentUserFolder)
                 ? StandardFolder(Environment.SpecialFolder.ApplicationData, revitVersion)
                 : currentUserFolder;
