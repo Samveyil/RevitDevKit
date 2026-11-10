@@ -23,6 +23,7 @@ namespace RevitDevKit.UI.DllRunner
 
             vm.CloseRequested += OnCloseRequested;
             Closed += (s, e) => _model.CloseRequested -= OnCloseRequested;
+            vm.OnWindowOpened();
         }
 
         private void OnCloseRequested(object sender, EventArgs e) => Close();
