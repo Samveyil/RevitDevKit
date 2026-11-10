@@ -49,11 +49,7 @@ namespace RevitDevKit.UI.DllRunner
             }
         }
 
-        // The full paths and the whole error, which the second line cuts short.
-        public string ToolTip =>
-            string.Join("\n", new[] { FilePath }.Concat(Manifest.Assemblies)
-                .Concat(Manifest.Error == null ? Enumerable.Empty<string>() : new[] { "Ошибка: " + Manifest.Error })
-                .Concat(IsLocked ? new[] { "Нужны права администратора" } : Enumerable.Empty<string>()));
+        public string ToolTip => FilePath;
 
         private static string Contents(AddinManifest m)
         {

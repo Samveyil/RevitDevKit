@@ -361,9 +361,9 @@
                                 <GroupStyle>
                                     <GroupStyle.HeaderTemplate>
                                         <DataTemplate>
-                                            <Border Background="#0A000000" Padding="8 4">
+                                            <Border Background="#0A000000" Padding="6 2">
                                                 <DockPanel>
-                                                    <materialDesign:PackIcon DockPanel.Dock="Left" Width="16" Height="16" Foreground="Gray"
+                                                    <materialDesign:PackIcon DockPanel.Dock="Left" Width="14" Height="14" Foreground="Gray"
                                                                              VerticalAlignment="Center" Margin="0 0 6 0">
                                                         <materialDesign:PackIcon.Style>
                                                             <Style TargetType="materialDesign:PackIcon">
@@ -376,7 +376,7 @@
                                                             </Style>
                                                         </materialDesign:PackIcon.Style>
                                                     </materialDesign:PackIcon>
-                                                    <TextBlock Text="{Binding Name}" Foreground="Gray" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding Name}" Foreground="Gray" FontSize="11" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                                                 </DockPanel>
                                             </Border>
                                         </DataTemplate>
@@ -384,9 +384,10 @@
                                 </GroupStyle>
                             </ListBox.GroupStyle>
 
+                            <!-- Compact rows: two short lines and little padding, so more add-ins fit the window. -->
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
-                                    <Setter Property="Padding" Value="6 3"/>
+                                    <Setter Property="Padding" Value="4 1"/>
                                 </Style>
                             </ListBox.ItemContainerStyle>
 
@@ -419,8 +420,8 @@
                                                   Command="{Binding DataContext.Startup.ToggleCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                                                   CommandParameter="{Binding}" ToolTip="Загружать при запуске Revit"/>
 
-                                        <materialDesign:PackIcon Grid.Column="1" Grid.RowSpan="2" Width="18" Height="18"
-                                                                 VerticalAlignment="Center" Margin="0 0 8 0">
+                                        <materialDesign:PackIcon Grid.Column="1" Grid.RowSpan="2" Width="16" Height="16"
+                                                                 VerticalAlignment="Center" Margin="0 0 6 0">
                                             <materialDesign:PackIcon.Style>
                                                 <Style TargetType="materialDesign:PackIcon">
                                                     <Setter Property="Kind" Value="PackageVariantClosed"/>
@@ -438,7 +439,8 @@
                                             </materialDesign:PackIcon.Style>
                                         </materialDesign:PackIcon>
 
-                                        <TextBlock Grid.Column="2" Text="{Binding Name}" FontWeight="DemiBold" TextTrimming="CharacterEllipsis">
+                                        <TextBlock Grid.Column="2" Text="{Binding Name}" FontWeight="DemiBold" TextTrimming="CharacterEllipsis"
+                                                   LineHeight="15" LineStackingStrategy="BlockLineHeight">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Style.Triggers>
@@ -453,7 +455,8 @@
                                             </TextBlock.Style>
                                         </TextBlock>
 
-                                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Details}" TextTrimming="CharacterEllipsis">
+                                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Details}" TextTrimming="CharacterEllipsis"
+                                                   FontSize="11" LineHeight="13" LineStackingStrategy="BlockLineHeight">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Foreground" Value="Gray"/>
