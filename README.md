@@ -7,7 +7,7 @@
 [![README на русском](https://img.shields.io/badge/README-%D0%BD%D0%B0%20%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%BE%D0%BC-blue)](README.ru.md)
 [![Release](https://img.shields.io/github/v/release/Samveyil/RevitDevKit?label=Release&color=blue)](https://github.com/Samveyil/RevitDevKit/releases/latest)
 
-A Revit 2019–2024 add-in that helps while developing plugins. It has a C# script editor, runs commands from a DLL without restarting Revit, updates ribbon buttons from a new build, turns add-ins on and off, finds DLLs that add-ins bring in clashing versions, and has a console for output.
+A Revit 2019–2024 add-in that helps while developing plugins. It has a C# script editor, runs commands from a DLL without restarting Revit, updates ribbon buttons from a new build, turns add-ins on and off, lists the assemblies loaded into Revit, finds DLLs that add-ins bring in clashing versions, and has a console for output.
 
 The add-in's interface is in Russian; the names of its menus and buttons are given below with a translation.
 
@@ -30,7 +30,9 @@ An assembly that Revit does not load can be referenced with `#r`:
 #r "D:\Libs\MyHelpers.dll"
 ```
 
-The **Примеры** (Samples) menu has a few ready-made scripts. The **Автотранзакция** (auto transaction) checkbox wraps the run in a transaction, for scripts that change the model without opening one themselves. If a script does not compile, the errors go to the console and the caret moves to the first of them.
+The **Примеры** (Samples) menu has a few ready-made scripts. The **Автотранзакция** (auto transaction) checkbox wraps the run in a transaction, for scripts that change the model without opening one themselves. If a script does not compile, the errors go to the console and the caret moves to the first of them. **Чистить консоль** (clear console) clears the console before each run.
+
+Scripts are saved to `%AppData%\RevitDevKit\Scripts` unless you pick another folder. A right click on a tab closes it, saves it under another name (**Сохранить как…**, also a toolbar button and Ctrl+Shift+S), and for a tab saved to a file shows the file in Explorer. Repeat Last on the ribbon repeats a script as it was compiled: edits take effect after F5 in the editor.
 
 The editor suggests as you type: after a dot it lists the members of the type, after `(` it shows the method's overloads with parameter descriptions from the Revit API documentation. After `<` of a generic method the list keeps only the types that fit: `All<` offers element classes, and `walls.OfType<` puts the subclasses of the collection's element first. Brackets `()`, `[]`, `{}`, `<>` of generics and quotes close by themselves, and Enter between `{}` opens a block.
 
@@ -80,7 +82,7 @@ In the output of `Compare`, `-нет-` (none) means the element has no such para
 
 <img src="assets/dll-runner-commands.png" width="580" alt="Add-in Explorer, the Commands tab" />
 
-Add a built DLL, and its `IExternalCommand` classes appear in the list, grouped by namespace. A double click or F5 runs a command. The DLL file is not locked, so the project can be rebuilt without closing Revit. The command is taken from the DLL on disk every time, so after a build just run it again. The **Обновить** (Refresh) button is needed only when new commands appear.
+Add a built DLL, and its `IExternalCommand` classes appear in the list, grouped by namespace. A double click or F5 runs a command. The DLL file is not locked, so the project can be rebuilt without closing Revit. The command is taken from the DLL on disk every time, so after a build just run it again. The **Обновить** (Refresh) button is needed only when new commands appear. As in the editor, **Чистить консоль** (clear console) clears the console before each run.
 
 The window closes when a command runs. To run the same command again after changes, there is no need to open Add-in Explorer: build the project and press Repeat Last on the ribbon, and the command runs from the fresh DLL. Repeat Last can be given a keyboard shortcut in Revit.
 
@@ -92,7 +94,7 @@ Here you can see what an add-in's buttons will look like after changes, without 
 
 The old buttons keep running commands from the version Revit loaded, and the new ones run code from the fresh build. After Revit restarts, the ribbon is again what the `.addin` creates. The **Вернуть как было** (Restore) button brings it back without a restart.
 
-The DLL may have a different name than the installed one, for example `Dbg_MyAddin.dll` instead of `MyAddin.dll`.
+The DLL may have a different name than the installed one, for example `Dbg_MyAddin.dll` instead of `MyAddin.dll`, or the same one: windows of the installed add-in and of the fresh build each load their own XAML. Libraries that did not change, MaterialDesign for instance, are loaded once and shared, so their styles fit both.
 
 ### Startup
 
@@ -100,7 +102,7 @@ The DLL may have a different name than the installed one, for example `Dbg_MyAdd
 
 This tab lists the `.addin` files of the running Revit version: the current user's from `%AppData%\Autodesk\Revit\Addins\<year>` and those for all users from `%ProgramData%\Autodesk\Revit\Addins\<year>`. Clearing a checkbox renames `X.addin` to `X.addin.disable`, so Revit does not load the add-in on its next start, and ticking it renames the file back.
 
-Under each name is what the file contains and its DLL, and in red what is wrong: a DLL that is not found or an `.addin` that cannot be read. Files that Windows does not let you rename, usually installers' files for all users, have a lock: changing them needs administrator rights. Before DevKit turns itself off, it asks.
+Under each name is what the file contains and its DLL, and in red what is wrong: a DLL that is not found or an `.addin` that cannot be read. Files that Windows does not let you rename, usually installers' files for all users, have a lock: changing them needs administrator rights. Before DevKit turns itself off, it asks. A file can be shown in Explorer or opened in Notepad (Ctrl+O). Changes apply at the next start of Revit, as the note at the bottom of the tab says.
 
 ### Assemblies
 
@@ -127,7 +129,7 @@ The copy loaded in this session is marked. A right click on a DLL or an add-in s
 
 ![Console](assets/console.png)
 
-Everything that scripts and DLL commands write goes here: `Console.WriteLine`, `Debug.WriteLine`, `Trace` and exceptions with their call stacks. The console opens as a separate Revit pane and is also shown at the bottom of the script editor. It can be cleared and copied, and checkboxes turn on timestamps and debug lines.
+Everything that scripts and DLL commands write goes here: `Console.WriteLine`, `Debug.WriteLine`, `Trace` and exceptions with their call stacks. The console opens as a separate Revit pane and is also shown at the bottom of the script editor. The Console button on the ribbon shows the pane, or hides it when it is open. The output can be cleared (Ctrl+L) and copied. The checkboxes are **Автопрокрутка** (auto scroll), **Время** (timestamps) and **Стек вызовов** (call stacks), the last one showing call stacks and other debug lines.
 
 ## License
 
