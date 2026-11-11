@@ -2,12 +2,12 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 
@@ -23,7 +23,10 @@ namespace RevitDevKit.Core
         public string AssemblyName { get; set; }
         public Version AssemblyVersion { get; set; }
 
-        // Three parts, as Windows shows it: 4.600.24, 13.0.3.
+        // Set for a satellite assembly: the resources of one language.
+        public string Culture { get; set; }
+
+        // Three parts, as Windows shows it: 4.600.24, 13.0.3. A dash when the file has no version.
         public string FileVersion { get; set; }
 
         public IList<AssemblyName> References { get; set; } = new List<AssemblyName>();
@@ -67,44 +70,22 @@ namespace RevitDevKit.Core
         public List<LoadedCopy> Loaded { get; set; } = new List<LoadedCopy>();
     }
 
-    public enum MissingKind
-    {
-        // Neither next to the add-in, nor in Revit, the GAC or anywhere else: it fails when it gets to that code.
-        Nowhere,
-        // Not next to the add-in, but another add-in has it or loaded it: it works while that one is there.
-        Elsewhere
-    }
-
-    // A DLL an add-in references but does not ship.
-    public sealed class MissingDll
-    {
-        public string Owner { get; set; }
-        public string Name { get; set; }
-        public Version Version { get; set; }
-        public string ReferencedBy { get; set; }
-        public MissingKind Kind { get; set; }
-        public string FoundPath { get; set; }
-        public string FoundOwner { get; set; }
-
-        // The copy found elsewhere is the one loaded now, not just lying in another add-in's folder.
-        public bool FoundLoaded { get; set; }
-    }
-
     public sealed class DependencyReport
     {
         public string RevitVersion { get; set; }
         public DateTime CheckedAt { get; set; }
         public List<VersionGroup> Groups { get; set; } = new List<VersionGroup>();
-        public List<MissingDll> Missing { get; set; } = new List<MissingDll>();
     }
 
     // Which DLLs the add-ins of this Revit version bring, and where they disagree. An add-in's DLLs are the ones in
-    // the folder of its assembly (the copies .NET finds for it); when that folder is shared, as Addins\<year> is, only
-    // what its assembly references. References are followed from the add-in's assemblies to find what it uses but
-    // does not ship. Revit's own folder takes part as "Revit": its copies are usually loaded first.
+    // the folder of its assembly (the copies .NET finds for it), one per name, the nearest to its assembly; when that
+    // folder is shared, as Addins\<year> is, only what its assembly references. Revit's own folder takes part as
+    // "Revit": its copies are usually loaded first. Language resources are left out: they are the same DLL in another
+    // language, not another version.
     public static class AddinDependencies
     {
         public const string RevitOwner = "Revit";
+        private const string NoVersion = "—";
 
         // Revit's folder; tests point it elsewhere.
         public static string RevitFolder { get; set; }
@@ -112,15 +93,16 @@ namespace RevitDevKit.Core
         private static readonly ConcurrentDictionary<string, Tuple<DateTime, DllInfo>> Cache =
             new ConcurrentDictionary<string, Tuple<DateTime, DllInfo>>(StringComparer.OrdinalIgnoreCase);
 
-        private static readonly ConcurrentDictionary<string, bool> SystemNames =
-            new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        // en, en-US, ru-RU, zh-Hans...: folders of language resources.
+        private static readonly Lazy<HashSet<string>> Cultures = new Lazy<HashSet<string>>(() =>
+            new HashSet<string>(CultureInfo.GetCultures(CultureTypes.AllCultures).Select(c => c.Name).Where(n => n.Length > 0), StringComparer.OrdinalIgnoreCase));
 
         private sealed class Participant
         {
             public string Name;
             public List<string> Mains = new List<string>();
             public List<string> Folders = new List<string>();
-            // File name -> path of every DLL where .NET would look for this add-in.
+            // File name -> path of the DLLs next to an assembly in a shared folder.
             public Dictionary<string, string> Index = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             // The DLLs counted as the add-in's own.
             public HashSet<string> Own = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -144,26 +126,46 @@ namespace RevitDevKit.Core
                 foreach (var main in manifest.Assemblies.Where(File.Exists))
                 {
                     p.Mains.Add(main);
+                    p.Own.Add(main);
                     var folder = Path.GetDirectoryName(main);
                     if (folder == null || p.Folders.Contains(folder, StringComparer.OrdinalIgnoreCase)) continue;
                     p.Folders.Add(folder);
 
                     // A shared folder holds other add-ins' DLLs too: only what the assembly references counts.
-                    var shared = IsShared(folder, sharedFolders, revitFolder);
-                    p.Shared |= shared;
-                    foreach (var file in Dlls(folder, recursive: !shared))
+                    if (IsShared(folder, sharedFolders, revitFolder))
                     {
-                        if (!p.Index.ContainsKey(Path.GetFileName(file))) p.Index[Path.GetFileName(file)] = file;
-                        if (!shared) p.Own.Add(file);
+                        p.Shared = true;
+                        foreach (var file in Dlls(folder, recursive: false))
+                            if (!p.Index.ContainsKey(Path.GetFileName(file))) p.Index[Path.GetFileName(file)] = file;
+                    }
+                    else
+                    {
+                        foreach (var file in Dlls(folder, recursive: true))
+                            p.Own.Add(file);
                     }
                 }
             }
 
             participants.RemoveAll(p => p.Mains.Count == 0);
+
+            // In a shared folder, the add-in's DLLs are the ones its assembly references, and theirs, found next to it.
+            foreach (var p in participants.Where(x => x.Shared))
+            {
+                var queue = new Queue<string>(p.Mains);
+                while (queue.Count > 0)
+                {
+                    token.ThrowIfCancellationRequested();
+                    foreach (var reference in Read(queue.Dequeue()).References)
+                    {
+                        if (p.Index.TryGetValue(reference.Name + ".dll", out var local) && p.Own.Add(local))
+                            queue.Enqueue(local);
+                    }
+                }
+            }
+
             token.ThrowIfCancellationRequested();
 
             var report = new DependencyReport { RevitVersion = AddinManifests.RevitVersion, CheckedAt = DateTime.Now };
-            var revitIndex = Dlls(revitFolder, recursive: false).ToDictionary(Path.GetFileName, f => f, StringComparer.OrdinalIgnoreCase);
             var loadedByName = loadedAssemblies
                 .GroupBy(a => a.Item1, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => g.Select(a => a.Item2).ToList(), StringComparer.OrdinalIgnoreCase);
@@ -177,77 +179,36 @@ namespace RevitDevKit.Core
                 return path.IndexOf(@"\assembly\GAC", StringComparison.OrdinalIgnoreCase) >= 0 ? "GAC" : null;
             }
 
-            // Follows references from the add-in's assemblies: what is found next to it is its own (that is how a shared
-            // folder gets its DLLs), what is not is looked for where .NET and other add-ins would find it.
+            // One copy per add-in and name: several files of one name inside an add-in (x64\ and x86\, a stale
+            // subfolder) are not a clash with itself; the one nearest to its assembly is the one .NET finds first.
+            var copies = new Dictionary<string, List<DllCopy>>(StringComparer.OrdinalIgnoreCase);
             foreach (var p in participants)
             {
-                var queue = new Queue<string>(p.Mains);
-                var seen = new HashSet<string>(p.Mains, StringComparer.OrdinalIgnoreCase);
-                foreach (var main in p.Mains) p.Own.Add(main);
-
-                while (queue.Count > 0)
+                token.ThrowIfCancellationRequested();
+                foreach (var sameName in p.Own.Select(Read).Where(IsComparable).GroupBy(d => d.FileName, StringComparer.OrdinalIgnoreCase))
                 {
-                    token.ThrowIfCancellationRequested();
-                    var dll = Read(queue.Dequeue());
-                    foreach (var reference in dll.References)
-                    {
-                        var file = reference.Name + ".dll";
-                        if (p.Index.TryGetValue(file, out var local) || p.Index.TryGetValue(reference.Name + ".exe", out local))
-                        {
-                            p.Own.Add(local);
-                            if (seen.Add(local)) queue.Enqueue(local);
-                            continue;
-                        }
-
-                        if (IsSystem(reference.Name) || revitIndex.ContainsKey(file)) continue;
-                        if (report.Missing.Any(m => m.Owner == p.Name && string.Equals(m.Name, reference.Name, StringComparison.OrdinalIgnoreCase))) continue;
-
-                        var missing = new MissingDll { Owner = p.Name, Name = reference.Name, Version = reference.Version, ReferencedBy = dll.Path, Kind = MissingKind.Nowhere };
-                        if (loadedByName.TryGetValue(reference.Name, out var loadedPaths))
-                        {
-                            var owner = loadedPaths.Select(OwnerOf).FirstOrDefault(o => o != null && o != p.Name);
-                            if (owner == RevitOwner || owner == "GAC") continue;
-                            missing.Kind = MissingKind.Elsewhere;
-                            missing.FoundOwner = owner;
-                            missing.FoundPath = loadedPaths.First();
-                            missing.FoundLoaded = true;
-                        }
-                        else
-                        {
-                            var other = participants.FirstOrDefault(o => o != p && o.Index.ContainsKey(file));
-                            if (other != null)
-                            {
-                                missing.Kind = MissingKind.Elsewhere;
-                                missing.FoundOwner = other.Name;
-                                missing.FoundPath = other.Index[file];
-                            }
-                        }
-
-                        report.Missing.Add(missing);
-                    }
+                    var nearest = sameName.OrderBy(d => Depth(d.Path, p.Folders)).ThenBy(d => d.Path, StringComparer.OrdinalIgnoreCase).First();
+                    Add(copies, new DllCopy { Owner = p.Name, Dll = nearest });
                 }
             }
 
-            // Every DLL by file name, from each add-in and from Revit where an add-in has it too.
-            var copies = new Dictionary<string, List<DllCopy>>(StringComparer.OrdinalIgnoreCase);
-            foreach (var p in participants)
-            foreach (var path in p.Own)
+            foreach (var name in copies.Keys.ToList())
             {
-                token.ThrowIfCancellationRequested();
-                Add(copies, new DllCopy { Owner = p.Name, Dll = Read(path) });
+                var revitCopy = Path.Combine(revitFolder, name);
+                if (File.Exists(revitCopy) && IsComparable(Read(revitCopy)))
+                    Add(copies, new DllCopy { Owner = RevitOwner, Dll = Read(revitCopy) });
             }
 
-            foreach (var name in copies.Keys.ToList())
-                if (revitIndex.TryGetValue(name, out var revitCopy))
-                    Add(copies, new DllCopy { Owner = RevitOwner, Dll = Read(revitCopy) });
-
             var modules = new HashSet<string>(loadedModules ?? new string[0], StringComparer.OrdinalIgnoreCase);
-            foreach (var pair in copies)
+            foreach (var list in copies.Values)
             {
-                var list = pair.Value;
                 if (list.Select(c => c.Owner).Distinct().Count() < 2) continue;
 
-                var group = new VersionGroup { FileName = list[0].Dll.FileName, Copies = list.OrderBy(c => c.Owner == RevitOwner ? 0 : 1).ThenBy(c => c.Owner, StringComparer.OrdinalIgnoreCase).ToList() };
+                var group = new VersionGroup
+                {
+                    FileName = list[0].Dll.FileName,
+                    Copies = list.OrderBy(c => c.Owner == RevitOwner ? 0 : 1).ThenBy(c => c.Owner, StringComparer.OrdinalIgnoreCase).ToList()
+                };
                 var distinct = list.GroupBy(c => c.Dll.Path, StringComparer.OrdinalIgnoreCase).Select(g => g.First().Dll).ToList();
                 group.Level = distinct.All(d => d.IsManaged) && distinct.Select(d => d.AssemblyVersion).Distinct().Count() > 1 ? DependencyLevel.Assembly
                     : distinct.Select(d => d.FileVersion).Distinct().Count() > 1 ? DependencyLevel.FileOnly
@@ -267,14 +228,28 @@ namespace RevitDevKit.Core
             }
 
             report.Groups = report.Groups.OrderByDescending(g => g.Level).ThenBy(g => g.FileName, StringComparer.OrdinalIgnoreCase).ToList();
-            report.Missing = report.Missing.OrderBy(m => m.Kind).ThenBy(m => m.Name, StringComparer.OrdinalIgnoreCase).ThenBy(m => m.Owner).ToList();
             return report;
+        }
+
+        // A language's resources (X.resources.dll, a culture in the header) are not another version of anything,
+        // and a native DLL without a version has nothing to compare.
+        private static bool IsComparable(DllInfo dll) =>
+            !dll.FileName.EndsWith(".resources.dll", StringComparison.OrdinalIgnoreCase)
+            && string.IsNullOrEmpty(dll.Culture)
+            && (dll.IsManaged || dll.FileVersion != NoVersion);
+
+        // How many folders below the add-in's own folder the file lies.
+        private static int Depth(string path, List<string> folders)
+        {
+            var folder = folders.FirstOrDefault(f => IsUnder(path, f));
+            if (folder == null) return int.MaxValue;
+            return path.Substring(folder.TrimEnd('\\').Length + 1).Count(c => c == '\\');
         }
 
         private static void Add(Dictionary<string, List<DllCopy>> copies, DllCopy copy)
         {
             if (!copies.TryGetValue(copy.Dll.FileName, out var list)) copies[copy.Dll.FileName] = list = new List<DllCopy>();
-            if (!list.Any(c => c.Owner == copy.Owner && string.Equals(c.Dll.Path, copy.Dll.Path, StringComparison.OrdinalIgnoreCase)))
+            if (!list.Any(c => c.Owner == copy.Owner))
                 list.Add(copy);
         }
 
@@ -285,37 +260,28 @@ namespace RevitDevKit.Core
         private static bool IsUnder(string path, string folder) =>
             path.StartsWith(folder.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase) || string.Equals(path.TrimEnd('\\'), folder.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase);
 
+        // The DLLs of a folder; below it, all but the language folders (en-US\, ru-RU\...).
         private static IEnumerable<string> Dlls(string folder, bool recursive)
         {
+            var result = new List<string>();
             try
             {
-                return Directory.Exists(folder)
-                    ? Directory.GetFiles(folder, "*.dll", recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly)
-                    : new string[0];
+                if (!Directory.Exists(folder)) return result;
+                result.AddRange(Directory.GetFiles(folder, "*.dll"));
+                if (recursive)
+                {
+                    foreach (var sub in Directory.GetDirectories(folder))
+                        if (!Cultures.Value.Contains(Path.GetFileName(sub)))
+                            result.AddRange(Dlls(sub, recursive: true));
+                }
             }
             catch (Exception)
             {
-                return new string[0];
+                // A folder without access: what was read so far.
             }
-        }
 
-        // The .NET Framework and the GAC answer for these: System.*, WindowsBase, netstandard and the like.
-        private static bool IsSystem(string name) => SystemNames.GetOrAdd(name, n =>
-        {
-            var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
-            var runtime = RuntimeEnvironment.GetRuntimeDirectory();
-            return new[]
-                {
-                    Path.Combine(windows, @"Microsoft.NET\assembly\GAC_MSIL", n),
-                    Path.Combine(windows, @"Microsoft.NET\assembly\GAC_64", n),
-                    Path.Combine(windows, @"Microsoft.NET\assembly\GAC_32", n),
-                    Path.Combine(windows, @"assembly\GAC_MSIL", n),
-                    Path.Combine(windows, @"assembly\GAC", n)
-                }.Any(Directory.Exists)
-                || File.Exists(Path.Combine(runtime, n + ".dll"))
-                || File.Exists(Path.Combine(runtime, "Facades", n + ".dll"))
-                || File.Exists(Path.Combine(runtime, "WPF", n + ".dll"));
-        });
+            return result;
+        }
 
         // The header only, read once per file version: hundreds of DLLs in Program Files are checked quickly again.
         public static DllInfo Read(string path)
@@ -341,6 +307,7 @@ namespace RevitDevKit.Core
                             var definition = metadata.GetAssemblyDefinition();
                             info.AssemblyName = metadata.GetString(definition.Name);
                             info.AssemblyVersion = definition.Version;
+                            info.Culture = metadata.GetString(definition.Culture);
                         }
 
                         info.References = metadata.AssemblyReferences
@@ -365,7 +332,7 @@ namespace RevitDevKit.Core
             {
                 var version = FileVersionInfo.GetVersionInfo(path);
                 if (version.FileMajorPart == 0 && version.FileMinorPart == 0 && version.FileBuildPart == 0 && version.FilePrivatePart == 0)
-                    return string.IsNullOrWhiteSpace(version.FileVersion) ? "—" : version.FileVersion.Trim();
+                    return string.IsNullOrWhiteSpace(version.FileVersion) ? NoVersion : version.FileVersion.Trim();
                 return version.FileMajorPart + "." + version.FileMinorPart + "." + version.FileBuildPart;
             }
             catch
@@ -374,35 +341,17 @@ namespace RevitDevKit.Core
             }
         }
 
-        // Markdown for an issue or a chat: the missing DLLs, then a table of versions with a column per add-in.
+        // Markdown for an issue or a chat: a table of versions with a column per add-in, as Revit sees them now.
         public static string ToMarkdown(DependencyReport report, bool onlyProblems)
         {
             var text = new StringBuilder();
-            text.AppendLine("### Revit " + (report.RevitVersion ?? "") + ": зависимости надстроек (" + report.CheckedAt.ToString("yyyy-MM-dd HH:mm") + ")");
+            text.AppendLine("### Revit " + (report.RevitVersion ?? "") + ": версии DLL у надстроек (" + report.CheckedAt.ToString("yyyy-MM-dd HH:mm") + ")");
             text.AppendLine();
 
-            text.AppendLine("#### Не хватает DLL");
-            text.AppendLine();
-            if (report.Missing.Count == 0)
-            {
-                text.AppendLine("Нет.");
-            }
-            else
-            {
-                Table(text, new[] { "DLL", "Версия", "Нужна", "Где есть" }, report.Missing.Select(m => new[]
-                {
-                    m.Name + ".dll", m.Version?.ToString() ?? "", m.Owner,
-                    m.Kind == MissingKind.Nowhere ? "нигде" : (m.FoundOwner ?? "?") + ": " + m.FoundPath
-                }));
-            }
-
-            text.AppendLine();
-            text.AppendLine("#### Разные версии");
-            text.AppendLine();
             var groups = report.Groups.Where(g => !onlyProblems || g.Level != DependencyLevel.None).ToList();
             if (groups.Count == 0)
             {
-                text.AppendLine("Нет.");
+                text.AppendLine("Расхождений нет.");
                 return text.ToString();
             }
 
@@ -414,7 +363,7 @@ namespace RevitDevKit.Core
                     g.FileName,
                     g.Level == DependencyLevel.Assembly ? "версия сборки" : g.Level == DependencyLevel.FileOnly ? "версия файла" : "нет"
                 }
-                .Concat(owners.Select(o => string.Join(", ", g.Copies.Where(c => c.Owner == o).Select(c => c.Dll.FileVersion).Distinct()) is var v && v.Length > 0 ? v : "-"))
+                .Concat(owners.Select(o => g.Copies.FirstOrDefault(c => c.Owner == o)?.Dll.FileVersion ?? "-"))
                 .Concat(new[] { g.Loaded.Count == 0 ? "-" : string.Join(", ", g.Loaded.Select(l => l.FileVersion + " (" + (l.Owner ?? l.Path) + ")")) })
                 .ToArray()));
             return text.ToString();

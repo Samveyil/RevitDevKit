@@ -41,7 +41,7 @@ namespace RevitDevKit.UI.DllRunner
         }
     }
 
-    // "Не хватает DLL · 2", "Разные версии · 3": a gray heading over its items, always open.
+    // "Разные версии · 3": a gray heading over its items, always open.
     public sealed class DependencySectionVM : DependencyNodeVM
     {
         public DependencySectionVM(string title, string icon) : base(null)
@@ -53,34 +53,6 @@ namespace RevitDevKit.UI.DllRunner
 
         public string Title { get; }
         public string Icon { get; }
-    }
-
-    public sealed class MissingNodeVM : DependencyNodeVM
-    {
-        public MissingNodeVM(MissingDll missing, Action<DependencyNodeVM> onSelected) : base(onSelected)
-        {
-            Missing = missing;
-        }
-
-        public MissingDll Missing { get; }
-        public string Name => Missing.Name + ".dll";
-        public string Version => Missing.Version?.ToString() ?? string.Empty;
-        public Severity Severity => Missing.Kind == MissingKind.Nowhere ? Severity.Critical : Severity.Minor;
-
-        public string Details
-        {
-            get
-            {
-                var where = Missing.Kind == MissingKind.Nowhere ? "не найдена нигде"
-                    : Missing.FoundOwner == null ? "рядом нет, сейчас загружена из " + Path.GetDirectoryName(Missing.FoundPath)
-                    : Missing.FoundLoaded ? "рядом нет, сейчас берётся у " + Missing.FoundOwner
-                    : "рядом нет, есть только у " + Missing.FoundOwner;
-                return "нужна " + Missing.Owner + " · " + where;
-            }
-        }
-
-        public string ToolTip => "Ссылается: " + Missing.ReferencedBy + (Missing.FoundPath == null ? string.Empty : "\nНайдена: " + Missing.FoundPath);
-        public override string FilePath => Missing.FoundPath ?? Missing.ReferencedBy;
     }
 
     public sealed class VersionGroupVM : DependencyNodeVM
@@ -170,7 +142,7 @@ namespace RevitDevKit.UI.DllRunner
         public override string FilePath => Copy.Dll.Path;
     }
 
-    // DLLs the add-ins of this Revit version bring in different versions, and DLLs they use but do not ship.
+    // DLLs the add-ins of this Revit version, and Revit itself, bring in different versions.
     // The check reads hundreds of DLL headers, so it runs in the background, on opening the tab and on F5.
     public sealed partial class DependenciesVM : ObservableObject
     {
@@ -242,8 +214,8 @@ namespace RevitDevKit.UI.DllRunner
             CopyReportCommand.NotifyCanExecuteChanged();
             IsBusy = false;
 
-            var problems = report.Missing.Count + report.Groups.Count(g => g.Level != DependencyLevel.None);
-            Status = "Проверено в " + report.CheckedAt.ToString("HH:mm:ss") + " · " + (problems == 0 ? "проблем нет" : "проблем: " + problems);
+            var problems = report.Groups.Count(g => g.Level != DependencyLevel.None);
+            Status = "Проверено в " + report.CheckedAt.ToString("HH:mm:ss") + " · " + (problems == 0 ? "расхождений нет" : "расхождений: " + problems);
             Rebuild();
         }
 
@@ -298,14 +270,6 @@ namespace RevitDevKit.UI.DllRunner
 
             var query = SearchText?.Trim() ?? string.Empty;
             bool Matches(params string[] values) => query.Length == 0 || values.Any(v => v != null && v.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
-
-            var missing = _report.Missing.Where(m => Matches(m.Name, m.Owner, m.FoundOwner)).ToList();
-            if (missing.Count > 0)
-            {
-                var section = new DependencySectionVM("Не хватает DLL · " + missing.Count, "AlertCircleOutline");
-                foreach (var m in missing) section.Children.Add(new MissingNodeVM(m, Select));
-                Sections.Add(section);
-            }
 
             AddGroups("Разные версии", "SourceBranch", g => g.Level != DependencyLevel.None, Matches);
             if (!OnlyProblems)

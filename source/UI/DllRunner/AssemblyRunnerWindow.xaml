@@ -105,18 +105,6 @@
                 <Setter Property="LineHeight" Value="14"/>
                 <Setter Property="LineStackingStrategy" Value="BlockLineHeight"/>
             </Style>
-
-            <Style x:Key="SeverityDetails" TargetType="TextBlock" BasedOn="{StaticResource RowDetails}">
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding Severity}" Value="Critical">
-                        <Setter Property="Foreground" Value="#C62828"/>
-                    </DataTrigger>
-                    <DataTrigger Binding="{Binding Severity}" Value="Minor">
-                        <Setter Property="Foreground" Value="#B26A00"/>
-                    </DataTrigger>
-                </Style.Triggers>
-            </Style>
-
             <DataTemplate x:Key="TabHeader">
                 <TextBlock Text="{Binding}" FontSize="14" FontWeight="DemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </DataTemplate>
@@ -236,7 +224,7 @@
                 <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Только проблемы" Margin="20 0 0 0" IsChecked="{Binding Dependencies.OnlyProblems}"
+            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Только расхождения" Margin="20 0 0 0" IsChecked="{Binding Dependencies.OnlyProblems}"
                       ToolTip="Снимите, чтобы видеть и DLL, одинаковые у нескольких надстроек"/>
         </StackPanel>
 
@@ -585,39 +573,22 @@
                     <Grid>
                         <TreeView ItemsSource="{Binding Dependencies.Sections}" Margin="2" Grid.IsSharedSizeScope="True">
                             <TreeView.Resources>
+                                <!-- Compact: a small expander (it is also the indent of each level) and no padding. -->
                                 <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
                                     <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
                                     <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
-                                    <Setter Property="Padding" Value="4 1"/>
+                                    <Setter Property="Padding" Value="2 0"/>
                                     <Setter Property="MinHeight" Value="0"/>
+                                    <Setter Property="materialDesign:TreeViewAssist.ExpanderSize" Value="12"/>
                                 </Style>
 
                                 <HierarchicalDataTemplate DataType="{x:Type local:DependencySectionVM}" ItemsSource="{Binding Children}">
-                                    <StackPanel Orientation="Horizontal" Margin="0 2">
+                                    <StackPanel Orientation="Horizontal" Margin="0 1">
                                         <materialDesign:PackIcon Kind="{Binding Icon}" Width="14" Height="14" Foreground="Gray"
                                                                  VerticalAlignment="Center" Margin="0 0 6 0"/>
                                         <TextBlock Text="{Binding Title}" Foreground="Gray" FontSize="11" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </HierarchicalDataTemplate>
-
-                                <DataTemplate DataType="{x:Type local:MissingNodeVM}">
-                                    <Grid ToolTip="{Binding ToolTip}" Background="Transparent">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <materialDesign:PackIcon Grid.RowSpan="2" Style="{StaticResource SeverityIcon}"/>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                            <TextBlock Text="{Binding Name}" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Text="{Binding Version}" Style="{StaticResource RowDetails}" FontFamily="Consolas" Margin="8 0 0 0" VerticalAlignment="Bottom"/>
-                                        </StackPanel>
-                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Details}" Style="{StaticResource SeverityDetails}"/>
-                                    </Grid>
-                                </DataTemplate>
 
                                 <HierarchicalDataTemplate DataType="{x:Type local:VersionGroupVM}" ItemsSource="{Binding Children}">
                                     <Grid Background="Transparent">
@@ -630,14 +601,15 @@
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         <materialDesign:PackIcon Grid.RowSpan="2" Style="{StaticResource SeverityIcon}"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding Name}" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Summary}" Style="{StaticResource RowDetails}"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}" Style="{StaticResource RowTitle}" LineHeight="14"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Summary}" Style="{StaticResource RowDetails}" LineHeight="12"/>
                                     </Grid>
                                 </HierarchicalDataTemplate>
 
                                 <!-- The add-ins of one DLL: the versions line up in a column across the whole tree. -->
                                 <DataTemplate DataType="{x:Type local:DllCopyVM}">
-                                    <Grid ToolTip="{Binding ToolTip}" Background="Transparent">
+                                    <Grid ToolTip="{Binding ToolTip}" Background="Transparent"
+                                          TextBlock.LineHeight="15" TextBlock.LineStackingStrategy="BlockLineHeight">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" SharedSizeGroup="DependencyOwner"/>
                                             <ColumnDefinition Width="Auto" SharedSizeGroup="DependencyLoaded"/>
@@ -653,7 +625,7 @@
                             </TreeView.Resources>
                         </TreeView>
 
-                        <TextBlock Text="Проблем не найдено" Foreground="Gray" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                        <TextBlock Text="Расхождений нет" Foreground="Gray" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
                                    Visibility="{Binding Dependencies.IsEmpty, Converter={StaticResource BoolToVisibility}}"/>
                     </Grid>
                 </DockPanel>

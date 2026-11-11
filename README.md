@@ -106,12 +106,9 @@ Under each name is what the file contains and its DLL, and in red what is wrong:
 
 <img src="assets/dll-runner-dependencies.png" width="520" alt="DLL Runner, the Dependencies tab" />
 
-This tab checks the DLLs of the add-ins the running Revit version loads, together with Revit's own folder. All add-ins run in one Revit process, and a library is loaded once, usually from whichever add-in needs it first, so two kinds of problems show here:
+This tab finds DLLs that several add-ins of the running Revit version, or an add-in and Revit itself, bring in different versions. All add-ins run in one Revit process, and a library is loaded once, usually from whichever add-in needs it first, so the others get that copy too. Red means the assembly versions differ, and the loaded copy may not suit the others. Orange means only the file version differs, which is usually harmless. The copy loaded in this session is marked.
 
-- **Missing DLLs**: an add-in references a library it does not ship. Red means it is nowhere, and the add-in fails when it gets to that code. Orange means it works only because another add-in has that library or has already loaded it.
-- **Different versions**: several add-ins, or an add-in and Revit, bring the same DLL in different versions. Red means the assembly versions differ, and the loaded copy may not suit the others. Orange means only the file version differs, which is usually harmless. The copy loaded in this session is marked.
-
-An add-in's DLLs are the ones in the folder of its assembly, and references are read from the DLL headers without loading them. The copy button puts a markdown report on the clipboard. A DLL that an add-in loads by path in its own code is not seen.
+An add-in's DLLs are the ones in the folder of its assembly, read from their headers without loading them. Language resources (folders such as `en-US` and `*.resources.dll`) are left out: they are the same DLL in another language. The copy button puts a markdown report on the clipboard.
 
 ## Console
 
