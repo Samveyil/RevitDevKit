@@ -59,6 +59,7 @@ namespace RevitDevKit.Core
                 throw new InvalidOperationException("DevKit не инициализирован — перезапустите Revit.");
 
             RibbonAccess.Verify();
+            PackResources.FollowComponents();
 
             var original = Path.GetFullPath(path);
             if (!File.Exists(original))
@@ -108,7 +109,9 @@ namespace RevitDevKit.Core
                 commandFiles.Contains(RibbonDraft.FileName(button.AssemblyName) ?? string.Empty) ||
                 folder.Loaded.Any(a => !string.IsNullOrEmpty(button.ClassName) && a.GetType(button.ClassName) != null));
             merge.Apply(draft);
-            ProxyCommands.Rebind(merge.Adopted, folder, Path.GetDirectoryName(original));
+            // Every button of the new build runs through a proxy, also one the add-in moved to a panel of its own:
+            // Revit would load a second copy's DLL by its name and get the first copy, whose XAML is no longer found.
+            ProxyCommands.Rebind(merge.Adopted.Concat(draft.Items().OfType<PushButton>()).Distinct(), folder, Path.GetDirectoryName(original));
 
             ConsoleOutput.Info("Лента: обновлено " + merge.Updated + ", добавлено " + merge.Added + ", убрано " + merge.Removed + ".");
 
@@ -241,7 +244,7 @@ namespace RevitDevKit.Core
 
                 var own = args.RequestingAssembly == null
                     ? null
-                    : Folders.FirstOrDefault(f => f.Contains(args.RequestingAssembly));
+                    : Folders.LastOrDefault(f => f.Contains(args.RequestingAssembly));
 
                 if (own != null)
                     return own.TryLoad(name);
@@ -287,12 +290,91 @@ namespace RevitDevKit.Core
                 return loaded;
             }
 
+            // A dependency that did not change (MaterialDesign, say) is the copy already loaded, the installed
+            // add-in's or one from an earlier build: with two copies of a library, XAML may take its types from
+            // one and the code from the other, and styles, casts and resources fail.
             public Assembly TryLoad(string name)
             {
                 if (_loaded.TryGetValue(name, out var loaded)) return loaded;
 
                 var path = Path.Combine(Directory, name + ".dll");
-                return File.Exists(path) ? Load(path) : null;
+                if (!File.Exists(path)) return null;
+
+                var same = SameFile(name, path);
+                if (same != null)
+                {
+                    _loaded[name] = same;
+                    return same;
+                }
+
+                return Load(path);
+            }
+
+            private static Assembly SameFile(string name, string path)
+            {
+                try
+                {
+                    var length = new FileInfo(path).Length;
+                    string hash = null;
+                    foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                    {
+                        if (assembly.IsDynamic || !string.Equals(assembly.GetName().Name, name, StringComparison.OrdinalIgnoreCase)) continue;
+
+                        var location = assembly.Location;
+                        if (string.IsNullOrEmpty(location) || !File.Exists(location) || new FileInfo(location).Length != length) continue;
+
+                        hash ??= Hash(path);
+                        if (Hash(location) == hash) return assembly;
+                    }
+
+                    // Not loaded yet, but the same file sits next to an installed add-in that will load it later:
+                    // it is loaded from there now, so the add-in gets this very assembly instead of a second copy.
+                    foreach (var folder in LiveFolders())
+                    {
+                        var candidate = Path.Combine(folder, name + ".dll");
+                        if (!File.Exists(candidate) || new FileInfo(candidate).Length != length) continue;
+
+                        hash ??= Hash(path);
+                        if (Hash(candidate) == hash) return Assembly.LoadFrom(candidate);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ConsoleOutput.Debug("Не удалось сравнить " + name + " с загруженной: " + ex.Message);
+                }
+
+                return null;
+            }
+
+            // Folders the add-ins Revit loaded live in: not DevKit's shadow copies, nor .NET's own.
+            private static IEnumerable<string> LiveFolders()
+            {
+                var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+                return AppDomain.CurrentDomain.GetAssemblies()
+                    .Where(a => !a.IsDynamic && !Folders.Any(f => f.Contains(a)))
+                    .Select(a => { try { return a.Location; } catch { return null; } })
+                    .Where(l => !string.IsNullOrEmpty(l) && !l.StartsWith(windows, StringComparison.OrdinalIgnoreCase)
+                                && !l.StartsWith(ShadowBase, StringComparison.OrdinalIgnoreCase))
+                    .Select(Path.GetDirectoryName)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+
+            private static readonly Dictionary<string, Tuple<DateTime, string>> Hashes =
+                new Dictionary<string, Tuple<DateTime, string>>(StringComparer.OrdinalIgnoreCase);
+
+            private static string Hash(string path)
+            {
+                var stamp = File.GetLastWriteTimeUtc(path);
+                if (Hashes.TryGetValue(path, out var cached) && cached.Item1 == stamp) return cached.Item2;
+
+                using (var sha = System.Security.Cryptography.SHA256.Create())
+                using (var stream = File.OpenRead(path))
+                {
+                    var hash = Convert.ToBase64String(sha.ComputeHash(stream));
+                    Hashes[path] = Tuple.Create(stamp, hash);
+                    return hash;
+                }
             }
         }
     }
