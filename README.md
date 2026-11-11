@@ -16,7 +16,7 @@ The Add-Ins tab gets a DevKit panel with a pulldown button:
 - Script Editor opens the script editor;
 - Add-in Explorer opens a window with the commands and applications of a DLL, the add-ins Revit loads at startup, the loaded assemblies and the add-ins' DLLs;
 - Run Again repeats the last run;
-- Console shows the console pane.
+- Console, after a separator, shows the console pane or hides it when it is open.
 
 ## Script Editor
 
