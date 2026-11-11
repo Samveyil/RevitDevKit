@@ -25,6 +25,14 @@ namespace RevitDevKit.Core
 
         public List<Adw.RibbonTab> NewTabs { get; private set; } = new List<Adw.RibbonTab>();
 
+        // Every panel the draft created through the API, also one it took off the tab and out of the registry
+        // after moving its buttons to a panel of its own: those buttons are on the ribbon all the same.
+        public List<RibbonPanel> CreatedPanels { get; private set; } = new List<RibbonPanel>();
+
+        // Panels the add-in put on tabs that were already there through AdWindows itself, not the API
+        // (a panel of its own on Modify, say): the API registry knows nothing of them.
+        public List<Tuple<Adw.RibbonTab, Adw.RibbonPanel>> ForeignPanels { get; private set; } = new List<Tuple<Adw.RibbonTab, Adw.RibbonPanel>>();
+
         public static RibbonDraft Run(Action startup)
         {
             DraftPatches.Install();
@@ -32,6 +40,7 @@ namespace RevitDevKit.Core
             var ribbon = RibbonAccess.Ribbon;
             var live = RibbonAccess.Registry;
             var tabsBefore = ribbon.Tabs.ToList();
+            var panelsBefore = tabsBefore.ToDictionary(t => t, t => new HashSet<Adw.RibbonPanel>(t.Panels));
 
             var draft = new RibbonDraft();
             foreach (var key in live.Keys.Where(RibbonAccess.IsCustomTab))
@@ -43,6 +52,7 @@ namespace RevitDevKit.Core
             Exception failure = null;
 
             RibbonAccess.Registry = draft.Registry;
+            DraftPatches.Created.Clear();
             DraftPatches.IsActive = true;
             try
             {
@@ -56,9 +66,17 @@ namespace RevitDevKit.Core
             {
                 DraftPatches.IsActive = false;
                 RibbonAccess.Registry = live;
+                draft.CreatedPanels = DraftPatches.Created.Distinct().ToList();
+                DraftPatches.Created.Clear();
             }
 
             draft.NewTabs = ribbon.Tabs.Where(t => !tabsBefore.Contains(t)).ToList();
+
+            var apiPanels = new HashSet<Adw.RibbonPanel>(draft.Registry.Values.SelectMany(p => p.Values).Select(p => p.ToAWRibbonPanel()));
+            draft.ForeignPanels = ribbon.Tabs
+                .Where(panelsBefore.ContainsKey)
+                .SelectMany(t => t.Panels.Where(p => !panelsBefore[t].Contains(p) && !apiPanels.Contains(p)).Select(p => Tuple.Create(t, p)))
+                .ToList();
 
             if (failure != null)
             {
@@ -71,7 +89,8 @@ namespace RevitDevKit.Core
 
         public IEnumerable<RibbonItem> Items()
         {
-            foreach (var item in Registry.Values.SelectMany(p => p.Values).SelectMany(p => RibbonAccess.Items(p).Values))
+            var panels = Registry.Values.SelectMany(p => p.Values).Concat(CreatedPanels).Distinct();
+            foreach (var item in panels.SelectMany(p => RibbonAccess.Items(p).Values))
             {
                 yield return item;
 
@@ -96,6 +115,9 @@ namespace RevitDevKit.Core
 
             foreach (var tab in NewTabs)
                 RibbonAccess.Ribbon.Tabs.Remove(tab);
+
+            foreach (var foreign in ForeignPanels)
+                foreign.Item1.Panels.Remove(foreign.Item2);
         }
 
         internal static string FileName(string path)
@@ -114,6 +136,9 @@ namespace RevitDevKit.Core
 
         public static bool IsActive { get; set; }
 
+        // Panels CreateRibbonPanel returned while the draft ran.
+        public static List<RibbonPanel> Created { get; } = new List<RibbonPanel>();
+
         public static void Install()
         {
             if (_harmony != null) return;
@@ -121,22 +146,29 @@ namespace RevitDevKit.Core
 
             var app = typeof(UIControlledApplication);
             Patch(app.GetMethod(nameof(UIControlledApplication.CreateRibbonTab), new[] { typeof(string) }), nameof(CreateRibbonTab));
-            Patch(app.GetMethod(nameof(UIControlledApplication.CreateRibbonPanel), new[] { typeof(string), typeof(string) }), nameof(CreatePanelInTab));
-            Patch(app.GetMethod(nameof(UIControlledApplication.CreateRibbonPanel), new[] { typeof(string) }), nameof(CreatePanelInAddIns));
-            Patch(app.GetMethod(nameof(UIControlledApplication.CreateRibbonPanel), new[] { typeof(Tab), typeof(string) }), nameof(CreatePanelInBuiltInTab));
+            Patch(app.GetMethod(nameof(UIControlledApplication.CreateRibbonPanel), new[] { typeof(string), typeof(string) }), nameof(CreatePanelInTab), nameof(PanelCreated));
+            Patch(app.GetMethod(nameof(UIControlledApplication.CreateRibbonPanel), new[] { typeof(string) }), nameof(CreatePanelInAddIns), nameof(PanelCreated));
+            Patch(app.GetMethod(nameof(UIControlledApplication.CreateRibbonPanel), new[] { typeof(Tab), typeof(string) }), nameof(CreatePanelInBuiltInTab), nameof(PanelCreated));
             Patch(app.GetMethod(nameof(UIControlledApplication.RegisterDockablePane)), nameof(RegisterDockablePane));
         }
 
-        private static void Patch(MethodInfo original, string prefix)
+        private static void Patch(MethodInfo original, string prefix, string postfix = null)
         {
             try
             {
-                _harmony.Patch(original, prefix: new HarmonyMethod(typeof(DraftPatches).GetMethod(prefix, BindingFlags.NonPublic | BindingFlags.Static)));
+                _harmony.Patch(original,
+                    prefix: new HarmonyMethod(typeof(DraftPatches).GetMethod(prefix, BindingFlags.NonPublic | BindingFlags.Static)),
+                    postfix: postfix == null ? null : new HarmonyMethod(typeof(DraftPatches).GetMethod(postfix, BindingFlags.NonPublic | BindingFlags.Static)));
             }
             catch (Exception ex)
             {
                 ConsoleOutput.Warning("Не удалось перехватить " + (original?.Name ?? prefix) + ": " + ex.Message);
             }
+        }
+
+        private static void PanelCreated(RibbonPanel __result)
+        {
+            if (IsActive && __result != null) Created.Add(__result);
         }
 
         // Prefixes: returning false skips the original method.

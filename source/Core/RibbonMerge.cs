@@ -156,6 +156,147 @@ namespace RevitDevKit.Core
             }
 
             HideRemovedPanels(draft);
+            MergeForeignPanels(draft);
+        }
+
+        // A panel the add-in made through AdWindows replaces nothing by name: its counterpart is the live panel
+        // on the same tab with the same buttons. That one is kept, as the add-in holds it to show and hide it,
+        // and gets the new buttons; a panel without a counterpart is new and goes away on Undo.
+        private void MergeForeignPanels(RibbonDraft draft)
+        {
+            var apiPanels = new HashSet<Adw.RibbonPanel>(RibbonAccess.Registry.Values.SelectMany(p => p.Values).Select(p => p.ToAWRibbonPanel()));
+            var draftPanels = new HashSet<Adw.RibbonPanel>(draft.ForeignPanels.Select(f => f.Item2));
+            var draftButtons = draft.Items().OfType<PushButton>().ToList();
+            var taken = new HashSet<Adw.RibbonPanel>();
+
+            foreach (var foreign in draft.ForeignPanels)
+            {
+                var tab = foreign.Item1;
+                var panel = foreign.Item2;
+                var live = tab.Panels
+                    .Where(p => !draftPanels.Contains(p) && !apiPanels.Contains(p) && !taken.Contains(p))
+                    .Select(p => new { Panel = p, Score = Likeness(p, panel) })
+                    .Where(c => c.Score > 0)
+                    .OrderByDescending(c => c.Score)
+                    .Select(c => c.Panel)
+                    .FirstOrDefault();
+
+                if (live == null)
+                {
+                    foreach (var item in Flatten(panel.Source.Items))
+                        AdoptAdw(item, draftButtons);
+                    _undo.Add(() => tab.Panels.Remove(panel));
+                    continue;
+                }
+
+                taken.Add(live);
+                MergeForeignPanel(live, panel, draftButtons);
+                tab.Panels.Remove(panel);
+            }
+        }
+
+        // How sure it is the same panel: buttons with the same Id, then the same title.
+        private static int Likeness(Adw.RibbonPanel live, Adw.RibbonPanel draft)
+        {
+            var ids = new HashSet<string>(Flatten(live.Source.Items).Select(i => i.Id).Where(id => !string.IsNullOrEmpty(id)));
+            var score = 2 * Flatten(draft.Source.Items).Count(i => !string.IsNullOrEmpty(i.Id) && ids.Contains(i.Id));
+            if (!string.IsNullOrEmpty(draft.Source.Title) && draft.Source.Title == live.Source.Title) score++;
+            return score;
+        }
+
+        private static IEnumerable<Adw.RibbonItem> Flatten(IEnumerable<Adw.RibbonItem> items)
+        {
+            foreach (var item in items)
+            {
+                if (item is Adw.RibbonRowPanel row)
+                {
+                    foreach (var child in Flatten(row.Items)) yield return child;
+                }
+                else if (!(item is Adw.RibbonSeparator) && !(item is Adw.RibbonRowBreak))
+                {
+                    yield return item;
+                }
+            }
+        }
+
+        // Buttons are paired by Id, or by place and type when the add-in gave none (a clone may have none).
+        private void MergeForeignPanel(Adw.RibbonPanel live, Adw.RibbonPanel draft, List<PushButton> draftButtons)
+        {
+            var liveItems = live.Source.Items;
+            var oldOrder = liveItems.ToList();
+            var oldVisible = oldOrder.ToDictionary(i => i, i => i.IsVisible);
+            _undo.Add(() =>
+            {
+                Replace(liveItems, oldOrder);
+                foreach (var entry in oldVisible) entry.Key.IsVisible = entry.Value;
+            });
+
+            var order = new List<Adw.RibbonItem>();
+            var draftItems = draft.Source.Items.ToList();
+            for (var i = 0; i < draftItems.Count; i++)
+            {
+                var item = draftItems[i];
+                Adw.RibbonItem match;
+                if (!string.IsNullOrEmpty(item.Id))
+                    match = oldOrder.FirstOrDefault(l => l.Id == item.Id && l.GetType() == item.GetType() && !order.Contains(l));
+                else
+                    match = i < oldOrder.Count && string.IsNullOrEmpty(oldOrder[i].Id) && oldOrder[i].GetType() == item.GetType() && !order.Contains(oldOrder[i])
+                        ? oldOrder[i] : null;
+
+                if (match == null || item is Adw.RibbonRowPanel)
+                {
+                    foreach (var added in Flatten(new[] { item }))
+                        AdoptAdw(added, draftButtons);
+                    order.Add(item);
+                    continue;
+                }
+
+                if (!ReferenceEquals(match, item))
+                {
+                    Updated++;
+                    CopyAdw(match, item);
+                }
+
+                order.Add(match);
+            }
+
+            // Buttons the new build no longer puts on this panel are hidden, not lost: Undo shows them again.
+            foreach (var item in oldOrder.Where(l => !order.Contains(l) && !(l is Adw.RibbonSeparator)).ToList())
+            {
+                if (!item.IsVisible) continue;
+                item.IsVisible = false;
+                Removed++;
+            }
+
+            foreach (var item in oldOrder.Where(l => !order.Contains(l)).ToList())
+                order.Add(item);
+
+            draft.Source.Items.Clear();
+            Replace(liveItems, order);
+        }
+
+        private void AdoptAdw(Adw.RibbonItem item, List<PushButton> draftButtons)
+        {
+            Added++;
+            Adopted.AddRange(draftButtons.Where(b => ReferenceEquals(b.ToAWRibbonItem(), item)));
+        }
+
+        // What an add-in sets on an AdWindows item: its text, tooltip and images besides the appearance.
+        private static readonly string[] ContentProperties = { "Text", "ToolTip", "Description", "Image", "LargeImage", "IsEnabled", "IsVisible" };
+
+        private void CopyAdw(Adw.RibbonItem live, Adw.RibbonItem draft)
+        {
+            foreach (var name in ContentProperties)
+            {
+                PropertyInfo property;
+                try { property = live.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance); }
+                catch (AmbiguousMatchException) { continue; }
+
+                if (property == null || !property.CanRead || !property.CanWrite) continue;
+                Copy(live, draft, i => property.GetValue(i), (i, v) => property.SetValue(i, v));
+            }
+
+            CopyAppearance(live, draft);
         }
 
         private void AdoptTab(Dictionary<string, Dictionary<string, RibbonPanel>> live, string key,
@@ -503,6 +644,58 @@ namespace RevitDevKit.Core
             WrapperType?.GetProperty("Assembly", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
 
         private const string Component = ";component/";
+
+        private static HarmonyLib.Harmony _harmony;
+
+        // The installed add-in and a fresh build may have the same name (Dbg_BIMPlugins), and then two copies
+        // share one wrapper: whichever it points to, the other copy's windows fail with "the component does not
+        // have a resource identified by the URI". So each time a component loads its XAML, the wrapper of its
+        // name is pointed at the component's own assembly first.
+        public static void FollowComponents()
+        {
+            if (_harmony != null || ResourceManagersField == null || WrapperAssembly == null) return;
+
+            try
+            {
+                var loadComponent = typeof(System.Windows.Application).GetMethod(nameof(System.Windows.Application.LoadComponent),
+                    BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(object), typeof(Uri) }, null);
+                _harmony = new HarmonyLib.Harmony("RevitDevKit.PackResources");
+                _harmony.Patch(loadComponent, prefix: new HarmonyLib.HarmonyMethod(typeof(PackResources).GetMethod(nameof(BeforeLoadComponent), BindingFlags.NonPublic | BindingFlags.Static)));
+            }
+            catch (Exception ex)
+            {
+                ConsoleOutput.Warning("Не удалось перехватить Application.LoadComponent: " + ex.Message);
+            }
+        }
+
+        private static void BeforeLoadComponent(object component, Uri resourceLocator)
+        {
+            try
+            {
+                var assembly = component?.GetType().Assembly;
+                if (assembly == null || resourceLocator == null) return;
+
+                var path = Uri.UnescapeDataString(resourceLocator.IsAbsoluteUri ? resourceLocator.AbsolutePath : resourceLocator.OriginalString).TrimStart('/');
+                var at = path.IndexOf(Component, StringComparison.OrdinalIgnoreCase);
+                if (at < 0) return;
+
+                var name = assembly.GetName().Name;
+                if (!string.Equals(path.Substring(0, at).Split(';')[0], name, StringComparison.OrdinalIgnoreCase)) return;
+
+                var managers = ResourceManagersField.GetValue(null) as IDictionary;
+                if (managers == null) return;
+
+                var key = name.ToLowerInvariant();
+                if (!managers.Contains(key))
+                    managers[key] = Activator.CreateInstance(WrapperType, BindingFlags.NonPublic | BindingFlags.Instance, null, new object[] { assembly }, null);
+
+                Point(managers, name, assembly);
+            }
+            catch (Exception ex)
+            {
+                ConsoleOutput.Debug("Ресурсы WPF для " + component?.GetType().FullName + " не перенаправлены: " + ex.Message);
+            }
+        }
 
         // While the draft runs, the resources of the fresh build come from its copy. Afterwards an
         // assembly Revit loaded under the same name gets its own resources back.
