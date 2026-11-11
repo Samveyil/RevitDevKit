@@ -200,7 +200,7 @@ namespace RevitDevKit.Core
                             + ", показано " + rows.Count + " из " + total + ")");
             text.AppendLine();
             AddinDependencies.Table(text, new[] { "№", "Сборка", "Версия", "Версия файла", "Чья", "Путь" },
-                rows.Select(a => new[] { a.Number.ToString(), Cell(a.Name) + (a.IsDuplicate ? " ⚠" : ""), Cell(a.Version?.ToString()),
+                rows.Select(a => new[] { a.Number.ToString(), Cell(a.Name) + (a.IsDuplicate ? " (x" + a.SameName + ")" : ""), Cell(a.Version?.ToString()),
                     Cell(a.FileVersion), Cell(a.Owner), Cell(Where(a)) }), 0);
             return text.ToString();
         }
