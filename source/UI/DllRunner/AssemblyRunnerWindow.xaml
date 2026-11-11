@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:RevitDevKit.UI.DllRunner"
         d:DataContext="{d:DesignInstance local:AssemblyRunnerVM}"
         mc:Ignorable="d"
-        Title="DLL Runner" WindowStartupLocation="CenterScreen"
+        Title="Add-in Explorer" WindowStartupLocation="CenterScreen"
         Height="720" Width="520" MinHeight="320" MinWidth="520">
 
     <Window.Resources>
@@ -228,12 +228,25 @@
                       ToolTip="Снимите, чтобы видеть и подписанные DLL, которые загрузятся рядом, и одинаковые у нескольких надстроек"/>
         </StackPanel>
 
+        <!-- Dependencies' status bar, as the Script Editor has one: the check on the left, the last action on the right. -->
+        <StackPanel DockPanel.Dock="Bottom" Style="{StaticResource DependenciesToolbar}">
+            <StatusBar>
+                <StatusBarItem DockPanel.Dock="Right">
+                    <TextBlock Text="{Binding Dependencies.Notice}"/>
+                </StatusBarItem>
+                <StatusBarItem>
+                    <TextBlock Text="{Binding Dependencies.Status}"/>
+                </StatusBarItem>
+            </StatusBar>
+        </StackPanel>
+
         <TabControl Margin="5 0 5 5" Style="{StaticResource FramedTabControl}" SelectedIndex="{Binding SelectedTabIndex}">
             <TabItem Header="Команды" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
-                    <DockPanel>
+                    <!-- The tree comes first in focus order, as on Dependencies: a click on the tab does not land in the search box. -->
+                    <DockPanel KeyboardNavigation.TabNavigation="Local">
                         <DockPanel DockPanel.Dock="Top" Margin="4 2">
                             <Button DockPanel.Dock="Right" Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding CollapseAllCommand}"
-                                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Свернуть всё">
+                                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Свернуть всё" TabIndex="2">
                                 <materialDesign:PackIcon Kind="ArrowExpand" Width="22" Height="22" Foreground="{StaticResource IconBrush}"/>
                             </Button>
 
@@ -241,12 +254,12 @@
                                                      VerticalAlignment="Center" Margin="0 0 6 0"/>
 
                             <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Padding="5 2"
-                                     materialDesign:HintAssist.Hint="Поиск" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="Поиск" Style="{StaticResource MaterialDesignOutlinedTextBox}" TabIndex="1"
                                      materialDesign:TextFieldAssist.HasClearButton="True" materialDesign:HintAssist.IsFloating="False"/>
                         </DockPanel>
 
                         <Grid>
-                            <TreeView ItemsSource="{Binding Assemblies}" Margin="2">
+                            <TreeView ItemsSource="{Binding Assemblies}" Margin="2" TabIndex="0">
                                 <TreeView.Resources>
                                     <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
 
@@ -559,19 +572,23 @@
             </TabItem>
 
             <TabItem Header="Dependencies" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
-                <DockPanel>
+                <!-- The tree comes first in focus order: opening the tab with a click puts the focus here, not in the search box. -->
+                <DockPanel KeyboardNavigation.TabNavigation="Local">
                     <DockPanel DockPanel.Dock="Top" Margin="4 2">
+                        <Button DockPanel.Dock="Right" Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding Dependencies.CollapseAllCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Свернуть всё" TabIndex="2">
+                            <materialDesign:PackIcon Kind="ArrowExpand" Width="22" Height="22" Foreground="{StaticResource IconBrush}"/>
+                        </Button>
+
                         <materialDesign:PackIcon DockPanel.Dock="Left" Kind="Magnify" Width="20" Height="20" Foreground="Gray"
                                                  VerticalAlignment="Center" Margin="0 0 6 0"/>
                         <TextBox Text="{Binding Dependencies.SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Padding="5 2"
-                                 materialDesign:HintAssist.Hint="Поиск по DLL или надстройке" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 materialDesign:HintAssist.Hint="Поиск" Style="{StaticResource MaterialDesignOutlinedTextBox}" TabIndex="1"
                                  materialDesign:TextFieldAssist.HasClearButton="True" materialDesign:HintAssist.IsFloating="False"/>
                     </DockPanel>
 
-                    <TextBlock DockPanel.Dock="Bottom" Text="{Binding Dependencies.Status}" Style="{StaticResource RowDetails}" Margin="6 2"/>
-
                     <Grid>
-                        <TreeView ItemsSource="{Binding Dependencies.Sections}" Margin="2" Grid.IsSharedSizeScope="True">
+                        <TreeView ItemsSource="{Binding Dependencies.Sections}" Margin="2" Grid.IsSharedSizeScope="True" TabIndex="0">
                             <TreeView.Resources>
                                 <!-- Compact: a small expander (it is also the indent of each level) and no padding. -->
                                 <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">

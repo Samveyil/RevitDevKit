@@ -100,12 +100,14 @@ namespace RevitDevKit.UI.DllRunner
             get
             {
                 var signed = Group.Copies.All(c => c.Dll.IsSigned);
+                var versionsDiffer = Group.Copies.All(c => c.Dll.IsManaged) && Group.Copies.Select(c => c.Dll.AssemblyVersion).Distinct().Count() > 1;
+                if (!signed && versionsDiffer)
+                    return "Не подписана: Revit загружает одну копию, ту, что понадобилась первой, и её получают все надстройки.\n"
+                           + "Более новая обычно подходит, если в библиотеке только добавляли (оранжевым), более старая может не подойти (красным).\n"
+                           + "Какая копия будет первой, зависит от порядка загрузки надстроек: в другой раз старую версию может получить другая.";
+
                 switch (Group.Level)
                 {
-                    case DependencyLevel.Assembly when !signed:
-                        return "Не подписана: Revit загружает одну копию, ту, что понадобилась первой, и её получают все надстройки.\n"
-                               + "Более новая обычно подходит, если в библиотеке только добавляли (оранжевым), более старая может не подойти (красным).\n"
-                               + "Какая копия будет первой, зависит от порядка загрузки надстроек: в другой раз старую версию может получить другая.";
                     case DependencyLevel.Assembly:
                         return "Revit.exe.config перенаправляет на более старую версию, чем та, под которую собрана надстройка (красным).";
                     case DependencyLevel.FileOnly:
@@ -165,7 +167,10 @@ namespace RevitDevKit.UI.DllRunner
         [NotifyCanExecuteChangedFor(nameof(CopyReportCommand))]
         private bool _isBusy;
 
+        // The status bar: the check on the left, a short note of the last action on the right, gone after a while.
         [ObservableProperty] private string _status = "Нажмите «Проверить»";
+        [ObservableProperty] private string _notice = string.Empty;
+        private DispatcherTimer _noticeTimer;
         [ObservableProperty] private string _searchText = string.Empty;
         [ObservableProperty] private bool _onlyProblems = true;
         [ObservableProperty] private bool _isEmpty;
@@ -313,6 +318,30 @@ namespace RevitDevKit.UI.DllRunner
 
         private void Select(DependencyNodeVM node) => SelectedNode = node;
 
+        [RelayCommand]
+        private void CollapseAll()
+        {
+            foreach (var group in Sections.SelectMany(s => s.Children).OfType<VersionGroupVM>())
+                group.IsExpanded = false;
+        }
+
+        private void Notify(string text)
+        {
+            Notice = text;
+            if (_noticeTimer == null)
+            {
+                _noticeTimer = new DispatcherTimer(DispatcherPriority.Background, _dispatcher) { Interval = TimeSpan.FromSeconds(4) };
+                _noticeTimer.Tick += (s, e) =>
+                {
+                    _noticeTimer.Stop();
+                    Notice = string.Empty;
+                };
+            }
+
+            _noticeTimer.Stop();
+            _noticeTimer.Start();
+        }
+
         private bool CanCopy() => _report != null && !IsBusy;
 
         [RelayCommand(CanExecute = nameof(CanCopy))]
@@ -321,7 +350,7 @@ namespace RevitDevKit.UI.DllRunner
             try
             {
                 Clipboard.SetText(AddinDependencies.ToMarkdown(_report, OnlyProblems));
-                Status = "Отчёт скопирован";
+                Notify("Отчёт скопирован");
             }
             catch (Exception ex)
             {
@@ -340,7 +369,7 @@ namespace RevitDevKit.UI.DllRunner
             try
             {
                 Clipboard.SetText(path);
-                Status = "Путь скопирован";
+                Notify("Путь скопирован");
             }
             catch (Exception ex)
             {

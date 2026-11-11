@@ -45,12 +45,11 @@ namespace RevitDevKit.Core
         None,
         // Signed, with different assembly versions: every add-in loads its own, side by side.
         SideBySide,
-        // An add-in gets another file of the assembly version it was built against, or Revit redirects it to a
-        // newer version: one copy is shared, usually fine.
+        // An add-in gets another file of the assembly version it was built against, a newer version of a DLL without
+        // a strong name, or a newer version Revit redirects it to: one copy is shared, usually fine.
         FileOnly,
-        // Add-ins may get another assembly version than they were built against: not signed, so the first copy loaded
-        // goes to everyone and which one that is depends on the load order; or Revit redirects one down to an older
-        // version. An add-in that gets an older one may fail.
+        // An add-in gets an older assembly version than it was built against and may fail: a DLL without a strong
+        // name whose older copy was loaded first, or one Revit redirects down.
         Assembly
     }
 
@@ -329,10 +328,12 @@ namespace RevitDevKit.Core
                         : CopyState.Fine;
                 }
 
-                group.Level = !native && copies.Select(c => c.Dll.AssemblyVersion).Distinct().Count() > 1 ? DependencyLevel.Assembly
-                    : copies.Any(c => c.State == CopyState.Differs) ? DependencyLevel.FileOnly
+                // The group is as bad as its worst copy now; that the next session may go otherwise is in the tooltip.
+                var versionsDiffer = !native && copies.Select(c => c.Dll.AssemblyVersion).Distinct().Count() > 1;
+                group.Level = copies.Any(c => c.State == CopyState.Breaks) ? DependencyLevel.Assembly
+                    : versionsDiffer || copies.Any(c => c.State == CopyState.Differs) ? DependencyLevel.FileOnly
                     : DependencyLevel.None;
-                group.Reason = group.Level == DependencyLevel.Assembly ? "не подписана, одна копия на всех"
+                group.Reason = versionsDiffer ? "не подписана, одна копия на всех"
                     : group.Level == DependencyLevel.FileOnly ? (native ? "разные версии файла" : "одна версия сборки, разные файлы")
                     : "одинаковые версии";
                 return;

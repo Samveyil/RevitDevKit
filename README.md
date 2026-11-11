@@ -7,14 +7,14 @@
 [![README на русском](https://img.shields.io/badge/README-%D0%BD%D0%B0%20%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%BE%D0%BC-blue)](README.ru.md)
 [![Release](https://img.shields.io/github/v/release/Samveyil/RevitDevKit?label=Release&color=blue)](https://github.com/Samveyil/RevitDevKit/releases/latest)
 
-A Revit 2019–2024 add-in that helps while developing plugins. It has a C# script editor, runs commands from a DLL without restarting Revit, updates ribbon buttons from a new build and has a console for output.
+A Revit 2019–2024 add-in that helps while developing plugins. It has a C# script editor, runs commands from a DLL without restarting Revit, updates ribbon buttons from a new build, turns add-ins on and off, finds DLLs that add-ins bring in clashing versions, and has a console for output.
 
 The add-in's interface is in Russian; the names of its menus and buttons are given below with a translation.
 
 The Add-Ins tab gets a DevKit panel with a pulldown button:
 
 - Script Editor opens the script editor;
-- DLL Runner opens a window with the commands and applications of a DLL, the add-ins Revit loads at startup and their DLLs;
+- Add-in Explorer opens a window with the commands and applications of a DLL, the add-ins Revit loads at startup and their DLLs;
 - Run Again repeats the last run;
 - Console shows the console pane.
 
@@ -74,19 +74,19 @@ Tx("Mark walls", () =>
 
 In the output of `Compare`, `-нет-` (none) means the element has no such parameter, `-` means the parameter has no value, and `-пусто-` (empty) means an empty string.
 
-## DLL Runner
+## Add-in Explorer
 
 ### Commands
 
-<img src="assets/dll-runner-commands.png" width="520" alt="DLL Runner, the Commands tab" />
+<img src="assets/dll-runner-commands.png" width="520" alt="Add-in Explorer, the Commands tab" />
 
 Add a built DLL, and its `IExternalCommand` classes appear in the list, grouped by namespace. A double click or F5 runs a command. The DLL file is not locked, so the project can be rebuilt without closing Revit. The command is taken from the DLL on disk every time, so after a build just run it again. The **Обновить** (Refresh) button is needed only when new commands appear.
 
-The window closes when a command runs. To run the same command again after changes, there is no need to open DLL Runner: build the project and press Run Again on the ribbon, and the command runs from the fresh DLL. Run Again can be given a keyboard shortcut in Revit.
+The window closes when a command runs. To run the same command again after changes, there is no need to open Add-in Explorer: build the project and press Run Again on the ribbon, and the command runs from the fresh DLL. Run Again can be given a keyboard shortcut in Revit.
 
 ### Applications
 
-<img src="assets/dll-runner-apps.png" width="520" alt="DLL Runner, the Applications tab" />
+<img src="assets/dll-runner-apps.png" width="520" alt="Add-in Explorer, the Applications tab" />
 
 Here you can see what an add-in's buttons will look like after changes, without restarting Revit. The add-in is installed as usual with an `.addin` file, and the DLL from the project's build folder is added here. After changes, build the project and press **Обновить** (Refresh): the add-in's buttons on the ribbon change their texts, tooltips, icons and `ShowText`. New buttons and panels appear, removed ones disappear, and a button that became a pulldown is replaced in the same place.
 
@@ -96,7 +96,7 @@ The DLL may have a different name than the installed one, for example `Dbg_MyAdd
 
 ### Startup
 
-<img src="assets/dll-runner-startup.png" width="520" alt="DLL Runner, the Startup tab" />
+<img src="assets/dll-runner-startup.png" width="520" alt="Add-in Explorer, the Startup tab" />
 
 This tab lists the `.addin` files of the running Revit version: the current user's from `%AppData%\Autodesk\Revit\Addins\<year>` and those for all users from `%ProgramData%\Autodesk\Revit\Addins\<year>`. Clearing a checkbox renames `X.addin` to `X.addin.disable`, so Revit does not load the add-in on its next start, and ticking it renames the file back.
 
@@ -104,11 +104,11 @@ Under each name is what the file contains and its DLL, and in red what is wrong:
 
 ### Dependencies
 
-<img src="assets/dll-runner-dependencies.png" width="520" alt="DLL Runner, the Dependencies tab" />
+<img src="assets/dll-runner-dependencies.png" width="520" alt="Add-in Explorer, the Dependencies tab" />
 
 This tab finds DLLs that several add-ins of the running Revit version, or an add-in and Revit itself, bring in different versions, and shows which of them really clash in the one Revit process they all share:
 
-- **Red**: an add-in gets an older assembly version than it was built against, and may fail. That happens to a DLL without a strong name, where the first copy loaded goes to everyone, and to one that `Revit.exe.config` redirects down to Revit's version. A DLL without a strong name in different versions is a conflict as a whole: which copy loads first depends on the order the add-ins load, so next time another add-in may get the older one.
+- **Red**: an add-in gets an older assembly version than it was built against, and may fail. That happens to a DLL without a strong name, where the first copy loaded goes to everyone, and to one that `Revit.exe.config` redirects down to Revit's version. A DLL without a strong name in different versions is always listed among the conflicts, orange when nobody gets an older one now: which copy loads first depends on the order the add-ins load, so next time another add-in may get the older one.
 - **Orange**: an add-in gets a newer version (fine if the library only added things), another file of the same assembly version, or a newer version Revit redirects it to. One copy is shared, which is usually harmless.
 - With **Только конфликты** (conflicts only) cleared, signed DLLs of different versions show too: .NET loads each add-in its own version, side by side. Revit's redirects count only for the versions their `oldVersion` names.
 
