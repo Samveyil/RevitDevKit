@@ -273,7 +273,7 @@ namespace RevitDevKit.UI.DllRunner
                     // The window closes on run; showing the console pane needs an API context, i.e. here.
                     ConsolePane.TryShow(RevitAPI.UIApplication);
 
-                    // Run Again repeats this request, and the DLL may have been rebuilt since.
+                    // Repeat Last repeats this request, and the DLL may have been rebuilt since.
                     var current = Resolve(path, typeName) ?? throw new InvalidOperationException(missing);
                     return current.Invoke();
                 },
