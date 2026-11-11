@@ -223,9 +223,9 @@
                 </StackPanel>
             </Button>
 
-            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding Dependencies.CopyReportCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Копировать отчёт в markdown">
-                <materialDesign:PackIcon Kind="ContentCopy" Width="22" Height="22" Foreground="{StaticResource IconBrush}"/>
+            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding Dependencies.SaveReportCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить отчёт в текстовый файл (markdown) и показать его в проводнике">
+                <materialDesign:PackIcon Kind="FileDocumentArrowRightOutline" Width="24" Height="24" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
             <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Dependencies.RevealInExplorerCommand}"
@@ -247,9 +247,9 @@
                 </StackPanel>
             </Button>
 
-            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding LoadedAssemblies.CopyListCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Копировать показанный список в markdown">
-                <materialDesign:PackIcon Kind="ContentCopy" Width="22" Height="22" Foreground="{StaticResource IconBrush}"/>
+            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding LoadedAssemblies.SaveListCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить показанный список в текстовый файл (markdown) и показать его в проводнике">
+                <materialDesign:PackIcon Kind="FileDocumentArrowRightOutline" Width="24" Height="24" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
             <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding LoadedAssemblies.RevealInExplorerCommand}"
@@ -303,7 +303,8 @@
                         </DockPanel>
 
                         <Grid>
-                            <TreeView ItemsSource="{Binding Assemblies}" Margin="2" TabIndex="0">
+                            <!-- MaterialDesign's expander keeps 8 to its left; the tree moves over so it starts 4 from the frame, as the lists do. -->
+                            <TreeView ItemsSource="{Binding Assemblies}" Margin="-4 0 0 0" TabIndex="0">
                                 <TreeView.Resources>
                                     <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
 
@@ -404,7 +405,7 @@
 
             <TabItem Header="Applications" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
                 <Grid>
-                    <ListBox ItemsSource="{Binding Apps.Items}" SelectedItem="{Binding Apps.SelectedItem}" Margin="2"
+                    <ListBox ItemsSource="{Binding Apps.Items}" SelectedItem="{Binding Apps.SelectedItem}" Margin="0"
                              HorizontalContentAlignment="Stretch" ItemContainerStyle="{StaticResource CompactListBoxItem}">
 
                         <ListBox.ItemTemplate>
@@ -489,14 +490,29 @@
                     </Border>
 
                     <Grid>
-                        <ListBox ItemsSource="{Binding Startup.View}" SelectedItem="{Binding Startup.SelectedItem}" Margin="2"
+                        <ListBox ItemsSource="{Binding Startup.View}" SelectedItem="{Binding Startup.SelectedItem}" Margin="0"
                                  HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                  ItemContainerStyle="{StaticResource CompactListBoxItem}">
                             <ListBox.GroupStyle>
+                                <!-- A plain group: a header over its rows, no indent, so the rows line up with the other tabs'. -->
                                 <GroupStyle>
+                                    <GroupStyle.ContainerStyle>
+                                        <Style TargetType="GroupItem">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="GroupItem">
+                                                        <StackPanel>
+                                                            <ContentPresenter/>
+                                                            <ItemsPresenter/>
+                                                        </StackPanel>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </GroupStyle.ContainerStyle>
                                     <GroupStyle.HeaderTemplate>
                                         <DataTemplate>
-                                            <Border Background="#0A000000" Padding="6 2">
+                                            <Border Background="#0A000000" Padding="4 2">
                                                 <DockPanel>
                                                     <materialDesign:PackIcon DockPanel.Dock="Left" Width="14" Height="14" Foreground="Gray"
                                                                              VerticalAlignment="Center" Margin="0 0 6 0">
@@ -618,7 +634,8 @@
             <TabItem Header="Assemblies" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
                 <!-- The list comes first in focus order, as on Dependencies: a click on the tab does not land in the search box. -->
                 <DockPanel KeyboardNavigation.TabNavigation="Local">
-                    <DockPanel DockPanel.Dock="Top" Margin="4 2">
+                    <!-- As tall as the row with the collapse button on Commands and Dependencies: the box sits at the same height. -->
+                    <DockPanel DockPanel.Dock="Top" Margin="4 2" MinHeight="25">
                         <materialDesign:PackIcon DockPanel.Dock="Left" Kind="Magnify" Width="20" Height="20" Foreground="Gray"
                                                  VerticalAlignment="Center" Margin="0 0 6 0"/>
                         <TextBox Text="{Binding LoadedAssemblies.SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Padding="5 2"
@@ -627,7 +644,7 @@
                     </DockPanel>
 
                     <Grid>
-                        <ListBox ItemsSource="{Binding LoadedAssemblies.Items}" SelectedItem="{Binding LoadedAssemblies.SelectedItem}" Margin="2" TabIndex="0"
+                        <ListBox ItemsSource="{Binding LoadedAssemblies.Items}" SelectedItem="{Binding LoadedAssemblies.SelectedItem}" Margin="0" TabIndex="0"
                                  HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                  ItemContainerStyle="{StaticResource CompactListBoxItem}">
                             <ListBox.ItemTemplate>
@@ -648,7 +665,7 @@
                                         </Grid.ContextMenu>
 
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="34"/>
+                                            <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -658,8 +675,9 @@
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
 
+                                        <!-- Padded with spaces to the longest number in the list: a column only as wide as it needs. -->
                                         <TextBlock Grid.RowSpan="2" Text="{Binding Number}" FontFamily="Consolas" FontSize="11" Foreground="Gray"
-                                                   TextAlignment="Right" VerticalAlignment="Center" Margin="0 0 8 0"/>
+                                                   VerticalAlignment="Center" Margin="0 0 6 0"/>
 
                                         <!-- Orange: the same name is loaded more than once. -->
                                         <TextBlock Grid.Column="1" Text="{Binding Name}">
@@ -728,7 +746,8 @@
                     </DockPanel>
 
                     <Grid>
-                        <TreeView ItemsSource="{Binding Dependencies.Sections}" Margin="2" Grid.IsSharedSizeScope="True" TabIndex="0">
+                        <!-- As on Commands: the expander starts 4 from the frame. -->
+                        <TreeView ItemsSource="{Binding Dependencies.Sections}" Margin="-4 0 0 0" Grid.IsSharedSizeScope="True" TabIndex="0">
                             <TreeView.Resources>
                                 <!-- Compact: a small expander (it is also the indent of each level) and no padding. -->
                                 <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">

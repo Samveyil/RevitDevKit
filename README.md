@@ -108,7 +108,7 @@ Under each name is what the file contains and its DLL, and in red what is wrong:
 
 Every assembly loaded into Revit right now, with a number and a path. The number is its place in the `AppDomain`'s list, roughly the load order. On the right is whose it is: an add-in's (by its folder), Revit's, .NET's, the GAC's or DevKit's. Assemblies without a file, such as scripts and DLL commands DevKit loaded from bytes, say **в памяти** (in memory); a copy of a DLL names the file it came from.
 
-Assemblies loaded more than once under the same name are orange, and the tooltip lists every copy. **Скрыть системные** (hide system) hides .NET, the GAC, Revit's own and dynamic assemblies, leaving the add-ins and their DLLs. The list is read again each time the tab opens and on F5. A right click shows an assembly in Explorer or copies its path, and the copy button puts the list as shown on the clipboard in markdown.
+Assemblies loaded more than once under the same name are orange, and the tooltip lists every copy. **Скрыть системные** (hide system) hides .NET, the GAC, Revit's own and dynamic assemblies, leaving the add-ins and their DLLs. The list is read again each time the tab opens and on F5. A right click shows an assembly in Explorer or copies its path, and the report button saves the list as shown to a text file in `%TEMP%\RevitDevKit\Reports`, a markdown table, and shows the file in Explorer.
 
 ### Dependencies
 
@@ -121,7 +121,7 @@ This tab finds DLLs that several add-ins of the running Revit version, or an add
 - With **Только конфликты** (conflicts only) cleared, signed DLLs of different versions show too: .NET loads each add-in its own version, side by side. Revit's redirects count only for the versions their `oldVersion` names.
 - DLLs that differ only between Revit and Autodesk's own add-ins are not counted as conflicts, since they cannot be changed anyway. With the box cleared they show under **Только Revit и Autodesk** (Revit and Autodesk only). An add-in is Autodesk's if its `.addin` says `VendorId` `ADSK` or its DLL names Autodesk as the company.
 
-The copy loaded in this session is marked. A right click on a DLL or an add-in shows it in Explorer or copies its path. An add-in's DLLs are the ones in the folder of its assembly, read from their headers without loading them. Language resources (folders such as `en-US` and `*.resources.dll`) are left out: they are the same DLL in another language. The copy button puts a markdown report on the clipboard.
+The copy loaded in this session is marked. A right click on a DLL or an add-in shows it in Explorer or copies its path. An add-in's DLLs are the ones in the folder of its assembly, read from their headers without loading them. Language resources (folders such as `en-US` and `*.resources.dll`) are left out: they are the same DLL in another language. The report button saves a markdown report to a text file in `%TEMP%\RevitDevKit\Reports` and shows the file in Explorer.
 
 ## Console
 
