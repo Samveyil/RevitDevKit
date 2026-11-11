@@ -157,7 +157,7 @@
                 <materialDesign:PackIcon Kind="DeleteOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Чистить консоль" Margin="20 0 0 0" IsChecked="{Binding IsClearOnRun}"
+            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Чистить консоль" Margin="20 0 0 0" IsChecked="{Binding IsClearOnRun}"
                       ToolTip="Очищать консоль перед каждым запуском"/>
         </StackPanel>
 
@@ -233,7 +233,7 @@
                 <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Только конфликты" Margin="20 0 0 0" IsChecked="{Binding Dependencies.OnlyProblems}"
+            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Только конфликты" Margin="20 0 0 0" IsChecked="{Binding Dependencies.OnlyProblems}"
                       ToolTip="Снимите, чтобы видеть и подписанные DLL, которые загрузятся рядом, и одинаковые у нескольких надстроек"/>
         </StackPanel>
 
@@ -257,7 +257,7 @@
                 <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Скрыть системные" Margin="20 0 0 0" IsChecked="{Binding LoadedAssemblies.HideSystem}"
+            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Скрыть системные" Margin="20 0 0 0" IsChecked="{Binding LoadedAssemblies.HideSystem}"
                       ToolTip="Скрыть сборки .NET, GAC, Revit и созданные в памяти: останутся надстройки и их DLL"/>
         </StackPanel>
 

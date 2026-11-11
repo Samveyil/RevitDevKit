@@ -74,10 +74,10 @@
                 </materialDesign:PopupBox>
             </Border>
 
-            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Автотранзакция" IsChecked="{Binding IsAutoTransaction}"
+            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Автотранзакция" IsChecked="{Binding IsAutoTransaction}"
                       ToolTip="Обернуть выполнение в транзакцию. Выключите, если скрипт открывает транзакции сам."/>
 
-            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Чистить консоль" Margin="8 0" IsChecked="{Binding IsClearOnRun}"
+            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Чистить консоль" Margin="8 0" IsChecked="{Binding IsClearOnRun}"
                       ToolTip="Очищать консоль перед каждым запуском"/>
         </StackPanel>
 
