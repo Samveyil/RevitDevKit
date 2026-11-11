@@ -96,8 +96,10 @@ namespace RevitDevKit
             pullBtn.CreatePushButton<ExecutePendingCmd, AlwaysAvailable>("Run Again")
                 .SetToolTip("Повторить последний запуск в контексте настоящей команды Revit.");
 
+            pullBtn.AddSeparator();
+
             pullBtn.CreatePushButton<ShowConsolePaneCmd>("Console")
-                .SetToolTip("Показать панель с консолью плагина.");
+                .SetToolTip("Показать панель с консолью плагина, а если она открыта — скрыть.");
         }
 
         // The folders Revit loads .addin files from, for the Startup and Dependencies tabs of Add-in Explorer.
