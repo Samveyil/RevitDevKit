@@ -311,7 +311,13 @@ namespace RevitDevKit.UI.ScriptEditor
         [NotifyPropertyChangedFor(nameof(Header))]
         private string _title;
 
-        [ObservableProperty] private string _filePath;
+        // Set once the tab is opened from a file or saved to one; a new tab and a sample have none.
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(HasFile))]
+        private string _filePath;
+
+        // Only such a tab has a file to show in Explorer.
+        public bool HasFile => !string.IsNullOrEmpty(FilePath);
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(Header))]

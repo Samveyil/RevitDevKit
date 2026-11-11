@@ -118,8 +118,20 @@
                                                           Command="{Binding PlacementTarget.Tag.CloseTabCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                                 <MenuItem Header="Сохранить как…" CommandParameter="{Binding}"
                                                           Command="{Binding PlacementTarget.Tag.SaveFileAsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                <!-- Only a tab saved to a file has one to show. -->
                                                 <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
-                                                          Command="{Binding PlacementTarget.Tag.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                          Command="{Binding PlacementTarget.Tag.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                                                    <MenuItem.Style>
+                                                        <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HasFile}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </MenuItem.Style>
+                                                </MenuItem>
                                             </ContextMenu>
                                         </Grid.ContextMenu>
 
