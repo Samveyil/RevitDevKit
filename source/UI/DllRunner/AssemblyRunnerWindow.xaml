@@ -8,7 +8,7 @@
         d:DataContext="{d:DesignInstance local:AssemblyRunnerVM}"
         mc:Ignorable="d"
         Title="Add-in Explorer" WindowStartupLocation="CenterScreen"
-        Height="720" Width="520" MinHeight="320" MinWidth="520">
+        Height="720" Width="580" MinHeight="320" MinWidth="580">
 
     <Window.Resources>
         <ResourceDictionary>
@@ -16,7 +16,7 @@
                 <ResourceDictionary Source="pack://application:,,,/RevitDevKit;component/UI/Shared/Theme.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Each tab has its own toolbar: 0 - commands, 1 - applications, 2 - startup. -->
+            <!-- Each tab has its own toolbar: 0 - commands, 1 - applications, 2 - startup, 3 - assemblies, 4 - dependencies. -->
             <Style x:Key="CommandsToolbar" TargetType="StackPanel">
                 <Setter Property="Visibility" Value="Collapsed"/>
                 <Style.Triggers>
@@ -45,6 +45,15 @@
             </Style>
 
             <Style x:Key="DependenciesToolbar" TargetType="StackPanel">
+                <Setter Property="Visibility" Value="Collapsed"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding SelectedTabIndex}" Value="4">
+                        <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="AssembliesToolbar" TargetType="StackPanel">
                 <Setter Property="Visibility" Value="Collapsed"/>
                 <Style.Triggers>
                     <DataTrigger Binding="{Binding SelectedTabIndex}" Value="3">
@@ -228,6 +237,41 @@
                       ToolTip="Снимите, чтобы видеть и подписанные DLL, которые загрузятся рядом, и одинаковые у нескольких надстроек"/>
         </StackPanel>
 
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource AssembliesToolbar}">
+            <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding LoadedAssemblies.RefreshCommand}"
+                    ToolTip="Перечитать список загруженных сборок (F5)">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
+                                             VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
+                    <TextBlock Text="Обновить (F5)" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding LoadedAssemblies.CopyListCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Копировать показанный список в markdown">
+                <materialDesign:PackIcon Kind="ContentCopy" Width="22" Height="22" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding LoadedAssemblies.RevealInExplorerCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике выбранную сборку">
+                <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+
+            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Скрыть системные" Margin="20 0 0 0" IsChecked="{Binding LoadedAssemblies.HideSystem}"
+                      ToolTip="Скрыть сборки .NET, GAC, Revit и созданные в памяти: останутся надстройки и их DLL"/>
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Bottom" Style="{StaticResource AssembliesToolbar}">
+            <StatusBar>
+                <StatusBarItem DockPanel.Dock="Right">
+                    <TextBlock Text="{Binding LoadedAssemblies.Notice}"/>
+                </StatusBarItem>
+                <StatusBarItem>
+                    <TextBlock Text="{Binding LoadedAssemblies.Status}"/>
+                </StatusBarItem>
+            </StatusBar>
+        </StackPanel>
+
         <!-- Dependencies' status bar, as the Script Editor has one: the check on the left, the last action on the right. -->
         <StackPanel DockPanel.Dock="Bottom" Style="{StaticResource DependenciesToolbar}">
             <StatusBar>
@@ -241,7 +285,7 @@
         </StackPanel>
 
         <TabControl Margin="5 0 5 5" Style="{StaticResource FramedTabControl}" SelectedIndex="{Binding SelectedTabIndex}">
-            <TabItem Header="Команды" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
+            <TabItem Header="Commands" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
                     <!-- The tree comes first in focus order, as on Dependencies: a click on the tab does not land in the search box. -->
                     <DockPanel KeyboardNavigation.TabNavigation="Local">
                         <DockPanel DockPanel.Dock="Top" Margin="4 2">
@@ -358,7 +402,7 @@
                     </DockPanel>
             </TabItem>
 
-            <TabItem Header="Приложения" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
+            <TabItem Header="Applications" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
                 <Grid>
                     <ListBox ItemsSource="{Binding Apps.Items}" SelectedItem="{Binding Apps.SelectedItem}" Margin="2"
                              HorizontalContentAlignment="Stretch" ItemContainerStyle="{StaticResource CompactListBoxItem}">
@@ -567,6 +611,102 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
+                    </Grid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="Assemblies" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
+                <!-- The list comes first in focus order, as on Dependencies: a click on the tab does not land in the search box. -->
+                <DockPanel KeyboardNavigation.TabNavigation="Local">
+                    <DockPanel DockPanel.Dock="Top" Margin="4 2">
+                        <materialDesign:PackIcon DockPanel.Dock="Left" Kind="Magnify" Width="20" Height="20" Foreground="Gray"
+                                                 VerticalAlignment="Center" Margin="0 0 6 0"/>
+                        <TextBox Text="{Binding LoadedAssemblies.SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Padding="5 2"
+                                 materialDesign:HintAssist.Hint="Поиск" Style="{StaticResource MaterialDesignOutlinedTextBox}" TabIndex="1"
+                                 materialDesign:TextFieldAssist.HasClearButton="True" materialDesign:HintAssist.IsFloating="False"/>
+                    </DockPanel>
+
+                    <Grid>
+                        <ListBox ItemsSource="{Binding LoadedAssemblies.Items}" SelectedItem="{Binding LoadedAssemblies.SelectedItem}" Margin="2" TabIndex="0"
+                                 HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ItemContainerStyle="{StaticResource CompactListBoxItem}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ToolTip="{Binding ToolTip}" Background="Transparent"
+                                          Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ListBox}}">
+                                        <Grid.InputBindings>
+                                            <MouseBinding Gesture="LeftDoubleClick" CommandParameter="{Binding}"
+                                                          Command="{Binding DataContext.LoadedAssemblies.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"/>
+                                        </Grid.InputBindings>
+                                        <Grid.ContextMenu>
+                                            <ContextMenu materialDesign:MenuAssist.MenuItemsPresenterMargin="0">
+                                                <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
+                                                          Command="{Binding PlacementTarget.Tag.LoadedAssemblies.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                <MenuItem Header="Копировать путь" CommandParameter="{Binding}"
+                                                          Command="{Binding PlacementTarget.Tag.LoadedAssemblies.CopyPathCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            </ContextMenu>
+                                        </Grid.ContextMenu>
+
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="34"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.RowSpan="2" Text="{Binding Number}" FontFamily="Consolas" FontSize="11" Foreground="Gray"
+                                                   TextAlignment="Right" VerticalAlignment="Center" Margin="0 0 8 0"/>
+
+                                        <!-- Orange: the same name is loaded more than once. -->
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource RowTitle}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDuplicate}" Value="True">
+                                                            <Setter Property="Foreground" Value="#B26A00"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Grid.Column="2" Text="{Binding Version}" Margin="8 0 0 0" FontFamily="Consolas" FontSize="11"
+                                                   VerticalAlignment="Bottom" TextTrimming="CharacterEllipsis">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="Gray"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDuplicate}" Value="True">
+                                                            <Setter Property="Foreground" Value="#B26A00"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Grid.Column="3" Text="{Binding Owner}" Style="{StaticResource RowDetails}" Margin="8 0 0 0"
+                                                   VerticalAlignment="Bottom" MaxWidth="160"/>
+
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding Where}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource RowDetails}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsInMemory}" Value="True">
+                                                            <Setter Property="FontStyle" Value="Italic"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <TextBlock Text="Ничего не найдено" Foreground="Gray" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                                   Visibility="{Binding LoadedAssemblies.IsEmpty, Converter={StaticResource BoolToVisibility}}"/>
                     </Grid>
                 </DockPanel>
             </TabItem>

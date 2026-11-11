@@ -42,10 +42,13 @@ namespace RevitDevKit.UI.DllRunner
 
         public DependenciesVM Dependencies { get; } = new DependenciesVM();
 
+        public AssembliesVM LoadedAssemblies { get; } = new AssembliesVM();
+
         public const int CommandsTab = 0;
         public const int AppsTab = 1;
         public const int StartupTab = 2;
-        public const int DependenciesTab = 3;
+        public const int AssembliesTab = 3;
+        public const int DependenciesTab = 4;
 
         // The toolbar and hotkeys follow the open tab.
         [ObservableProperty] private int _selectedTabIndex;
@@ -58,6 +61,7 @@ namespace RevitDevKit.UI.DllRunner
 
         // The .addin files are read again whenever the tab is opened: they may have changed outside DevKit.
         // Dependencies are checked on the first opening only: reading every DLL takes a while, F5 checks again.
+        // The loaded assemblies are listed again on every opening: it is quick, and more get loaded all the time.
         partial void OnSelectedTabIndexChanged(int value) => OnTabShown();
 
         public void OnWindowOpened() => OnTabShown();
@@ -66,23 +70,26 @@ namespace RevitDevKit.UI.DllRunner
         {
             if (SelectedTabIndex == StartupTab) Startup.Refresh();
             if (SelectedTabIndex == DependenciesTab) Dependencies.EnsureChecked();
+            if (SelectedTabIndex == AssembliesTab) LoadedAssemblies.Refresh();
         }
 
         private System.Windows.Input.ICommand ForTab(System.Windows.Input.ICommand commands, System.Windows.Input.ICommand apps,
-            System.Windows.Input.ICommand startup, System.Windows.Input.ICommand dependencies) =>
+            System.Windows.Input.ICommand startup, System.Windows.Input.ICommand dependencies, System.Windows.Input.ICommand assemblies) =>
             SelectedTabIndex == AppsTab ? apps
             : SelectedTabIndex == StartupTab ? startup
             : SelectedTabIndex == DependenciesTab ? dependencies
+            : SelectedTabIndex == AssembliesTab ? assemblies
             : commands;
 
         [RelayCommand]
-        private void RunHotkey() => Execute(ForTab(RunCommand, Apps.ApplyCommand, Startup.RefreshCommand, Dependencies.RefreshCommand));
+        private void RunHotkey() => Execute(ForTab(RunCommand, Apps.ApplyCommand, Startup.RefreshCommand, Dependencies.RefreshCommand, LoadedAssemblies.RefreshCommand));
 
         [RelayCommand]
-        private void AddHotkey() => Execute(ForTab(AddAssemblyCommand, Apps.AddAssemblyCommand, Startup.OpenFileCommand, null));
+        private void AddHotkey() => Execute(ForTab(AddAssemblyCommand, Apps.AddAssemblyCommand, Startup.OpenFileCommand, null, null));
 
         [RelayCommand]
-        private void ReloadHotkey() => Execute(ForTab(ReloadAssemblyCommand, Apps.ApplyCommand, Startup.RefreshCommand, Dependencies.RefreshCommand));
+        private void ReloadHotkey() => Execute(ForTab(ReloadAssemblyCommand, Apps.ApplyCommand, Startup.RefreshCommand, Dependencies.RefreshCommand,
+            LoadedAssemblies.RefreshCommand));
 
         private static void Execute(System.Windows.Input.ICommand command)
         {
