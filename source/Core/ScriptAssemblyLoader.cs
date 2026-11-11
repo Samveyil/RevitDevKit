@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 #if !NETFRAMEWORK
 using System.Runtime.Loader;
@@ -15,12 +16,25 @@ namespace RevitDevKit.Core
         private static readonly List<IDisposable> Contexts = new List<IDisposable>();
         private static readonly object Sync = new object();
 
+        // What DevKit loaded from bytes: the DLL it is a copy of, or an empty string for a compiled script.
+        // An assembly loaded from bytes has no location, so the Assemblies tab asks here where it came from.
+        private static readonly ConditionalWeakTable<Assembly, string> Origins = new ConditionalWeakTable<Assembly, string>();
+
+        public static bool TryGetOrigin(Assembly assembly, out string originalPath) => Origins.TryGetValue(assembly, out originalPath);
+
+        private static Assembly Remember(Assembly assembly, string originalPath)
+        {
+            try { Origins.Add(assembly, originalPath ?? string.Empty); }
+            catch (ArgumentException) { }
+            return assembly;
+        }
+
         public static Assembly Load(string name, byte[] peBytes, byte[] pdbBytes)
         {
 #if NETFRAMEWORK
-            return pdbBytes != null && pdbBytes.Length > 0
+            return Remember(pdbBytes != null && pdbBytes.Length > 0
                 ? Assembly.Load(peBytes, pdbBytes)
-                : Assembly.Load(peBytes);
+                : Assembly.Load(peBytes), null);
 #else
             var context = new UnloadableContext(name);
             lock (Sync) Contexts.Add(context);
@@ -28,7 +42,7 @@ namespace RevitDevKit.Core
             using (var pe = new MemoryStream(peBytes))
             using (var pdb = pdbBytes != null && pdbBytes.Length > 0 ? new MemoryStream(pdbBytes) : null)
             {
-                return context.LoadFromStream(pe, pdb);
+                return Remember(context.LoadFromStream(pe, pdb), null);
             }
 #endif
         }
@@ -68,6 +82,7 @@ namespace RevitDevKit.Core
             owner = context;
             assembly = context.LoadFromAssemblyPath(shadowPath);
 #endif
+            Remember(assembly, original);
 
             return new LoadedAssembly
             {

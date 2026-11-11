@@ -84,21 +84,25 @@ namespace RevitDevKit
                     "Весь вывод — Console.WriteLine, Debug, исключения — попадает в консоль плагина."
                 );
 
-            pullBtn.CreatePushButton<OpenAssemblyRunnerCmd, AlwaysAvailable>("DLL Runner")
-                .SetToolTip("Загрузка внешних DLL и запуск их команд.")
+            // The button's internal name comes from its command class, so renaming the text keeps users' shortcuts.
+            pullBtn.CreatePushButton<OpenAssemblyRunnerCmd, AlwaysAvailable>("Add-in Explorer")
+                .SetToolTip("Надстройки и их DLL: запуск команд, лента по свежей сборке, автозагрузка, конфликты версий.")
                 .SetLongDescription(
-                    "Подключите собранную DLL и запустите из неё IExternalCommand. " +
-                    "Команда берётся из актуальной DLL на диске: после пересборки достаточно запустить её снова."
+                    "Подключите собранную DLL и запустите из неё IExternalCommand: команда берётся из актуальной DLL на диске. " +
+                    "Здесь же видно, как изменится лента надстройки, какие надстройки Revit загружает при запуске " +
+                    "и какие DLL у них расходятся по версиям."
                 );
 
             pullBtn.CreatePushButton<ExecutePendingCmd, AlwaysAvailable>("Run Again")
                 .SetToolTip("Повторить последний запуск в контексте настоящей команды Revit.");
 
+            pullBtn.AddSeparator();
+
             pullBtn.CreatePushButton<ShowConsolePaneCmd>("Console")
-                .SetToolTip("Показать панель с консолью плагина.");
+                .SetToolTip("Показать панель с консолью плагина, а если она открыта — скрыть.");
         }
 
-        // The folders Revit loads .addin files from, for the Startup tab of DLL Runner.
+        // The folders Revit loads .addin files from, for the Startup and Dependencies tabs of Add-in Explorer.
         private static void LocateAddinFolders(UIControlledApplication application)
         {
             var revit = application.ControlledApplication;

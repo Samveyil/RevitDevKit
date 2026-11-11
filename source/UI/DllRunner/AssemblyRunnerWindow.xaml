@@ -7,8 +7,8 @@
         xmlns:local="clr-namespace:RevitDevKit.UI.DllRunner"
         d:DataContext="{d:DesignInstance local:AssemblyRunnerVM}"
         mc:Ignorable="d"
-        Title="DLL Runner" WindowStartupLocation="CenterScreen"
-        Height="720" Width="520" MinHeight="320" MinWidth="520">
+        Title="Add-in Explorer" WindowStartupLocation="CenterScreen"
+        Height="720" Width="580" MinHeight="320" MinWidth="580">
 
     <Window.Resources>
         <ResourceDictionary>
@@ -16,7 +16,7 @@
                 <ResourceDictionary Source="pack://application:,,,/RevitDevKit;component/UI/Shared/Theme.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Each tab has its own toolbar: 0 - commands, 1 - applications, 2 - startup. -->
+            <!-- Each tab has its own toolbar: 0 - commands, 1 - applications, 2 - startup, 3 - assemblies, 4 - dependencies. -->
             <Style x:Key="CommandsToolbar" TargetType="StackPanel">
                 <Setter Property="Visibility" Value="Collapsed"/>
                 <Style.Triggers>
@@ -44,7 +44,56 @@
                 </Style.Triggers>
             </Style>
 
+            <Style x:Key="DependenciesToolbar" TargetType="StackPanel">
+                <Setter Property="Visibility" Value="Collapsed"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding SelectedTabIndex}" Value="4">
+                        <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="AssembliesToolbar" TargetType="StackPanel">
+                <Setter Property="Visibility" Value="Collapsed"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding SelectedTabIndex}" Value="3">
+                        <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
             <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+
+            <!-- Red for what fails or may fail, orange for what works on someone else's or another copy. -->
+            <Style x:Key="SeverityText" TargetType="TextBlock">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Severity}" Value="Critical">
+                        <Setter Property="Foreground" Value="#C62828"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Severity}" Value="Minor">
+                        <Setter Property="Foreground" Value="#B26A00"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="SeverityIcon" TargetType="materialDesign:PackIcon">
+                <Setter Property="Width" Value="16"/>
+                <Setter Property="Height" Value="16"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="Margin" Value="0 0 6 0"/>
+                <Setter Property="Kind" Value="CheckCircleOutline"/>
+                <Setter Property="Foreground" Value="Gray"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Severity}" Value="Critical">
+                        <Setter Property="Kind" Value="AlertOutline"/>
+                        <Setter Property="Foreground" Value="#C62828"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Severity}" Value="Minor">
+                        <Setter Property="Kind" Value="InformationOutline"/>
+                        <Setter Property="Foreground" Value="#B26A00"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
 
             <!-- Rows of the Applications and Startup lists: a bold name and a small gray line under it, little padding. -->
             <Style x:Key="CompactListBoxItem" TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
@@ -65,7 +114,6 @@
                 <Setter Property="LineHeight" Value="14"/>
                 <Setter Property="LineStackingStrategy" Value="BlockLineHeight"/>
             </Style>
-
             <DataTemplate x:Key="TabHeader">
                 <TextBlock Text="{Binding}" FontSize="14" FontWeight="DemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </DataTemplate>
@@ -165,12 +213,84 @@
             </Button>
         </StackPanel>
 
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource DependenciesToolbar}">
+            <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding Dependencies.RefreshCommand}"
+                    ToolTip="Проверить DLL надстроек этой версии Revit (F5)">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
+                                             VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
+                    <TextBlock Text="Проверить (F5)" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding Dependencies.SaveReportCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить отчёт в текстовый файл (markdown) и показать его в проводнике">
+                <materialDesign:PackIcon Kind="FileDocumentArrowRightOutline" Width="24" Height="24" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Dependencies.RevealInExplorerCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике выбранную DLL">
+                <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+
+            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Только конфликты" Margin="20 0 0 0" IsChecked="{Binding Dependencies.OnlyProblems}"
+                      ToolTip="Снимите, чтобы видеть и подписанные DLL, которые загрузятся рядом, и одинаковые у нескольких надстроек"/>
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource AssembliesToolbar}">
+            <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding LoadedAssemblies.RefreshCommand}"
+                    ToolTip="Перечитать список загруженных сборок (F5)">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
+                                             VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
+                    <TextBlock Text="Обновить (F5)" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding LoadedAssemblies.SaveListCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить показанный список в текстовый файл (markdown) и показать его в проводнике">
+                <materialDesign:PackIcon Kind="FileDocumentArrowRightOutline" Width="24" Height="24" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding LoadedAssemblies.RevealInExplorerCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике выбранную сборку">
+                <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+
+            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Скрыть системные" Margin="20 0 0 0" IsChecked="{Binding LoadedAssemblies.HideSystem}"
+                      ToolTip="Скрыть сборки .NET, GAC, Revit и созданные в памяти: останутся надстройки и их DLL"/>
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Bottom" Style="{StaticResource AssembliesToolbar}">
+            <StatusBar>
+                <StatusBarItem DockPanel.Dock="Right">
+                    <TextBlock Text="{Binding LoadedAssemblies.Notice}"/>
+                </StatusBarItem>
+                <StatusBarItem>
+                    <TextBlock Text="{Binding LoadedAssemblies.Status}"/>
+                </StatusBarItem>
+            </StatusBar>
+        </StackPanel>
+
+        <!-- Dependencies' status bar, as the Script Editor has one: the check on the left, the last action on the right. -->
+        <StackPanel DockPanel.Dock="Bottom" Style="{StaticResource DependenciesToolbar}">
+            <StatusBar>
+                <StatusBarItem DockPanel.Dock="Right">
+                    <TextBlock Text="{Binding Dependencies.Notice}"/>
+                </StatusBarItem>
+                <StatusBarItem>
+                    <TextBlock Text="{Binding Dependencies.Status}"/>
+                </StatusBarItem>
+            </StatusBar>
+        </StackPanel>
+
         <TabControl Margin="5 0 5 5" Style="{StaticResource FramedTabControl}" SelectedIndex="{Binding SelectedTabIndex}">
-            <TabItem Header="Команды" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
-                    <DockPanel>
-                        <DockPanel DockPanel.Dock="Top" Margin="4 2">
+            <TabItem Header="Commands" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
+                    <!-- The tree comes first in focus order, as on Dependencies: a click on the tab does not land in the search box. -->
+                    <DockPanel KeyboardNavigation.TabNavigation="Local">
+                        <DockPanel DockPanel.Dock="Top" Margin="4 2.5 4 2">
                             <Button DockPanel.Dock="Right" Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding CollapseAllCommand}"
-                                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Свернуть всё">
+                                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Свернуть всё" TabIndex="2">
                                 <materialDesign:PackIcon Kind="ArrowExpand" Width="22" Height="22" Foreground="{StaticResource IconBrush}"/>
                             </Button>
 
@@ -178,12 +298,13 @@
                                                      VerticalAlignment="Center" Margin="0 0 6 0"/>
 
                             <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Padding="5 2"
-                                     materialDesign:HintAssist.Hint="Поиск" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="Поиск" Style="{StaticResource MaterialDesignOutlinedTextBox}" TabIndex="1"
                                      materialDesign:TextFieldAssist.HasClearButton="True" materialDesign:HintAssist.IsFloating="False"/>
                         </DockPanel>
 
                         <Grid>
-                            <TreeView ItemsSource="{Binding Assemblies}" Margin="2">
+                            <!-- MaterialDesign's expander keeps 8 to its left; the tree moves over so it starts 4 from the frame, as the lists do. -->
+                            <TreeView ItemsSource="{Binding Assemblies}" Margin="-4 0 0 0" TabIndex="0">
                                 <TreeView.Resources>
                                     <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
 
@@ -282,9 +403,9 @@
                     </DockPanel>
             </TabItem>
 
-            <TabItem Header="Приложения" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
+            <TabItem Header="Applications" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
                 <Grid>
-                    <ListBox ItemsSource="{Binding Apps.Items}" SelectedItem="{Binding Apps.SelectedItem}" Margin="2"
+                    <ListBox ItemsSource="{Binding Apps.Items}" SelectedItem="{Binding Apps.SelectedItem}" Margin="0"
                              HorizontalContentAlignment="Stretch" ItemContainerStyle="{StaticResource CompactListBoxItem}">
 
                         <ListBox.ItemTemplate>
@@ -369,14 +490,29 @@
                     </Border>
 
                     <Grid>
-                        <ListBox ItemsSource="{Binding Startup.View}" SelectedItem="{Binding Startup.SelectedItem}" Margin="2"
+                        <ListBox ItemsSource="{Binding Startup.View}" SelectedItem="{Binding Startup.SelectedItem}" Margin="0"
                                  HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                  ItemContainerStyle="{StaticResource CompactListBoxItem}">
                             <ListBox.GroupStyle>
+                                <!-- A plain group: a header over its rows, no indent, so the rows line up with the other tabs'. -->
                                 <GroupStyle>
+                                    <GroupStyle.ContainerStyle>
+                                        <Style TargetType="GroupItem">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="GroupItem">
+                                                        <StackPanel>
+                                                            <ContentPresenter/>
+                                                            <ItemsPresenter/>
+                                                        </StackPanel>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </GroupStyle.ContainerStyle>
                                     <GroupStyle.HeaderTemplate>
                                         <DataTemplate>
-                                            <Border Background="#0A000000" Padding="6 2">
+                                            <Border Background="#0A000000" Padding="4 2">
                                                 <DockPanel>
                                                     <materialDesign:PackIcon DockPanel.Dock="Left" Width="14" Height="14" Foreground="Gray"
                                                                              VerticalAlignment="Center" Margin="0 0 6 0">
@@ -491,6 +627,197 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
+                    </Grid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="Assemblies" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
+                <!-- The list comes first in focus order, as on Dependencies: a click on the tab does not land in the search box. -->
+                <DockPanel KeyboardNavigation.TabNavigation="Local">
+                    <!-- As tall as the row with the collapse button on Commands and Dependencies: the box sits at the same height.
+                         4 from the frame to each element: the magnifier on the left, the box on top (2.5 + half of 25 - 22), the button or the box on the right. -->
+                    <DockPanel DockPanel.Dock="Top" Margin="4 2.5 4 2" MinHeight="25">
+                        <materialDesign:PackIcon DockPanel.Dock="Left" Kind="Magnify" Width="20" Height="20" Foreground="Gray"
+                                                 VerticalAlignment="Center" Margin="0 0 6 0"/>
+                        <TextBox Text="{Binding LoadedAssemblies.SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Padding="5 2"
+                                 materialDesign:HintAssist.Hint="Поиск" Style="{StaticResource MaterialDesignOutlinedTextBox}" TabIndex="1"
+                                 materialDesign:TextFieldAssist.HasClearButton="True" materialDesign:HintAssist.IsFloating="False"/>
+                    </DockPanel>
+
+                    <Grid>
+                        <ListBox ItemsSource="{Binding LoadedAssemblies.Items}" SelectedItem="{Binding LoadedAssemblies.SelectedItem}" Margin="0" TabIndex="0"
+                                 HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ItemContainerStyle="{StaticResource CompactListBoxItem}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ToolTip="{Binding ToolTip}" Background="Transparent"
+                                          Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ListBox}}">
+                                        <Grid.InputBindings>
+                                            <MouseBinding Gesture="LeftDoubleClick" CommandParameter="{Binding}"
+                                                          Command="{Binding DataContext.LoadedAssemblies.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"/>
+                                        </Grid.InputBindings>
+                                        <Grid.ContextMenu>
+                                            <ContextMenu materialDesign:MenuAssist.MenuItemsPresenterMargin="0">
+                                                <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
+                                                          Command="{Binding PlacementTarget.Tag.LoadedAssemblies.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                <MenuItem Header="Копировать путь" CommandParameter="{Binding}"
+                                                          Command="{Binding PlacementTarget.Tag.LoadedAssemblies.CopyPathCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            </ContextMenu>
+                                        </Grid.ContextMenu>
+
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Padded with spaces to the longest number in the list: a column only as wide as it needs. -->
+                                        <TextBlock Grid.RowSpan="2" Text="{Binding Number}" FontFamily="Consolas" FontSize="11" Foreground="Gray"
+                                                   VerticalAlignment="Center" Margin="0 0 6 0"/>
+
+                                        <!-- Orange: the same name is loaded more than once. -->
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource RowTitle}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDuplicate}" Value="True">
+                                                            <Setter Property="Foreground" Value="#B26A00"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Grid.Column="2" Text="{Binding Version}" Margin="8 0 0 0" FontFamily="Consolas" FontSize="11"
+                                                   VerticalAlignment="Bottom" TextTrimming="CharacterEllipsis">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="Gray"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDuplicate}" Value="True">
+                                                            <Setter Property="Foreground" Value="#B26A00"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Grid.Column="3" Text="{Binding Owner}" Style="{StaticResource RowDetails}" Margin="8 0 0 0"
+                                                   VerticalAlignment="Bottom" MaxWidth="160"/>
+
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding Where}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource RowDetails}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsInMemory}" Value="True">
+                                                            <Setter Property="FontStyle" Value="Italic"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <TextBlock Text="Ничего не найдено" Foreground="Gray" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                                   Visibility="{Binding LoadedAssemblies.IsEmpty, Converter={StaticResource BoolToVisibility}}"/>
+                    </Grid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="Dependencies" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
+                <!-- The tree comes first in focus order: opening the tab with a click puts the focus here, not in the search box. -->
+                <DockPanel KeyboardNavigation.TabNavigation="Local">
+                    <DockPanel DockPanel.Dock="Top" Margin="4 2.5 4 2">
+                        <Button DockPanel.Dock="Right" Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding Dependencies.CollapseAllCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Свернуть всё" TabIndex="2">
+                            <materialDesign:PackIcon Kind="ArrowExpand" Width="22" Height="22" Foreground="{StaticResource IconBrush}"/>
+                        </Button>
+
+                        <materialDesign:PackIcon DockPanel.Dock="Left" Kind="Magnify" Width="20" Height="20" Foreground="Gray"
+                                                 VerticalAlignment="Center" Margin="0 0 6 0"/>
+                        <TextBox Text="{Binding Dependencies.SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Padding="5 2"
+                                 materialDesign:HintAssist.Hint="Поиск" Style="{StaticResource MaterialDesignOutlinedTextBox}" TabIndex="1"
+                                 materialDesign:TextFieldAssist.HasClearButton="True" materialDesign:HintAssist.IsFloating="False"/>
+                    </DockPanel>
+
+                    <Grid>
+                        <!-- As on Commands: the expander starts 4 from the frame. -->
+                        <TreeView ItemsSource="{Binding Dependencies.Sections}" Margin="-4 0 0 0" Grid.IsSharedSizeScope="True" TabIndex="0">
+                            <TreeView.Resources>
+                                <!-- Compact: a small expander (it is also the indent of each level) and no padding. -->
+                                <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+                                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                                    <Setter Property="Padding" Value="2 0"/>
+                                    <Setter Property="MinHeight" Value="0"/>
+                                    <Setter Property="materialDesign:TreeViewAssist.ExpanderSize" Value="12"/>
+                                </Style>
+
+                                <HierarchicalDataTemplate DataType="{x:Type local:DependencySectionVM}" ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Horizontal" Margin="0 1">
+                                        <materialDesign:PackIcon Kind="{Binding Icon}" Width="14" Height="14" Foreground="Gray"
+                                                                 VerticalAlignment="Center" Margin="0 0 6 0"/>
+                                        <TextBlock Text="{Binding Title}" Foreground="Gray" FontSize="11" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </HierarchicalDataTemplate>
+
+                                <!-- The same menu on a DLL and on each add-in's copy of it. -->
+                                <ContextMenu x:Key="DependencyMenu" x:Shared="False" materialDesign:MenuAssist.MenuItemsPresenterMargin="0">
+                                    <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
+                                              Command="{Binding PlacementTarget.Tag.Dependencies.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                    <MenuItem Header="Копировать путь" CommandParameter="{Binding}"
+                                              Command="{Binding PlacementTarget.Tag.Dependencies.CopyPathCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                </ContextMenu>
+
+                                <HierarchicalDataTemplate DataType="{x:Type local:VersionGroupVM}" ItemsSource="{Binding Children}">
+                                    <Grid Background="Transparent" ContextMenu="{StaticResource DependencyMenu}" ToolTip="{Binding ToolTip}"
+                                          Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TreeView}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <materialDesign:PackIcon Grid.RowSpan="2" Style="{StaticResource SeverityIcon}"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}" Style="{StaticResource RowTitle}" LineHeight="14"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Summary}" Style="{StaticResource RowDetails}" LineHeight="12"/>
+                                    </Grid>
+                                </HierarchicalDataTemplate>
+
+                                <!-- The add-ins of one DLL: the versions line up in a column across the whole tree. -->
+                                <DataTemplate DataType="{x:Type local:DllCopyVM}">
+                                    <Grid ToolTip="{Binding ToolTip}" Background="Transparent" ContextMenu="{StaticResource DependencyMenu}"
+                                          Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TreeView}}"
+                                          TextBlock.LineHeight="15" TextBlock.LineStackingStrategy="BlockLineHeight">
+                                        <Grid.InputBindings>
+                                            <MouseBinding Gesture="LeftDoubleClick" CommandParameter="{Binding}"
+                                                          Command="{Binding DataContext.Dependencies.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                        </Grid.InputBindings>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="DependencyOwner"/>
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="DependencyLoaded"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Owner}" Style="{StaticResource SeverityText}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="● загружена" FontSize="11" Foreground="{StaticResource AccentBrush}" Margin="8 0 0 0"
+                                                   VerticalAlignment="Center" Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibility}}"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding Version}" Style="{StaticResource SeverityText}" FontFamily="Consolas"
+                                                   Margin="12 0 0 0" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </TreeView.Resources>
+                        </TreeView>
+
+                        <TextBlock Text="Конфликтов нет" Foreground="Gray" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                                   Visibility="{Binding Dependencies.IsEmpty, Converter={StaticResource BoolToVisibility}}"/>
                     </Grid>
                 </DockPanel>
             </TabItem>
