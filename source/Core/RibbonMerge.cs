@@ -645,6 +645,58 @@ namespace RevitDevKit.Core
 
         private const string Component = ";component/";
 
+        private static HarmonyLib.Harmony _harmony;
+
+        // The installed add-in and a fresh build may have the same name (Dbg_BIMPlugins), and then two copies
+        // share one wrapper: whichever it points to, the other copy's windows fail with "the component does not
+        // have a resource identified by the URI". So each time a component loads its XAML, the wrapper of its
+        // name is pointed at the component's own assembly first.
+        public static void FollowComponents()
+        {
+            if (_harmony != null || ResourceManagersField == null || WrapperAssembly == null) return;
+
+            try
+            {
+                var loadComponent = typeof(System.Windows.Application).GetMethod(nameof(System.Windows.Application.LoadComponent),
+                    BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(object), typeof(Uri) }, null);
+                _harmony = new HarmonyLib.Harmony("RevitDevKit.PackResources");
+                _harmony.Patch(loadComponent, prefix: new HarmonyLib.HarmonyMethod(typeof(PackResources).GetMethod(nameof(BeforeLoadComponent), BindingFlags.NonPublic | BindingFlags.Static)));
+            }
+            catch (Exception ex)
+            {
+                ConsoleOutput.Warning("Не удалось перехватить Application.LoadComponent: " + ex.Message);
+            }
+        }
+
+        private static void BeforeLoadComponent(object component, Uri resourceLocator)
+        {
+            try
+            {
+                var assembly = component?.GetType().Assembly;
+                if (assembly == null || resourceLocator == null) return;
+
+                var path = Uri.UnescapeDataString(resourceLocator.IsAbsoluteUri ? resourceLocator.AbsolutePath : resourceLocator.OriginalString).TrimStart('/');
+                var at = path.IndexOf(Component, StringComparison.OrdinalIgnoreCase);
+                if (at < 0) return;
+
+                var name = assembly.GetName().Name;
+                if (!string.Equals(path.Substring(0, at).Split(';')[0], name, StringComparison.OrdinalIgnoreCase)) return;
+
+                var managers = ResourceManagersField.GetValue(null) as IDictionary;
+                if (managers == null) return;
+
+                var key = name.ToLowerInvariant();
+                if (!managers.Contains(key))
+                    managers[key] = Activator.CreateInstance(WrapperType, BindingFlags.NonPublic | BindingFlags.Instance, null, new object[] { assembly }, null);
+
+                Point(managers, name, assembly);
+            }
+            catch (Exception ex)
+            {
+                ConsoleOutput.Debug("Ресурсы WPF для " + component?.GetType().FullName + " не перенаправлены: " + ex.Message);
+            }
+        }
+
         // While the draft runs, the resources of the fresh build come from its copy. Afterwards an
         // assembly Revit loaded under the same name gets its own resources back.
         public static IDisposable Pin(RibbonPreview.ShadowFolder folder)
