@@ -93,8 +93,13 @@ namespace RevitDevKit
                     "и какие DLL у них расходятся по версиям."
                 );
 
-            pullBtn.CreatePushButton<ExecutePendingCmd, AlwaysAvailable>("Run Again")
-                .SetToolTip("Повторить последний запуск в контексте настоящей команды Revit.");
+            // Renamed from Run Again: the internal name comes from ExecutePendingCmd, so shortcuts stay.
+            pullBtn.CreatePushButton<ExecutePendingCmd, AlwaysAvailable>("Repeat Last")
+                .SetToolTip("Повторить последний запуск: скрипт из Script Editor или команду из Add-in Explorer.")
+                .SetLongDescription(
+                    "Команда из DLL берётся из файла на диске, так что после пересборки запустится свежая версия. " +
+                    "Скрипт повторяется в том виде, в каком его запустили; правки в редакторе применятся после F5."
+                );
 
             pullBtn.AddSeparator();
 

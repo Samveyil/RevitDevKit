@@ -22,9 +22,9 @@
                 <materialDesign:PackIcon Kind="ContentCopy" Width="22" Height="22" Foreground="{DynamicResource IconBrush}"/>
             </Button>
 
-            <CheckBox Content="Автопрокрутка" VerticalAlignment="Center" Margin="15 0 0 0" Padding="2 0" IsChecked="{Binding IsAutoScroll}"/>
-            <CheckBox Content="Время" VerticalAlignment="Center" Margin="10 0" Padding="2 0" IsChecked="{Binding IsTimestamps}"/>
-            <CheckBox Content="Стек вызовов" VerticalAlignment="Center" Padding="2 0" IsChecked="{Binding IsShowDebug}"/>
+            <CheckBox Content="Автопрокрутка" VerticalAlignment="Bottom" Margin="15 0 0 0" Padding="2 0" IsChecked="{Binding IsAutoScroll}"/>
+            <CheckBox Content="Время" VerticalAlignment="Bottom" Margin="10 0" Padding="2 0" IsChecked="{Binding IsTimestamps}"/>
+            <CheckBox Content="Стек вызовов" VerticalAlignment="Bottom" Padding="2 0" IsChecked="{Binding IsShowDebug}"/>
         </StackPanel>
 
         <RichTextBox x:Name="Output" IsReadOnly="True" IsDocumentEnabled="True" FontFamily="Consolas" Margin="0 2 0 0"

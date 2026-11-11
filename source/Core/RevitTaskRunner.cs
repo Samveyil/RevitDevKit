@@ -168,7 +168,7 @@ namespace RevitDevKit.Core
 
     // ExternalCommandData exists only inside IExternalCommand.Execute, so a modeless window
     // cannot keep it. To run a foreign IExternalCommand we PostCommand our own ribbon
-    // button (Run Again) and execute the pending request inside it.
+    // button (Repeat Last) and execute the pending request inside it.
     internal static class RevitCommandBridge
     {
         private static RevitCommandId _commandId;
