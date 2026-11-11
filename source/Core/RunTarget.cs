@@ -60,7 +60,7 @@ namespace RevitDevKit.Core
             {
                 throw new InvalidOperationException(
                     "Для запуска IExternalCommand нужен живой ExternalCommandData, а его выдаёт " +
-                    "только сам Revit. Убедитесь, что на ленте есть кнопка «Run Again» — через неё " +
+                    "только сам Revit. Убедитесь, что на ленте есть кнопка «Repeat Last» — через неё " +
                     "плагин получает контекст команды.");
             }
 

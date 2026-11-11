@@ -15,7 +15,7 @@ The Add-Ins tab gets a DevKit panel with a pulldown button:
 
 - Script Editor opens the script editor;
 - Add-in Explorer opens a window with the commands and applications of a DLL, the add-ins Revit loads at startup, the loaded assemblies and the add-ins' DLLs;
-- Run Again repeats the last run;
+- Repeat Last runs the last script or command once more;
 - Console, after a separator, shows the console pane or hides it when it is open.
 
 ## Script Editor
@@ -82,7 +82,7 @@ In the output of `Compare`, `-нет-` (none) means the element has no such para
 
 Add a built DLL, and its `IExternalCommand` classes appear in the list, grouped by namespace. A double click or F5 runs a command. The DLL file is not locked, so the project can be rebuilt without closing Revit. The command is taken from the DLL on disk every time, so after a build just run it again. The **Обновить** (Refresh) button is needed only when new commands appear.
 
-The window closes when a command runs. To run the same command again after changes, there is no need to open Add-in Explorer: build the project and press Run Again on the ribbon, and the command runs from the fresh DLL. Run Again can be given a keyboard shortcut in Revit.
+The window closes when a command runs. To run the same command again after changes, there is no need to open Add-in Explorer: build the project and press Repeat Last on the ribbon, and the command runs from the fresh DLL. Repeat Last can be given a keyboard shortcut in Revit.
 
 ### Applications
 
