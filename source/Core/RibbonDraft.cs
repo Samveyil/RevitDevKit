@@ -25,6 +25,10 @@ namespace RevitDevKit.Core
 
         public List<Adw.RibbonTab> NewTabs { get; private set; } = new List<Adw.RibbonTab>();
 
+        // Panels the add-in put on tabs that were already there through AdWindows itself, not the API
+        // (a panel of its own on Modify, say): the API registry knows nothing of them.
+        public List<Tuple<Adw.RibbonTab, Adw.RibbonPanel>> ForeignPanels { get; private set; } = new List<Tuple<Adw.RibbonTab, Adw.RibbonPanel>>();
+
         public static RibbonDraft Run(Action startup)
         {
             DraftPatches.Install();
@@ -32,6 +36,7 @@ namespace RevitDevKit.Core
             var ribbon = RibbonAccess.Ribbon;
             var live = RibbonAccess.Registry;
             var tabsBefore = ribbon.Tabs.ToList();
+            var panelsBefore = tabsBefore.ToDictionary(t => t, t => new HashSet<Adw.RibbonPanel>(t.Panels));
 
             var draft = new RibbonDraft();
             foreach (var key in live.Keys.Where(RibbonAccess.IsCustomTab))
@@ -59,6 +64,12 @@ namespace RevitDevKit.Core
             }
 
             draft.NewTabs = ribbon.Tabs.Where(t => !tabsBefore.Contains(t)).ToList();
+
+            var apiPanels = new HashSet<Adw.RibbonPanel>(draft.Registry.Values.SelectMany(p => p.Values).Select(p => p.ToAWRibbonPanel()));
+            draft.ForeignPanels = ribbon.Tabs
+                .Where(panelsBefore.ContainsKey)
+                .SelectMany(t => t.Panels.Where(p => !panelsBefore[t].Contains(p) && !apiPanels.Contains(p)).Select(p => Tuple.Create(t, p)))
+                .ToList();
 
             if (failure != null)
             {
@@ -96,6 +107,9 @@ namespace RevitDevKit.Core
 
             foreach (var tab in NewTabs)
                 RibbonAccess.Ribbon.Tabs.Remove(tab);
+
+            foreach (var foreign in ForeignPanels)
+                foreign.Item1.Panels.Remove(foreign.Item2);
         }
 
         internal static string FileName(string path)
