@@ -14,9 +14,11 @@ namespace RevitDevKit.UI.DllRunner
 {
     public sealed class LoadedAssemblyVM
     {
-        public LoadedAssemblyVM(ProcessAssembly assembly, IReadOnlyList<ProcessAssembly> sameName)
+        // digits: of the largest number in the list, so the numbers line up right in a column just as wide.
+        public LoadedAssemblyVM(ProcessAssembly assembly, IReadOnlyList<ProcessAssembly> sameName, int digits)
         {
             Assembly = assembly;
+            Number = assembly.Number.ToString().PadLeft(digits);
             ToolTip = (assembly.FullName ?? assembly.Name)
                       + (string.IsNullOrEmpty(assembly.FileVersion) ? string.Empty : "\nВерсия файла " + assembly.FileVersion)
                       + "\n" + ProcessAssemblies.Where(assembly)
@@ -27,7 +29,7 @@ namespace RevitDevKit.UI.DllRunner
         }
 
         public ProcessAssembly Assembly { get; }
-        public string Number => Assembly.Number.ToString();
+        public string Number { get; }
         public string Name => Assembly.Name;
         public string Version => Assembly.Version?.ToString() ?? string.Empty;
         public string Owner => Assembly.Owner ?? string.Empty;
@@ -94,8 +96,10 @@ namespace RevitDevKit.UI.DllRunner
                 .ToDictionary(g => g.Key, g => (IReadOnlyList<ProcessAssembly>)g.ToList(), StringComparer.OrdinalIgnoreCase);
 
             Items.Clear();
-            foreach (var assembly in _all.Where(a => !HideSystem || !a.IsSystem).Where(Matches))
-                Items.Add(new LoadedAssemblyVM(assembly, byName[assembly.Name]));
+            var shown = _all.Where(a => !HideSystem || !a.IsSystem).Where(Matches).ToList();
+            var digits = shown.Count == 0 ? 1 : shown.Max(a => a.Number).ToString().Length;
+            foreach (var assembly in shown)
+                Items.Add(new LoadedAssemblyVM(assembly, byName[assembly.Name], digits));
 
             SelectedItem = Items.FirstOrDefault(i => i.Assembly.Number == selected);
             IsEmpty = Items.Count == 0;
@@ -119,17 +123,18 @@ namespace RevitDevKit.UI.DllRunner
             _noticeTimer.Start();
         }
 
+        // The list as shown goes to a text file, shown in Explorer.
         [RelayCommand]
-        private void CopyList()
+        private void SaveList()
         {
             try
             {
-                Clipboard.SetText(ProcessAssemblies.ToMarkdown(Items.Select(i => i.Assembly), _all.Count));
-                Notify("Список скопирован");
+                var path = ReportFiles.Save("Assemblies", ProcessAssemblies.ToMarkdown(Items.Select(i => i.Assembly), _all.Count));
+                Notify("Список сохранён: " + Path.GetFileName(path));
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Не удалось скопировать список:");
+                ConsoleOutput.Exception(ex, "Не удалось сохранить список:");
             }
         }
 

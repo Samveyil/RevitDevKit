@@ -199,11 +199,9 @@ namespace RevitDevKit.Core
             text.AppendLine("### Revit " + (AddinManifests.RevitVersion ?? "") + ": загруженные сборки (" + DateTime.Now.ToString("yyyy-MM-dd HH:mm")
                             + ", показано " + rows.Count + " из " + total + ")");
             text.AppendLine();
-            text.AppendLine("| № | Сборка | Версия | Версия файла | Чья | Путь |");
-            text.AppendLine("|---:|---|---|---|---|---|");
-            foreach (var a in rows)
-                text.AppendLine("| " + a.Number + " | " + Cell(a.Name) + (a.IsDuplicate ? " ⚠" : "") + " | " + a.Version + " | " + Cell(a.FileVersion)
-                                + " | " + Cell(a.Owner) + " | " + Cell(Where(a)) + " |");
+            AddinDependencies.Table(text, new[] { "№", "Сборка", "Версия", "Версия файла", "Чья", "Путь" },
+                rows.Select(a => new[] { a.Number.ToString(), Cell(a.Name) + (a.IsDuplicate ? " ⚠" : ""), Cell(a.Version?.ToString()),
+                    Cell(a.FileVersion), Cell(a.Owner), Cell(Where(a)) }), 0);
             return text.ToString();
         }
 

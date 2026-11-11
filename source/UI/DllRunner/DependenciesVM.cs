@@ -164,7 +164,7 @@ namespace RevitDevKit.UI.DllRunner
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(RefreshCommand))]
-        [NotifyCanExecuteChangedFor(nameof(CopyReportCommand))]
+        [NotifyCanExecuteChangedFor(nameof(SaveReportCommand))]
         private bool _isBusy;
 
         // The status bar: the check on the left, a short note of the last action on the right, gone after a while.
@@ -227,7 +227,7 @@ namespace RevitDevKit.UI.DllRunner
         {
             _report = report;
             OnPropertyChanged(nameof(HasReport));
-            CopyReportCommand.NotifyCanExecuteChanged();
+            SaveReportCommand.NotifyCanExecuteChanged();
             IsBusy = false;
 
             var conflicts = report.Groups.Count(g => g.IsConflict);
@@ -341,19 +341,20 @@ namespace RevitDevKit.UI.DllRunner
             _noticeTimer.Start();
         }
 
-        private bool CanCopy() => _report != null && !IsBusy;
+        private bool CanSave() => _report != null && !IsBusy;
 
-        [RelayCommand(CanExecute = nameof(CanCopy))]
-        private void CopyReport()
+        // The report goes to a text file, shown in Explorer.
+        [RelayCommand(CanExecute = nameof(CanSave))]
+        private void SaveReport()
         {
             try
             {
-                Clipboard.SetText(AddinDependencies.ToMarkdown(_report, OnlyProblems));
-                Notify("Отчёт скопирован");
+                var path = ReportFiles.Save("Dependencies", AddinDependencies.ToMarkdown(_report, OnlyProblems));
+                Notify("Отчёт сохранён: " + Path.GetFileName(path));
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Не удалось скопировать отчёт:");
+                ConsoleOutput.Exception(ex, "Не удалось сохранить отчёт:");
             }
         }
 

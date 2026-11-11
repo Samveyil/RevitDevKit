@@ -563,14 +563,17 @@ namespace RevitDevKit.Core
             return text.ToString();
         }
 
-        private static void Table(StringBuilder text, string[] header, IEnumerable<string[]> rows)
+        // A markdown table padded to the longest cell of each column, so it reads as a table in plain text too.
+        // Columns listed in rightAligned (numbers) are padded on the left and marked ---: for the renderers.
+        internal static void Table(StringBuilder text, string[] header, IEnumerable<string[]> rows, params int[] rightAligned)
         {
             var all = new[] { header }.Concat(rows).ToList();
             var widths = Enumerable.Range(0, header.Length).Select(i => all.Max(r => r[i].Length)).ToList();
-            string Line(string[] cells) => "| " + string.Join(" | ", cells.Select((c, i) => c.PadRight(widths[i]))) + " |";
+            bool Right(int i) => rightAligned.Contains(i);
+            string Line(string[] cells) => "| " + string.Join(" | ", cells.Select((c, i) => Right(i) ? c.PadLeft(widths[i]) : c.PadRight(widths[i]))) + " |";
 
             text.AppendLine(Line(header));
-            text.AppendLine("|" + string.Join("|", widths.Select(w => new string('-', w + 2))) + "|");
+            text.AppendLine("|" + string.Join("|", widths.Select((w, i) => Right(i) ? new string('-', w + 1) + ":" : new string('-', w + 2))) + "|");
             foreach (var row in all.Skip(1))
                 text.AppendLine(Line(row));
         }
