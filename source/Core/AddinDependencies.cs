@@ -155,7 +155,7 @@ namespace RevitDevKit.Core
         public static DependencyReport Scan(IEnumerable<AddinManifest> manifests, IList<Tuple<string, string>> loadedAssemblies,
             IList<string> loadedModules, CancellationToken token)
         {
-            var revitFolder = (RevitFolder ?? AppDomain.CurrentDomain.BaseDirectory).TrimEnd('\\');
+            var revitFolder = RevitFolderPath;
             var enabled = manifests.Where(m => m.IsEnabled && m.Error == null).ToList();
 
             var sharedFolders = new HashSet<string>(enabled.Select(m => Path.GetDirectoryName(m.FilePath)), StringComparer.OrdinalIgnoreCase) { revitFolder };
@@ -436,7 +436,7 @@ namespace RevitDevKit.Core
         private static bool IsShared(string folder, HashSet<string> sharedFolders, string revitFolder) =>
             sharedFolders.Contains(folder.TrimEnd('\\')) || IsUnder(revitFolder, folder) || Path.GetPathRoot(folder) == folder;
 
-        private static bool IsUnder(string path, string folder) =>
+        internal static bool IsUnder(string path, string folder) =>
             path.StartsWith(folder.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase) || string.Equals(path.TrimEnd('\\'), folder.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase);
 
         // The DLLs of a folder; below it, all but the language folders (en-US\, ru-RU\...).
@@ -516,6 +516,11 @@ namespace RevitDevKit.Core
                 return string.Concat(hash.Skip(hash.Length - 8).Reverse().Select(b => b.ToString("x2")));
             }
         }
+
+        internal static string FileVersionOf(string path) => FileVersionOf(path, out _);
+
+        // Revit's own folder: Revit.exe and the DLLs it ships.
+        internal static string RevitFolderPath => (RevitFolder ?? AppDomain.CurrentDomain.BaseDirectory).TrimEnd('\\');
 
         private static string FileVersionOf(string path, out string company)
         {

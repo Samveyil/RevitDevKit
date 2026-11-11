@@ -14,7 +14,7 @@ The add-in's interface is in Russian; the names of its menus and buttons are giv
 The Add-Ins tab gets a DevKit panel with a pulldown button:
 
 - Script Editor opens the script editor;
-- Add-in Explorer opens a window with the commands and applications of a DLL, the add-ins Revit loads at startup and their DLLs;
+- Add-in Explorer opens a window with the commands and applications of a DLL, the add-ins Revit loads at startup, the loaded assemblies and the add-ins' DLLs;
 - Run Again repeats the last run;
 - Console shows the console pane.
 
@@ -78,7 +78,7 @@ In the output of `Compare`, `-нет-` (none) means the element has no such para
 
 ### Commands
 
-<img src="assets/dll-runner-commands.png" width="520" alt="Add-in Explorer, the Commands tab" />
+<img src="assets/dll-runner-commands.png" width="580" alt="Add-in Explorer, the Commands tab" />
 
 Add a built DLL, and its `IExternalCommand` classes appear in the list, grouped by namespace. A double click or F5 runs a command. The DLL file is not locked, so the project can be rebuilt without closing Revit. The command is taken from the DLL on disk every time, so after a build just run it again. The **Обновить** (Refresh) button is needed only when new commands appear.
 
@@ -86,7 +86,7 @@ The window closes when a command runs. To run the same command again after chang
 
 ### Applications
 
-<img src="assets/dll-runner-apps.png" width="520" alt="Add-in Explorer, the Applications tab" />
+<img src="assets/dll-runner-apps.png" width="580" alt="Add-in Explorer, the Applications tab" />
 
 Here you can see what an add-in's buttons will look like after changes, without restarting Revit. The add-in is installed as usual with an `.addin` file, and the DLL from the project's build folder is added here. After changes, build the project and press **Обновить** (Refresh): the add-in's buttons on the ribbon change their texts, tooltips, icons and `ShowText`. New buttons and panels appear, removed ones disappear, and a button that became a pulldown is replaced in the same place.
 
@@ -96,15 +96,23 @@ The DLL may have a different name than the installed one, for example `Dbg_MyAdd
 
 ### Startup
 
-<img src="assets/dll-runner-startup.png" width="520" alt="Add-in Explorer, the Startup tab" />
+<img src="assets/dll-runner-startup.png" width="580" alt="Add-in Explorer, the Startup tab" />
 
 This tab lists the `.addin` files of the running Revit version: the current user's from `%AppData%\Autodesk\Revit\Addins\<year>` and those for all users from `%ProgramData%\Autodesk\Revit\Addins\<year>`. Clearing a checkbox renames `X.addin` to `X.addin.disable`, so Revit does not load the add-in on its next start, and ticking it renames the file back.
 
 Under each name is what the file contains and its DLL, and in red what is wrong: a DLL that is not found or an `.addin` that cannot be read. Files that Windows does not let you rename, usually installers' files for all users, have a lock: changing them needs administrator rights. Before DevKit turns itself off, it asks.
 
+### Assemblies
+
+<img src="assets/dll-runner-assemblies.png" width="580" alt="Add-in Explorer, the Assemblies tab" />
+
+Every assembly loaded into Revit right now, with a number and a path. The number is its place in the `AppDomain`'s list, roughly the load order. On the right is whose it is: an add-in's (by its folder), Revit's, .NET's, the GAC's or DevKit's. Assemblies without a file, such as scripts and DLL commands DevKit loaded from bytes, say **в памяти** (in memory); a copy of a DLL names the file it came from.
+
+Assemblies loaded more than once under the same name are orange, and the tooltip lists every copy. **Скрыть системные** (hide system) hides .NET, the GAC, Revit's own and dynamic assemblies, leaving the add-ins and their DLLs. The list is read again each time the tab opens and on F5. A right click shows an assembly in Explorer or copies its path, and the copy button puts the list as shown on the clipboard in markdown.
+
 ### Dependencies
 
-<img src="assets/dll-runner-dependencies.png" width="520" alt="Add-in Explorer, the Dependencies tab" />
+<img src="assets/dll-runner-dependencies.png" width="580" alt="Add-in Explorer, the Dependencies tab" />
 
 This tab finds DLLs that several add-ins of the running Revit version, or an add-in and Revit itself, bring in different versions, and shows which of them really clash in the one Revit process they all share:
 
