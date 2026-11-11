@@ -106,9 +106,13 @@ Under each name is what the file contains and its DLL, and in red what is wrong:
 
 <img src="assets/dll-runner-dependencies.png" width="520" alt="DLL Runner, the Dependencies tab" />
 
-This tab finds DLLs that several add-ins of the running Revit version, or an add-in and Revit itself, bring in different versions. All add-ins run in one Revit process, and a library is loaded once, usually from whichever add-in needs it first, so the others get that copy too. Red means the assembly versions differ, and the loaded copy may not suit the others. Orange means only the file version differs, which is usually harmless. The copy loaded in this session is marked.
+This tab finds DLLs that several add-ins of the running Revit version, or an add-in and Revit itself, bring in different versions, and shows which of them really clash in the one Revit process they all share:
 
-An add-in's DLLs are the ones in the folder of its assembly, read from their headers without loading them. Language resources (folders such as `en-US` and `*.resources.dll`) are left out: they are the same DLL in another language. The copy button puts a markdown report on the clipboard.
+- **Red**: the assembly versions differ, and only one copy loads, the first one, for everyone. That is what happens to a DLL without a strong name, and to one that Revit redirects to its own version in `Revit.exe.config`. An add-in built against another version may fail.
+- **Orange**: the assembly version is the same and only the file differs, so all add-ins share one copy. Usually harmless.
+- With **Только конфликты** (conflicts only) cleared, signed DLLs of different versions show too: .NET loads each add-in its own version, side by side.
+
+The copy loaded in this session is marked. An add-in's DLLs are the ones in the folder of its assembly, read from their headers without loading them. Language resources (folders such as `en-US` and `*.resources.dll`) are left out: they are the same DLL in another language. The copy button puts a markdown report on the clipboard.
 
 ## Console
 

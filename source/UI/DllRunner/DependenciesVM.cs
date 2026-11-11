@@ -65,12 +65,18 @@ namespace RevitDevKit.UI.DllRunner
             IsExpanded = expanded;
             _onExpanded = onExpanded;
 
-            // Each copy is compared with the one loaded now, or with the newest when none is loaded yet.
+            // Each copy is compared with the version everyone gets: the one Revit redirects to, the one loaded now,
+            // or the newest when none is loaded yet. Copies that load side by side are all fine.
             var reference = group.Loaded.Count > 0 && File.Exists(group.Loaded[0].Path)
                 ? AddinDependencies.Read(group.Loaded[0].Path)
                 : group.Copies.Select(c => c.Dll).OrderByDescending(d => d.AssemblyVersion).ThenByDescending(d => d.FileVersion).First();
             foreach (var copy in group.Copies)
-                Children.Add(new DllCopyVM(copy, Compare(copy.Dll, reference), onSelected));
+            {
+                var severity = group.Level == DependencyLevel.SideBySide || group.Level == DependencyLevel.None ? Severity.Normal
+                    : group.RedirectedTo != null ? (copy.Dll.AssemblyVersion == group.RedirectedTo ? Severity.Normal : Severity.Critical)
+                    : Compare(copy.Dll, reference);
+                Children.Add(new DllCopyVM(copy, severity, onSelected));
+            }
         }
 
         public VersionGroup Group { get; }
@@ -80,20 +86,15 @@ namespace RevitDevKit.UI.DllRunner
             : Group.Level == DependencyLevel.FileOnly ? Severity.Minor
             : Severity.Normal;
 
+        // Why it is in its section, then what is loaded now.
         public string Summary
         {
             get
             {
-                var dlls = Group.Copies.Select(c => c.Dll).ToList();
-                var versions = Group.Level == DependencyLevel.Assembly
-                    ? Plural(dlls.Select(d => d.AssemblyVersion).Distinct().Count(), "версия сборки", "версии сборки", "версий сборки")
-                    : Group.Level == DependencyLevel.FileOnly
-                        ? dlls.All(d => d.IsManaged) ? "одна версия сборки, разные файлы" : "разные версии файла"
-                        : "одинаковые версии";
                 var loaded = Group.Loaded.Count == 0
                     ? "ещё не загружена"
                     : "загружена " + string.Join(" и ", Group.Loaded.Select(l => l.FileVersion + " из " + (l.Owner ?? Path.GetDirectoryName(l.Path))));
-                return versions + " · " + loaded;
+                return AddinDependencies.Reason(Group) + " · " + loaded;
             }
         }
 
@@ -112,14 +113,6 @@ namespace RevitDevKit.UI.DllRunner
             if (copy.IsManaged && reference.IsManaged && copy.AssemblyVersion != reference.AssemblyVersion) return Severity.Critical;
             return copy.FileVersion != reference.FileVersion ? Severity.Minor : Severity.Normal;
         }
-
-        private static string Plural(int n, string one, string few, string many)
-        {
-            var tens = n % 100;
-            var units = n % 10;
-            var word = tens >= 11 && tens <= 14 ? many : units == 1 ? one : units >= 2 && units <= 4 ? few : many;
-            return n + " " + word;
-        }
     }
 
     public sealed class DllCopyVM : DependencyNodeVM
@@ -137,7 +130,9 @@ namespace RevitDevKit.UI.DllRunner
         public bool IsLoaded => Copy.IsLoaded;
 
         public string ToolTip => Copy.Dll.Path + "\nВерсия файла " + Copy.Dll.FileVersion
-                                 + (Copy.Dll.IsManaged ? ", версия сборки " + Copy.Dll.AssemblyVersion : ", нативная DLL");
+                                 + (!Copy.Dll.IsManaged ? ", нативная DLL"
+                                     : ", версия сборки " + Copy.Dll.AssemblyVersion
+                                       + (Copy.Dll.IsSigned ? ", подписана (" + Copy.Dll.PublicKeyToken + ")" : ", не подписана"));
 
         public override string FilePath => Copy.Dll.Path;
     }
@@ -214,8 +209,8 @@ namespace RevitDevKit.UI.DllRunner
             CopyReportCommand.NotifyCanExecuteChanged();
             IsBusy = false;
 
-            var problems = report.Groups.Count(g => g.Level != DependencyLevel.None);
-            Status = "Проверено в " + report.CheckedAt.ToString("HH:mm:ss") + " · " + (problems == 0 ? "расхождений нет" : "расхождений: " + problems);
+            var conflicts = report.Groups.Count(IsConflict);
+            Status = "Проверено в " + report.CheckedAt.ToString("HH:mm:ss") + " · " + (conflicts == 0 ? "конфликтов нет" : "конфликтов: " + conflicts);
             Rebuild();
         }
 
@@ -271,12 +266,19 @@ namespace RevitDevKit.UI.DllRunner
             var query = SearchText?.Trim() ?? string.Empty;
             bool Matches(params string[] values) => query.Length == 0 || values.Any(v => v != null && v.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
 
-            AddGroups("Разные версии", "SourceBranch", g => g.Level != DependencyLevel.None, Matches);
+            // Conflicts always; with the box cleared, also what loads side by side and what is the same everywhere.
+            AddGroups("Конфликты", "SourceBranch", IsConflict, Matches);
             if (!OnlyProblems)
+            {
+                AddGroups("Загрузятся рядом", "LayersOutline", g => g.Level == DependencyLevel.SideBySide, Matches);
                 AddGroups("Одинаковые у нескольких", "CheckAll", g => g.Level == DependencyLevel.None, Matches);
+            }
 
             IsEmpty = Sections.Count == 0;
         }
+
+        private static bool IsConflict(VersionGroup group) =>
+            group.Level == DependencyLevel.Assembly || group.Level == DependencyLevel.FileOnly;
 
         private void AddGroups(string title, string icon, Func<VersionGroup, bool> which, Func<string[], bool> matches)
         {
