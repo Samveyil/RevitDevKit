@@ -49,13 +49,14 @@ namespace RevitDevKit.UI.Console
         public void SetupDockablePane(DockablePaneProviderData data)
         {
             data.FrameworkElement = new ConsolePage();
-            // On its very first opening Revit gives a docked pane no height of its own and it collapses to a strip:
-            // a minimum keeps a few lines of output visible, and a size is given for when it is floated.
+            // The size the pane docks with, more than Revit's default of 200, so its first opening shows some output.
+            // Revit uses it when docking only: the user can still drag the pane smaller, and the API has no way to stop it.
+            // Like the position, it counts for a Revit that has not saved a layout of this pane yet.
             var state = new DockablePaneState { DockPosition = DockPosition.Bottom };
             state.SetFloatingRectangle(new Autodesk.Revit.DB.Rectangle(200, 200, 1100, 500));
 #if R2020_OR_GREATER
-            state.MinimumHeight = 180;
-            state.MinimumWidth = 300;
+            state.MinimumHeight = 250;
+            state.MinimumWidth = 400;
 #endif
             data.InitialState = state;
             data.VisibleByDefault = false;
