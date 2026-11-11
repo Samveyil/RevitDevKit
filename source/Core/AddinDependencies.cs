@@ -35,6 +35,9 @@ namespace RevitDevKit.Core
 
         public IList<AssemblyName> References { get; set; } = new List<AssemblyName>();
 
+        // The company in the file's version resource, empty when there is none.
+        public string Company { get; set; } = string.Empty;
+
         public bool IsManaged => AssemblyName != null;
     }
 
@@ -71,6 +74,9 @@ namespace RevitDevKit.Core
         public DllInfo Dll { get; set; }
         public bool IsLoaded { get; set; }
 
+        // Revit or an Autodesk add-in: the user cannot change its DLLs.
+        public bool IsAutodesk { get; set; }
+
         // The assembly version the add-in gets: its own, or the one Revit.exe.config redirects it to.
         public Version EffectiveVersion { get; set; }
         public CopyState State { get; set; }
@@ -98,6 +104,12 @@ namespace RevitDevKit.Core
 
         // What this session of Revit has loaded under this name, and from where.
         public List<LoadedCopy> Loaded { get; set; } = new List<LoadedCopy>();
+
+        // Only Revit and Autodesk add-ins bring it: nothing the user could fix, so it is not shown as a conflict.
+        public bool OnlyAutodesk => Copies.All(c => c.IsAutodesk);
+
+        // Worth the user's attention: an add-in of theirs takes part, and someone gets another version or file.
+        public bool IsConflict => !OnlyAutodesk && (Level == DependencyLevel.Assembly || Level == DependencyLevel.FileOnly);
     }
 
     public sealed class DependencyReport
@@ -137,6 +149,7 @@ namespace RevitDevKit.Core
             // The DLLs counted as the add-in's own.
             public HashSet<string> Own = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             public bool Shared;
+            public bool Autodesk;
         }
 
         public static DependencyReport Scan(IEnumerable<AddinManifest> manifests, IList<Tuple<string, string>> loadedAssemblies,
@@ -152,6 +165,7 @@ namespace RevitDevKit.Core
                 // The same name in both folders is one add-in.
                 var p = participants.FirstOrDefault(x => x.Name == manifest.Name);
                 if (p == null) participants.Add(p = new Participant { Name = manifest.Name });
+                p.Autodesk |= manifest.IsAutodesk;
 
                 foreach (var main in manifest.Assemblies.Where(File.Exists))
                 {
@@ -177,6 +191,10 @@ namespace RevitDevKit.Core
             }
 
             participants.RemoveAll(p => p.Mains.Count == 0);
+
+            // Not every Autodesk add-in says ADSK in its .addin; its assembly still names Autodesk as the company.
+            foreach (var p in participants.Where(x => !x.Autodesk))
+                p.Autodesk = p.Mains.Any(m => Read(m).Company.StartsWith("Autodesk", StringComparison.OrdinalIgnoreCase));
 
             // In a shared folder, the add-in's DLLs are the ones its assembly references, and theirs, found next to it.
             foreach (var p in participants.Where(x => x.Shared))
@@ -218,7 +236,7 @@ namespace RevitDevKit.Core
                 foreach (var sameName in p.Own.Select(Read).Where(IsComparable).GroupBy(d => d.FileName, StringComparer.OrdinalIgnoreCase))
                 {
                     var nearest = sameName.OrderBy(d => Depth(d.Path, p.Folders)).ThenBy(d => d.Path, StringComparer.OrdinalIgnoreCase).First();
-                    Add(copies, new DllCopy { Owner = p.Name, Dll = nearest });
+                    Add(copies, new DllCopy { Owner = p.Name, Dll = nearest, IsAutodesk = p.Autodesk });
                 }
             }
 
@@ -226,7 +244,7 @@ namespace RevitDevKit.Core
             {
                 var revitCopy = Path.Combine(revitFolder, name);
                 if (File.Exists(revitCopy) && IsComparable(Read(revitCopy)))
-                    Add(copies, new DllCopy { Owner = RevitOwner, Dll = Read(revitCopy) });
+                    Add(copies, new DllCopy { Owner = RevitOwner, Dll = Read(revitCopy), IsAutodesk = true });
             }
 
             var redirects = Redirects(Path.Combine(revitFolder, "Revit.exe.config"));
@@ -454,7 +472,7 @@ namespace RevitDevKit.Core
             if (Cache.TryGetValue(path, out var cached) && cached.Item1 == stamp)
                 return cached.Item2;
 
-            var info = new DllInfo { Path = path, FileName = Path.GetFileName(path), FileVersion = FileVersionOf(path) };
+            var info = new DllInfo { Path = path, FileName = Path.GetFileName(path), FileVersion = FileVersionOf(path, out var company), Company = company };
             try
             {
                 using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
@@ -499,11 +517,13 @@ namespace RevitDevKit.Core
             }
         }
 
-        private static string FileVersionOf(string path)
+        private static string FileVersionOf(string path, out string company)
         {
+            company = string.Empty;
             try
             {
                 var version = FileVersionInfo.GetVersionInfo(path);
+                company = version.CompanyName?.Trim() ?? string.Empty;
                 if (version.FileMajorPart == 0 && version.FileMinorPart == 0 && version.FileBuildPart == 0 && version.FilePrivatePart == 0)
                     return string.IsNullOrWhiteSpace(version.FileVersion) ? NoVersion : version.FileVersion.Trim();
                 return version.FileMajorPart + "." + version.FileMinorPart + "." + version.FileBuildPart;
@@ -521,7 +541,7 @@ namespace RevitDevKit.Core
             text.AppendLine("### Revit " + (report.RevitVersion ?? "") + ": версии DLL у надстроек (" + report.CheckedAt.ToString("yyyy-MM-dd HH:mm") + ")");
             text.AppendLine();
 
-            var groups = report.Groups.Where(g => !onlyProblems || g.Level == DependencyLevel.Assembly || g.Level == DependencyLevel.FileOnly).ToList();
+            var groups = report.Groups.Where(g => !onlyProblems || g.IsConflict).ToList();
             if (groups.Count == 0)
             {
                 text.AppendLine("Расхождений нет.");

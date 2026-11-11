@@ -230,7 +230,7 @@ namespace RevitDevKit.UI.DllRunner
             CopyReportCommand.NotifyCanExecuteChanged();
             IsBusy = false;
 
-            var conflicts = report.Groups.Count(IsConflict);
+            var conflicts = report.Groups.Count(g => g.IsConflict);
             Status = "Проверено в " + report.CheckedAt.ToString("HH:mm:ss") + " · " + (conflicts == 0 ? "конфликтов нет" : "конфликтов: " + conflicts);
             Rebuild();
         }
@@ -287,19 +287,18 @@ namespace RevitDevKit.UI.DllRunner
             var query = SearchText?.Trim() ?? string.Empty;
             bool Matches(params string[] values) => query.Length == 0 || values.Any(v => v != null && v.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
 
-            // Conflicts always; with the box cleared, also what loads side by side and what is the same everywhere.
-            AddGroups("Конфликты", "SourceBranch", IsConflict, Matches);
+            // Conflicts always; with the box cleared, also what loads side by side, what is the same everywhere,
+            // and what only Revit and Autodesk add-ins share, which the user cannot change anyway.
+            AddGroups("Конфликты", "SourceBranch", g => g.IsConflict, Matches);
             if (!OnlyProblems)
             {
-                AddGroups("Загрузятся рядом", "LayersOutline", g => g.Level == DependencyLevel.SideBySide, Matches);
-                AddGroups("Одинаковые у нескольких", "CheckAll", g => g.Level == DependencyLevel.None, Matches);
+                AddGroups("Загрузятся рядом", "LayersOutline", g => !g.OnlyAutodesk && g.Level == DependencyLevel.SideBySide, Matches);
+                AddGroups("Одинаковые у нескольких", "CheckAll", g => !g.OnlyAutodesk && g.Level == DependencyLevel.None, Matches);
+                AddGroups("Только Revit и Autodesk", "LockOutline", g => g.OnlyAutodesk, Matches);
             }
 
             IsEmpty = Sections.Count == 0;
         }
-
-        private static bool IsConflict(VersionGroup group) =>
-            group.Level == DependencyLevel.Assembly || group.Level == DependencyLevel.FileOnly;
 
         private void AddGroups(string title, string icon, Func<VersionGroup, bool> which, Func<string[], bool> matches)
         {
@@ -309,7 +308,7 @@ namespace RevitDevKit.UI.DllRunner
             var section = new DependencySectionVM(title + " · " + groups.Count, icon);
             foreach (var group in groups)
             {
-                var expanded = _expanded.TryGetValue(group.FileName, out var was) ? was : group.Level == DependencyLevel.Assembly;
+                var expanded = _expanded.TryGetValue(group.FileName, out var was) ? was : group.IsConflict && group.Level == DependencyLevel.Assembly;
                 section.Children.Add(new VersionGroupVM(group, expanded, Select, (name, value) => _expanded[name] = value));
             }
 
