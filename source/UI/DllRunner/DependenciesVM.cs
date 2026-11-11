@@ -65,16 +65,12 @@ namespace RevitDevKit.UI.DllRunner
             IsExpanded = expanded;
             _onExpanded = onExpanded;
 
-            // Each copy is compared with the version everyone gets: the one Revit redirects to, the one loaded now,
-            // or the newest when none is loaded yet. Copies that load side by side are all fine.
-            var reference = group.Loaded.Count > 0 && File.Exists(group.Loaded[0].Path)
-                ? AddinDependencies.Read(group.Loaded[0].Path)
-                : group.Copies.Select(c => c.Dll).OrderByDescending(d => d.AssemblyVersion).ThenByDescending(d => d.FileVersion).First();
+            // The check says what each add-in gets: its own copy, another file of its version, or an older version.
             foreach (var copy in group.Copies)
             {
-                var severity = group.Level == DependencyLevel.SideBySide || group.Level == DependencyLevel.None ? Severity.Normal
-                    : group.RedirectedTo != null ? (copy.Dll.AssemblyVersion == group.RedirectedTo ? Severity.Normal : Severity.Critical)
-                    : Compare(copy.Dll, reference);
+                var severity = copy.State == CopyState.Breaks ? Severity.Critical
+                    : copy.State == CopyState.Differs ? Severity.Minor
+                    : Severity.Normal;
                 Children.Add(new DllCopyVM(copy, severity, onSelected));
             }
         }
@@ -98,6 +94,30 @@ namespace RevitDevKit.UI.DllRunner
             }
         }
 
+        // What the short reason means for the add-ins, in full.
+        public string ToolTip
+        {
+            get
+            {
+                var signed = Group.Copies.All(c => c.Dll.IsSigned);
+                switch (Group.Level)
+                {
+                    case DependencyLevel.Assembly when !signed:
+                        return "Не подписана: Revit загружает одну копию, ту, что понадобилась первой, и её получают все надстройки.\n"
+                               + "Более новая обычно подходит, если в библиотеке только добавляли (оранжевым), более старая может не подойти (красным).\n"
+                               + "Какая копия будет первой, зависит от порядка загрузки надстроек: в другой раз старую версию может получить другая.";
+                    case DependencyLevel.Assembly:
+                        return "Revit.exe.config перенаправляет на более старую версию, чем та, под которую собрана надстройка (красным).";
+                    case DependencyLevel.FileOnly:
+                        return "У всех одна копия этой версии сборки, файл той, что загрузится первой. Обычно это безопасно.";
+                    case DependencyLevel.SideBySide:
+                        return "Подписана: каждая версия сборки загрузится отдельно, каждая надстройка получит свою.";
+                    default:
+                        return "У всех одна и та же версия.";
+                }
+            }
+        }
+
         public override string FilePath => Group.Loaded.FirstOrDefault()?.Path ?? Group.Copies.First().Dll.Path;
 
         // The open or closed state of each DLL is kept across checks and filtering.
@@ -105,13 +125,6 @@ namespace RevitDevKit.UI.DllRunner
         {
             base.OnPropertyChanged(e);
             if (e.PropertyName == nameof(IsExpanded)) _onExpanded?.Invoke(Name, IsExpanded);
-        }
-
-        private static Severity Compare(DllInfo copy, DllInfo reference)
-        {
-            if (string.Equals(copy.Path, reference.Path, StringComparison.OrdinalIgnoreCase)) return Severity.Normal;
-            if (copy.IsManaged && reference.IsManaged && copy.AssemblyVersion != reference.AssemblyVersion) return Severity.Critical;
-            return copy.FileVersion != reference.FileVersion ? Severity.Minor : Severity.Normal;
         }
     }
 
@@ -132,7 +145,9 @@ namespace RevitDevKit.UI.DllRunner
         public string ToolTip => Copy.Dll.Path + "\nВерсия файла " + Copy.Dll.FileVersion
                                  + (!Copy.Dll.IsManaged ? ", нативная DLL"
                                      : ", версия сборки " + Copy.Dll.AssemblyVersion
-                                       + (Copy.Dll.IsSigned ? ", подписана (" + Copy.Dll.PublicKeyToken + ")" : ", не подписана"));
+                                       + (Copy.Dll.IsSigned ? ", подписана (" + Copy.Dll.PublicKeyToken + ")" : ", не подписана")
+                                       + (Copy.EffectiveVersion != null && Copy.EffectiveVersion != Copy.Dll.AssemblyVersion
+                                           ? "\nПолучит версию " + Copy.EffectiveVersion : string.Empty));
 
         public override string FilePath => Copy.Dll.Path;
     }
@@ -157,6 +172,7 @@ namespace RevitDevKit.UI.DllRunner
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(RevealInExplorerCommand))]
+        [NotifyCanExecuteChangedFor(nameof(CopyPathCommand))]
         private DependencyNodeVM _selectedNode;
 
         public ObservableCollection<DependencyNodeVM> Sections { get; } = [];
@@ -313,12 +329,29 @@ namespace RevitDevKit.UI.DllRunner
             }
         }
 
-        private bool HasFile() => SelectedNode?.FilePath != null;
+        // A row's own menu passes its node; the toolbar button works on the selected one.
+        private bool HasFile(DependencyNodeVM node) => (node ?? SelectedNode)?.FilePath != null;
 
         [RelayCommand(CanExecute = nameof(HasFile))]
-        private void RevealInExplorer()
+        private void CopyPath(DependencyNodeVM node)
         {
-            var path = SelectedNode?.FilePath;
+            var path = (node ?? SelectedNode)?.FilePath;
+            if (path == null) return;
+            try
+            {
+                Clipboard.SetText(path);
+                Status = "Путь скопирован";
+            }
+            catch (Exception ex)
+            {
+                ConsoleOutput.Exception(ex, "Не удалось скопировать путь:");
+            }
+        }
+
+        [RelayCommand(CanExecute = nameof(HasFile))]
+        private void RevealInExplorer(DependencyNodeVM node)
+        {
+            var path = (node ?? SelectedNode)?.FilePath;
             if (path == null || !File.Exists(path)) return;
             Process.Start("explorer.exe", "/select,\"" + path + "\"");
         }

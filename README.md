@@ -108,11 +108,11 @@ Under each name is what the file contains and its DLL, and in red what is wrong:
 
 This tab finds DLLs that several add-ins of the running Revit version, or an add-in and Revit itself, bring in different versions, and shows which of them really clash in the one Revit process they all share:
 
-- **Red**: the assembly versions differ, and only one copy loads, the first one, for everyone. That is what happens to a DLL without a strong name, and to one that Revit redirects to its own version in `Revit.exe.config`. An add-in built against another version may fail.
-- **Orange**: the assembly version is the same and only the file differs, so all add-ins share one copy. Usually harmless.
-- With **Только конфликты** (conflicts only) cleared, signed DLLs of different versions show too: .NET loads each add-in its own version, side by side.
+- **Red**: an add-in gets an older assembly version than it was built against, and may fail. That happens to a DLL without a strong name, where the first copy loaded goes to everyone, and to one that `Revit.exe.config` redirects down to Revit's version. A DLL without a strong name in different versions is a conflict as a whole: which copy loads first depends on the order the add-ins load, so next time another add-in may get the older one.
+- **Orange**: an add-in gets a newer version (fine if the library only added things), another file of the same assembly version, or a newer version Revit redirects it to. One copy is shared, which is usually harmless.
+- With **Только конфликты** (conflicts only) cleared, signed DLLs of different versions show too: .NET loads each add-in its own version, side by side. Revit's redirects count only for the versions their `oldVersion` names.
 
-The copy loaded in this session is marked. An add-in's DLLs are the ones in the folder of its assembly, read from their headers without loading them. Language resources (folders such as `en-US` and `*.resources.dll`) are left out: they are the same DLL in another language. The copy button puts a markdown report on the clipboard.
+The copy loaded in this session is marked. A right click on a DLL or an add-in shows it in Explorer or copies its path. An add-in's DLLs are the ones in the folder of its assembly, read from their headers without loading them. Language resources (folders such as `en-US` and `*.resources.dll`) are left out: they are the same DLL in another language. The copy button puts a markdown report on the clipboard.
 
 ## Console
 

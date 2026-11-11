@@ -590,8 +590,17 @@
                                     </StackPanel>
                                 </HierarchicalDataTemplate>
 
+                                <!-- The same menu on a DLL and on each add-in's copy of it. -->
+                                <ContextMenu x:Key="DependencyMenu" x:Shared="False" materialDesign:MenuAssist.MenuItemsPresenterMargin="0">
+                                    <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
+                                              Command="{Binding PlacementTarget.Tag.Dependencies.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                    <MenuItem Header="Копировать путь" CommandParameter="{Binding}"
+                                              Command="{Binding PlacementTarget.Tag.Dependencies.CopyPathCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                </ContextMenu>
+
                                 <HierarchicalDataTemplate DataType="{x:Type local:VersionGroupVM}" ItemsSource="{Binding Children}">
-                                    <Grid Background="Transparent">
+                                    <Grid Background="Transparent" ContextMenu="{StaticResource DependencyMenu}" ToolTip="{Binding ToolTip}"
+                                          Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TreeView}}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
@@ -608,8 +617,13 @@
 
                                 <!-- The add-ins of one DLL: the versions line up in a column across the whole tree. -->
                                 <DataTemplate DataType="{x:Type local:DllCopyVM}">
-                                    <Grid ToolTip="{Binding ToolTip}" Background="Transparent"
+                                    <Grid ToolTip="{Binding ToolTip}" Background="Transparent" ContextMenu="{StaticResource DependencyMenu}"
+                                          Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TreeView}}"
                                           TextBlock.LineHeight="15" TextBlock.LineStackingStrategy="BlockLineHeight">
+                                        <Grid.InputBindings>
+                                            <MouseBinding Gesture="LeftDoubleClick" CommandParameter="{Binding}"
+                                                          Command="{Binding DataContext.Dependencies.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                        </Grid.InputBindings>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" SharedSizeGroup="DependencyOwner"/>
                                             <ColumnDefinition Width="Auto" SharedSizeGroup="DependencyLoaded"/>
