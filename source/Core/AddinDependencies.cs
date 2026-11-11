@@ -43,13 +43,26 @@ namespace RevitDevKit.Core
     {
         // The same versions everywhere.
         None,
-        // Signed, with different assembly versions and no redirect: every add-in loads its own, side by side.
+        // Signed, with different assembly versions: every add-in loads its own, side by side.
         SideBySide,
-        // Only the file versions differ: one assembly, one copy for all, usually fine.
+        // An add-in gets another file of the assembly version it was built against, or Revit redirects it to a
+        // newer version: one copy is shared, usually fine.
         FileOnly,
-        // Different assembly versions that do not load side by side: not signed, so the first copy loaded goes to
-        // everyone, or redirected by Revit to its own version. An add-in built against another may fail.
+        // Add-ins may get another assembly version than they were built against: not signed, so the first copy loaded
+        // goes to everyone and which one that is depends on the load order; or Revit redirects one down to an older
+        // version. An add-in that gets an older one may fail.
         Assembly
+    }
+
+    // What one add-in's copy means for that add-in.
+    public enum CopyState
+    {
+        // It gets the copy it brings, or one just like it.
+        Fine,
+        // It gets another file of the same assembly version, or a newer version Revit redirects it to.
+        Differs,
+        // It gets another, older assembly version than it was built against.
+        Breaks
     }
 
     public sealed class DllCopy
@@ -58,6 +71,10 @@ namespace RevitDevKit.Core
         public string Owner { get; set; }
         public DllInfo Dll { get; set; }
         public bool IsLoaded { get; set; }
+
+        // The assembly version the add-in gets: its own, or the one Revit.exe.config redirects it to.
+        public Version EffectiveVersion { get; set; }
+        public CopyState State { get; set; }
     }
 
     public sealed class LoadedCopy
@@ -74,7 +91,10 @@ namespace RevitDevKit.Core
         public List<DllCopy> Copies { get; set; } = new List<DllCopy>();
         public DependencyLevel Level { get; set; }
 
-        // Revit.exe.config sends every request for this assembly to this version.
+        // Why it is at its level, in a few words for the tab and the report.
+        public string Reason { get; set; }
+
+        // The version Revit.exe.config redirects some of the copies to, if it does.
         public Version RedirectedTo { get; set; }
 
         // What this session of Revit has loaded under this name, and from where.
@@ -221,22 +241,7 @@ namespace RevitDevKit.Core
                     FileName = list[0].Dll.FileName,
                     Copies = list.OrderBy(c => c.Owner == RevitOwner ? 0 : 1).ThenBy(c => c.Owner, StringComparer.OrdinalIgnoreCase).ToList()
                 };
-                var distinct = list.GroupBy(c => c.Dll.Path, StringComparer.OrdinalIgnoreCase).Select(g => g.First().Dll).ToList();
-                var simpleName = distinct.FirstOrDefault(d => d.IsManaged)?.AssemblyName;
-                if (simpleName != null && redirects.TryGetValue(simpleName, out var redirectedTo))
-                    group.RedirectedTo = redirectedTo;
-
-                var managed = distinct.All(d => d.IsManaged);
-                if (managed && distinct.Select(d => d.AssemblyVersion).Distinct().Count() > 1)
-                {
-                    // Signed versions are different assemblies to .NET and load side by side, unless Revit redirects them.
-                    group.Level = distinct.All(d => d.IsSigned) && group.RedirectedTo == null ? DependencyLevel.SideBySide : DependencyLevel.Assembly;
-                }
-                else
-                {
-                    group.Level = distinct.Select(d => d.FileVersion).Distinct().Count() > 1 ? DependencyLevel.FileOnly : DependencyLevel.None;
-                }
-
+                var simpleName = list.FirstOrDefault(c => c.Dll.IsManaged)?.Dll.AssemblyName;
                 var loadedPaths = simpleName != null && loadedByName.TryGetValue(simpleName, out var paths) ? paths
                     : modules.Where(m => string.Equals(Path.GetFileName(m), group.FileName, StringComparison.OrdinalIgnoreCase)).ToList();
                 foreach (var path in loadedPaths.Distinct(StringComparer.OrdinalIgnoreCase))
@@ -246,6 +251,7 @@ namespace RevitDevKit.Core
                         copy.IsLoaded = true;
                 }
 
+                Evaluate(group, simpleName != null && redirects.TryGetValue(simpleName, out var ranges) ? ranges : null);
                 report.Groups.Add(group);
             }
 
@@ -253,19 +259,38 @@ namespace RevitDevKit.Core
             return report;
         }
 
-        // <bindingRedirect> of Revit.exe.config: the assembly name and the version Revit gives everyone instead.
-        private static Dictionary<string, Version> Redirects(string configPath)
+        // One <bindingRedirect>: requests for versions Low..High get To instead.
+        private sealed class Redirect
         {
-            var result = new Dictionary<string, Version>(StringComparer.OrdinalIgnoreCase);
+            public Version Low;
+            public Version High;
+            public Version To;
+        }
+
+        // <bindingRedirect> of Revit.exe.config by assembly name. Only the versions in oldVersion are redirected:
+        // "0.0.0.0-11.0.0.0" leaves 12 and 13 alone, and a signed assembly of those loads its own copy.
+        private static Dictionary<string, List<Redirect>> Redirects(string configPath)
+        {
+            var result = new Dictionary<string, List<Redirect>>(StringComparer.OrdinalIgnoreCase);
             try
             {
                 if (!File.Exists(configPath)) return result;
                 foreach (var dependent in System.Xml.Linq.XDocument.Load(configPath).Descendants().Where(e => e.Name.LocalName == "dependentAssembly"))
                 {
                     var name = (string)dependent.Elements().FirstOrDefault(e => e.Name.LocalName == "assemblyIdentity")?.Attribute("name");
-                    var version = (string)dependent.Elements().FirstOrDefault(e => e.Name.LocalName == "bindingRedirect")?.Attribute("newVersion");
-                    if (!string.IsNullOrEmpty(name) && Version.TryParse(version, out var parsed))
-                        result[name] = parsed;
+                    if (string.IsNullOrEmpty(name)) continue;
+
+                    foreach (var redirect in dependent.Elements().Where(e => e.Name.LocalName == "bindingRedirect"))
+                    {
+                        var range = ((string)redirect.Attribute("oldVersion") ?? string.Empty).Split('-');
+                        if (!Version.TryParse((string)redirect.Attribute("newVersion"), out var to)
+                            || !Version.TryParse(range[0].Trim(), out var low)
+                            || !Version.TryParse(range[range.Length - 1].Trim(), out var high))
+                            continue;
+
+                        if (!result.TryGetValue(name, out var list)) result[name] = list = new List<Redirect>();
+                        list.Add(new Redirect { Low = low, High = high, To = to });
+                    }
                 }
             }
             catch (Exception)
@@ -276,23 +301,95 @@ namespace RevitDevKit.Core
             return result;
         }
 
-        // Why the DLL is where it is, in a few words for the tab and the report.
-        public static string Reason(VersionGroup group)
+        // What each add-in gets, and so how much the group matters.
+        // Native: one file per name in the process, compared by file version.
+        // Not signed: .NET looks at the name only, the first copy loaded goes to everyone.
+        // Signed: each assembly version (after Revit's redirects) is a separate assembly and loads once, side by side
+        // with the others; only copies of the same version share a file.
+        private static void Evaluate(VersionGroup group, List<Redirect> redirects)
         {
-            switch (group.Level)
+            var copies = group.Copies;
+            var loaded = group.Loaded.Where(l => File.Exists(l.Path)).Select(l => Read(l.Path)).ToList();
+            DllInfo Newest(IEnumerable<DllInfo> dlls) => dlls.OrderByDescending(d => d.AssemblyVersion).ThenByDescending(d => ParseVersion(d.FileVersion)).First();
+
+            if (!copies.All(c => c.Dll.IsManaged) || !copies.All(c => c.Dll.IsSigned))
             {
-                case DependencyLevel.Assembly:
-                    return group.RedirectedTo != null
-                        ? "Revit перенаправляет на " + group.RedirectedTo
-                        : "не подписана, загрузится одна копия";
-                case DependencyLevel.SideBySide:
-                    return "подписана, загрузятся обе версии";
-                case DependencyLevel.FileOnly:
-                    return group.Copies.All(c => c.Dll.IsManaged) ? "одна версия сборки, разные файлы" : "разные версии файла";
-                default:
-                    return "одинаковые версии";
+                // One copy goes to everyone: the one loaded now, or, before anything is loaded, most likely the newest.
+                // A newer one is what an add-in can live with if the library only added things (orange); an older one
+                // may lack what it calls (red). Which copy wins depends on the order add-ins load, so different assembly
+                // versions stay a conflict even when this session went well.
+                var native = !copies.All(c => c.Dll.IsManaged);
+                var reference = loaded.FirstOrDefault() ?? Newest(copies.Select(c => c.Dll));
+                foreach (var copy in copies)
+                {
+                    copy.EffectiveVersion = reference.AssemblyVersion;
+                    copy.State = !native && copy.Dll.AssemblyVersion > reference.AssemblyVersion ? CopyState.Breaks
+                        : !native && copy.Dll.AssemblyVersion < reference.AssemblyVersion ? CopyState.Differs
+                        : copy.Dll.FileVersion != reference.FileVersion ? CopyState.Differs
+                        : CopyState.Fine;
+                }
+
+                group.Level = !native && copies.Select(c => c.Dll.AssemblyVersion).Distinct().Count() > 1 ? DependencyLevel.Assembly
+                    : copies.Any(c => c.State == CopyState.Differs) ? DependencyLevel.FileOnly
+                    : DependencyLevel.None;
+                group.Reason = group.Level == DependencyLevel.Assembly ? "не подписана, одна копия на всех"
+                    : group.Level == DependencyLevel.FileOnly ? (native ? "разные версии файла" : "одна версия сборки, разные файлы")
+                    : "одинаковые версии";
+                return;
+            }
+
+            foreach (var copy in copies)
+                copy.EffectiveVersion = redirects?.FirstOrDefault(r => copy.Dll.AssemblyVersion >= r.Low && copy.Dll.AssemblyVersion <= r.High)?.To
+                                        ?? copy.Dll.AssemblyVersion;
+
+            var versions = copies.GroupBy(c => c.EffectiveVersion).ToList();
+            string filesDiffer = null;
+            foreach (var version in versions)
+            {
+                // The file of this version everyone gets: the one loaded now, or the newest of the copies that are it.
+                var own = version.Where(c => c.Dll.AssemblyVersion == version.Key).Select(c => c.Dll).ToList();
+                var reference = loaded.FirstOrDefault(l => l.AssemblyVersion == version.Key) ?? (own.Count > 0 ? Newest(own) : null);
+                foreach (var copy in version)
+                {
+                    copy.State = copy.EffectiveVersion < copy.Dll.AssemblyVersion ? CopyState.Breaks
+                        : copy.EffectiveVersion > copy.Dll.AssemblyVersion ? CopyState.Differs
+                        : reference != null && copy.Dll.FileVersion != reference.FileVersion ? CopyState.Differs
+                        : CopyState.Fine;
+                    if (copy.State == CopyState.Differs && copy.EffectiveVersion == copy.Dll.AssemblyVersion) filesDiffer = version.Key.ToString();
+                }
+            }
+
+            var redirected = copies.FirstOrDefault(c => c.EffectiveVersion != c.Dll.AssemblyVersion);
+            group.RedirectedTo = redirected?.EffectiveVersion;
+
+            if (copies.Any(c => c.State == CopyState.Breaks))
+            {
+                group.Level = DependencyLevel.Assembly;
+                group.Reason = "Revit перенаправляет на более старую " + copies.First(c => c.State == CopyState.Breaks).EffectiveVersion;
+            }
+            else if (copies.Any(c => c.State == CopyState.Differs))
+            {
+                group.Level = DependencyLevel.FileOnly;
+                group.Reason = filesDiffer == null ? "Revit перенаправляет на " + group.RedirectedTo
+                    : versions.Count > 1 ? "у версии " + filesDiffer + " разные файлы"
+                    : "одна версия сборки, разные файлы";
+            }
+            else if (versions.Count > 1)
+            {
+                group.Level = DependencyLevel.SideBySide;
+                group.Reason = "подписана, каждая версия загрузится отдельно";
+            }
+            else
+            {
+                group.Level = DependencyLevel.None;
+                group.Reason = "одинаковые версии";
             }
         }
+
+        private static Version ParseVersion(string text) => Version.TryParse(text, out var version) ? version : new Version(0, 0);
+
+        // Why the DLL is where it is, in a few words for the tab and the report.
+        public static string Reason(VersionGroup group) => group.Reason ?? string.Empty;
 
         // A language's resources (X.resources.dll, a culture in the header) are not another version of anything,
         // and a native DLL without a version has nothing to compare.
