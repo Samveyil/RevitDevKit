@@ -26,6 +26,10 @@ namespace RevitDevKit.Core
         // Set for a satellite assembly: the resources of one language.
         public string Culture { get; set; }
 
+        // Signed with a strong name: the version is part of its identity, so other versions load beside it.
+        public bool IsSigned => PublicKeyToken != null;
+        public string PublicKeyToken { get; set; }
+
         // Three parts, as Windows shows it: 4.600.24, 13.0.3. A dash when the file has no version.
         public string FileVersion { get; set; }
 
@@ -34,13 +38,17 @@ namespace RevitDevKit.Core
         public bool IsManaged => AssemblyName != null;
     }
 
+    // In order of how much it matters.
     public enum DependencyLevel
     {
         // The same versions everywhere.
         None,
-        // Only the file versions differ: one assembly version, so any copy fits every add-in.
+        // Signed, with different assembly versions and no redirect: every add-in loads its own, side by side.
+        SideBySide,
+        // Only the file versions differ: one assembly, one copy for all, usually fine.
         FileOnly,
-        // The assembly versions differ: Revit loads one copy, and an add-in built against another may fail.
+        // Different assembly versions that do not load side by side: not signed, so the first copy loaded goes to
+        // everyone, or redirected by Revit to its own version. An add-in built against another may fail.
         Assembly
     }
 
@@ -65,6 +73,9 @@ namespace RevitDevKit.Core
         public string FileName { get; set; }
         public List<DllCopy> Copies { get; set; } = new List<DllCopy>();
         public DependencyLevel Level { get; set; }
+
+        // Revit.exe.config sends every request for this assembly to this version.
+        public Version RedirectedTo { get; set; }
 
         // What this session of Revit has loaded under this name, and from where.
         public List<LoadedCopy> Loaded { get; set; } = new List<LoadedCopy>();
@@ -199,6 +210,7 @@ namespace RevitDevKit.Core
                     Add(copies, new DllCopy { Owner = RevitOwner, Dll = Read(revitCopy) });
             }
 
+            var redirects = Redirects(Path.Combine(revitFolder, "Revit.exe.config"));
             var modules = new HashSet<string>(loadedModules ?? new string[0], StringComparer.OrdinalIgnoreCase);
             foreach (var list in copies.Values)
             {
@@ -210,11 +222,21 @@ namespace RevitDevKit.Core
                     Copies = list.OrderBy(c => c.Owner == RevitOwner ? 0 : 1).ThenBy(c => c.Owner, StringComparer.OrdinalIgnoreCase).ToList()
                 };
                 var distinct = list.GroupBy(c => c.Dll.Path, StringComparer.OrdinalIgnoreCase).Select(g => g.First().Dll).ToList();
-                group.Level = distinct.All(d => d.IsManaged) && distinct.Select(d => d.AssemblyVersion).Distinct().Count() > 1 ? DependencyLevel.Assembly
-                    : distinct.Select(d => d.FileVersion).Distinct().Count() > 1 ? DependencyLevel.FileOnly
-                    : DependencyLevel.None;
-
                 var simpleName = distinct.FirstOrDefault(d => d.IsManaged)?.AssemblyName;
+                if (simpleName != null && redirects.TryGetValue(simpleName, out var redirectedTo))
+                    group.RedirectedTo = redirectedTo;
+
+                var managed = distinct.All(d => d.IsManaged);
+                if (managed && distinct.Select(d => d.AssemblyVersion).Distinct().Count() > 1)
+                {
+                    // Signed versions are different assemblies to .NET and load side by side, unless Revit redirects them.
+                    group.Level = distinct.All(d => d.IsSigned) && group.RedirectedTo == null ? DependencyLevel.SideBySide : DependencyLevel.Assembly;
+                }
+                else
+                {
+                    group.Level = distinct.Select(d => d.FileVersion).Distinct().Count() > 1 ? DependencyLevel.FileOnly : DependencyLevel.None;
+                }
+
                 var loadedPaths = simpleName != null && loadedByName.TryGetValue(simpleName, out var paths) ? paths
                     : modules.Where(m => string.Equals(Path.GetFileName(m), group.FileName, StringComparison.OrdinalIgnoreCase)).ToList();
                 foreach (var path in loadedPaths.Distinct(StringComparer.OrdinalIgnoreCase))
@@ -229,6 +251,47 @@ namespace RevitDevKit.Core
 
             report.Groups = report.Groups.OrderByDescending(g => g.Level).ThenBy(g => g.FileName, StringComparer.OrdinalIgnoreCase).ToList();
             return report;
+        }
+
+        // <bindingRedirect> of Revit.exe.config: the assembly name and the version Revit gives everyone instead.
+        private static Dictionary<string, Version> Redirects(string configPath)
+        {
+            var result = new Dictionary<string, Version>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                if (!File.Exists(configPath)) return result;
+                foreach (var dependent in System.Xml.Linq.XDocument.Load(configPath).Descendants().Where(e => e.Name.LocalName == "dependentAssembly"))
+                {
+                    var name = (string)dependent.Elements().FirstOrDefault(e => e.Name.LocalName == "assemblyIdentity")?.Attribute("name");
+                    var version = (string)dependent.Elements().FirstOrDefault(e => e.Name.LocalName == "bindingRedirect")?.Attribute("newVersion");
+                    if (!string.IsNullOrEmpty(name) && Version.TryParse(version, out var parsed))
+                        result[name] = parsed;
+                }
+            }
+            catch (Exception)
+            {
+                // An unreadable config: no redirects are known.
+            }
+
+            return result;
+        }
+
+        // Why the DLL is where it is, in a few words for the tab and the report.
+        public static string Reason(VersionGroup group)
+        {
+            switch (group.Level)
+            {
+                case DependencyLevel.Assembly:
+                    return group.RedirectedTo != null
+                        ? "Revit перенаправляет на " + group.RedirectedTo
+                        : "не подписана, загрузится одна копия";
+                case DependencyLevel.SideBySide:
+                    return "подписана, загрузятся обе версии";
+                case DependencyLevel.FileOnly:
+                    return group.Copies.All(c => c.Dll.IsManaged) ? "одна версия сборки, разные файлы" : "разные версии файла";
+                default:
+                    return "одинаковые версии";
+            }
         }
 
         // A language's resources (X.resources.dll, a culture in the header) are not another version of anything,
@@ -308,6 +371,7 @@ namespace RevitDevKit.Core
                             info.AssemblyName = metadata.GetString(definition.Name);
                             info.AssemblyVersion = definition.Version;
                             info.Culture = metadata.GetString(definition.Culture);
+                            info.PublicKeyToken = TokenOf(metadata.GetBlobBytes(definition.PublicKey));
                         }
 
                         info.References = metadata.AssemblyReferences
@@ -324,6 +388,17 @@ namespace RevitDevKit.Core
 
             Cache[path] = Tuple.Create(stamp, info);
             return info;
+        }
+
+        // The token .NET shows in an assembly's full name: the last 8 bytes of the key's SHA-1, reversed. Null if unsigned.
+        private static string TokenOf(byte[] publicKey)
+        {
+            if (publicKey == null || publicKey.Length == 0) return null;
+            using (var sha1 = System.Security.Cryptography.SHA1.Create())
+            {
+                var hash = sha1.ComputeHash(publicKey);
+                return string.Concat(hash.Skip(hash.Length - 8).Reverse().Select(b => b.ToString("x2")));
+            }
         }
 
         private static string FileVersionOf(string path)
@@ -348,7 +423,7 @@ namespace RevitDevKit.Core
             text.AppendLine("### Revit " + (report.RevitVersion ?? "") + ": версии DLL у надстроек (" + report.CheckedAt.ToString("yyyy-MM-dd HH:mm") + ")");
             text.AppendLine();
 
-            var groups = report.Groups.Where(g => !onlyProblems || g.Level != DependencyLevel.None).ToList();
+            var groups = report.Groups.Where(g => !onlyProblems || g.Level == DependencyLevel.Assembly || g.Level == DependencyLevel.FileOnly).ToList();
             if (groups.Count == 0)
             {
                 text.AppendLine("Расхождений нет.");
@@ -357,12 +432,8 @@ namespace RevitDevKit.Core
 
             var owners = groups.SelectMany(g => g.Copies.Select(c => c.Owner)).Distinct()
                 .OrderBy(o => o == RevitOwner ? 0 : 1).ThenBy(o => o, StringComparer.OrdinalIgnoreCase).ToList();
-            var header = new[] { "DLL", "Расхождение" }.Concat(owners).Concat(new[] { "Загружена" }).ToArray();
-            Table(text, header, groups.Select(g => new[]
-                {
-                    g.FileName,
-                    g.Level == DependencyLevel.Assembly ? "версия сборки" : g.Level == DependencyLevel.FileOnly ? "версия файла" : "нет"
-                }
+            var header = new[] { "DLL", "Почему" }.Concat(owners).Concat(new[] { "Загружена" }).ToArray();
+            Table(text, header, groups.Select(g => new[] { g.FileName, Reason(g) }
                 .Concat(owners.Select(o => g.Copies.FirstOrDefault(c => c.Owner == o)?.Dll.FileVersion ?? "-"))
                 .Concat(new[] { g.Loaded.Count == 0 ? "-" : string.Join(", ", g.Loaded.Select(l => l.FileVersion + " (" + (l.Owner ?? l.Path) + ")")) })
                 .ToArray()));

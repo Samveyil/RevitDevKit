@@ -224,8 +224,8 @@
                 <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Только расхождения" Margin="20 0 0 0" IsChecked="{Binding Dependencies.OnlyProblems}"
-                      ToolTip="Снимите, чтобы видеть и DLL, одинаковые у нескольких надстроек"/>
+            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Только конфликты" Margin="20 0 0 0" IsChecked="{Binding Dependencies.OnlyProblems}"
+                      ToolTip="Снимите, чтобы видеть и подписанные DLL, которые загрузятся рядом, и одинаковые у нескольких надстроек"/>
         </StackPanel>
 
         <TabControl Margin="5 0 5 5" Style="{StaticResource FramedTabControl}" SelectedIndex="{Binding SelectedTabIndex}">
@@ -625,7 +625,7 @@
                             </TreeView.Resources>
                         </TreeView>
 
-                        <TextBlock Text="Расхождений нет" Foreground="Gray" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                        <TextBlock Text="Конфликтов нет" Foreground="Gray" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
                                    Visibility="{Binding Dependencies.IsEmpty, Converter={StaticResource BoolToVisibility}}"/>
                     </Grid>
                 </DockPanel>
