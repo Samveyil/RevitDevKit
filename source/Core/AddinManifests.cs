@@ -43,6 +43,9 @@ namespace RevitDevKit.Core
         public bool HasTwin { get; set; }
 
         public bool IsDevKit { get; set; }
+
+        // Autodesk's own add-ins say VendorId ADSK; their DLLs are Autodesk's business, not the user's.
+        public bool IsAutodesk { get; set; }
     }
 
     // The .addin files of the running Revit version: the user's folder and the one for all users.
@@ -55,9 +58,11 @@ namespace RevitDevKit.Core
         // Set when DevKit starts, from Revit itself; without them the folders follow the standard layout.
         public static string CurrentUserFolder { get; set; }
         public static string AllUsersFolder { get; set; }
+        public static string RevitVersion { get; set; }
 
         public static void Locate(string currentUserFolder, string allUsersFolder, string revitVersion)
         {
+            RevitVersion = revitVersion;
             CurrentUserFolder = string.IsNullOrEmpty(currentUserFolder)
                 ? StandardFolder(Environment.SpecialFolder.ApplicationData, revitVersion)
                 : currentUserFolder;
@@ -129,6 +134,9 @@ namespace RevitDevKit.Core
                 foreach (var addin in addins)
                 {
                     var type = (string)addin.Attribute("Type") ?? string.Empty;
+                    var vendor = addin.Elements().FirstOrDefault(e => e.Name.LocalName == "VendorId")?.Value.Trim();
+                    if (string.Equals(vendor, "ADSK", StringComparison.OrdinalIgnoreCase))
+                        manifest.IsAutodesk = true;
                     if (type.Equals("Command", StringComparison.OrdinalIgnoreCase))
                         manifest.Commands++;
                     else

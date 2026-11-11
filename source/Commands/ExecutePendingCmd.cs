@@ -36,7 +36,7 @@ namespace RevitDevKit.Commands
             if (request == null)
             {
                 TaskDialog.Show("DevKit",
-                    "Нечего повторять. Запустите скрипт в Script Editor или команду в DLL Runner хотя бы один раз.");
+                    "Нечего повторять. Запустите скрипт в Script Editor или команду в Add-in Explorer хотя бы один раз.");
                 return Result.Cancelled;
             }
 
