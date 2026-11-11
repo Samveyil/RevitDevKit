@@ -96,22 +96,42 @@ namespace RevitDevKit.UI.ScriptEditor
             if (tab == null)
                 return;
 
-            var path = tab.FilePath;
-            if (string.IsNullOrEmpty(path))
+            var path = string.IsNullOrEmpty(tab.FilePath) ? AskPath(tab) : tab.FilePath;
+            if (path != null)
+                Save(tab, path);
+        }
+
+        // Always asks where, starting from the tab's own file: a copy under another name, the tab then follows it.
+        [RelayCommand]
+        private void SaveFileAs(ScriptTabVM tab)
+        {
+            tab ??= SelectedTab;
+            if (tab == null)
+                return;
+
+            var path = AskPath(tab);
+            if (path != null)
+                Save(tab, path);
+        }
+
+        // Tests answer the dialog themselves.
+        internal Func<ScriptTabVM, string> AskPath { get; set; } = AskPathInDialog;
+
+        private static string AskPathInDialog(ScriptTabVM tab)
+        {
+            var hasFile = !string.IsNullOrEmpty(tab.FilePath);
+            var dialog = new Microsoft.Win32.SaveFileDialog
             {
-                var dialog = new Microsoft.Win32.SaveFileDialog
-                {
-                    Filter = "C# файлы (*.cs)|*.cs|Все файлы (*.*)|*.*",
-                    InitialDirectory = ScriptsFolder(),
-                    FileName = tab.Title + ".cs"
-                };
+                Filter = "C# файлы (*.cs)|*.cs|Все файлы (*.*)|*.*",
+                InitialDirectory = hasFile ? Path.GetDirectoryName(tab.FilePath) : ScriptsFolder(),
+                FileName = hasFile ? Path.GetFileName(tab.FilePath) : tab.Title + ".cs"
+            };
 
-                if (dialog.ShowDialog() != true)
-                    return;
+            return dialog.ShowDialog() == true ? dialog.FileName : null;
+        }
 
-                path = dialog.FileName;
-            }
-
+        private void Save(ScriptTabVM tab, string path)
+        {
             try
             {
                 File.WriteAllText(path, tab.Document.Text);

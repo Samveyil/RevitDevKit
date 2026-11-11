@@ -41,7 +41,7 @@ Indentation is coloured by level, as the Indent Rainbow extension for Visual Stu
 | Keys | |
 |---|---|
 | F5, Ctrl+Enter | run |
-| Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+W | new tab, open, save, close |
+| Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+Shift+S, Ctrl+W | new tab, open, save, save as, close |
 | Ctrl+Space | suggestions; the list also opens by itself after a dot and on the first letter of a name |
 | Ctrl+Shift+Space | method overloads with parameter descriptions; the window also opens by itself after `(` and `,` |
 | Alt + mouse, Shift+Alt+arrows | carets on several lines |

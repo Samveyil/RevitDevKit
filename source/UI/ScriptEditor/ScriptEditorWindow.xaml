@@ -21,6 +21,7 @@
         <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewTabCommand}"/>
         <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenFileCommand}"/>
         <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveFileCommand}"/>
+        <KeyBinding Key="S" Modifiers="Control+Shift" Command="{Binding SaveFileAsCommand}"/>
         <KeyBinding Key="W" Modifiers="Control" Command="{Binding CloseTabCommand}"/>
         <KeyBinding Key="L" Modifiers="Control" Command="{Binding Output.ClearCommand}"/>
     </Window.InputBindings>
@@ -49,6 +50,11 @@
             <Button Width="25" Height="25" Padding="0" Command="{Binding SaveFileCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить (Ctrl+S)">
                 <materialDesign:PackIcon Kind="ContentSaveOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding SaveFileAsCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить как (Ctrl+Shift+S)">
+                <materialDesign:PackIcon Kind="ContentSaveEditOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
             <Border BorderThickness="1" BorderBrush="{StaticResource AccentBrush}" CornerRadius="3" Margin="20 0">
@@ -110,6 +116,8 @@
                                             <ContextMenu>
                                                 <MenuItem Header="Закрыть вкладку" CommandParameter="{Binding}"
                                                           Command="{Binding PlacementTarget.Tag.CloseTabCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                <MenuItem Header="Сохранить как…" CommandParameter="{Binding}"
+                                                          Command="{Binding PlacementTarget.Tag.SaveFileAsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                                 <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
                                                           Command="{Binding PlacementTarget.Tag.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                             </ContextMenu>
