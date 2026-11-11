@@ -288,7 +288,7 @@
             <TabItem Header="Commands" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
                     <!-- The tree comes first in focus order, as on Dependencies: a click on the tab does not land in the search box. -->
                     <DockPanel KeyboardNavigation.TabNavigation="Local">
-                        <DockPanel DockPanel.Dock="Top" Margin="4 2">
+                        <DockPanel DockPanel.Dock="Top" Margin="2 3 0 2">
                             <Button DockPanel.Dock="Right" Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding CollapseAllCommand}"
                                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Свернуть всё" TabIndex="2">
                                 <materialDesign:PackIcon Kind="ArrowExpand" Width="22" Height="22" Foreground="{StaticResource IconBrush}"/>
@@ -634,8 +634,9 @@
             <TabItem Header="Assemblies" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
                 <!-- The list comes first in focus order, as on Dependencies: a click on the tab does not land in the search box. -->
                 <DockPanel KeyboardNavigation.TabNavigation="Local">
-                    <!-- As tall as the row with the collapse button on Commands and Dependencies: the box sits at the same height. -->
-                    <DockPanel DockPanel.Dock="Top" Margin="4 2" MinHeight="25">
+                    <!-- As tall as the row with the collapse button on Commands and Dependencies: the box sits at the same height.
+                         The margins leave 4 of white to what is drawn: the magnifier and the buttons' glyphs have room of their own. -->
+                    <DockPanel DockPanel.Dock="Top" Margin="2 3 4 2" MinHeight="25">
                         <materialDesign:PackIcon DockPanel.Dock="Left" Kind="Magnify" Width="20" Height="20" Foreground="Gray"
                                                  VerticalAlignment="Center" Margin="0 0 6 0"/>
                         <TextBox Text="{Binding LoadedAssemblies.SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Padding="5 2"
@@ -732,7 +733,7 @@
             <TabItem Header="Dependencies" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
                 <!-- The tree comes first in focus order: opening the tab with a click puts the focus here, not in the search box. -->
                 <DockPanel KeyboardNavigation.TabNavigation="Local">
-                    <DockPanel DockPanel.Dock="Top" Margin="4 2">
+                    <DockPanel DockPanel.Dock="Top" Margin="2 3 0 2">
                         <Button DockPanel.Dock="Right" Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding Dependencies.CollapseAllCommand}"
                                 Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Свернуть всё" TabIndex="2">
                             <materialDesign:PackIcon Kind="ArrowExpand" Width="22" Height="22" Foreground="{StaticResource IconBrush}"/>
