@@ -19,6 +19,10 @@ namespace RevitDevKit.Core
         public string TransactionName { get; set; }
 
         public Action<Exception> Completed { get; set; }
+
+        // The DLL a command of Add-in Explorer comes from; null for a script. Repeat Last: Debug repeats only
+        // commands, and attaches the Visual Studio whose solution holds this DLL.
+        public string SourceDll { get; set; }
     }
 
     public sealed class RevitTaskRunner : IExternalEventHandler

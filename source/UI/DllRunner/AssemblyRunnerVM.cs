@@ -284,6 +284,7 @@ namespace RevitDevKit.UI.DllRunner
             {
                 Title = target.DisplayName,
                 TransactionName = "DevKit: " + target.Type.Name,
+                SourceDll = path,
                 Body = () =>
                 {
                     // The window closes on run; showing the console pane needs an API context, i.e. here.
