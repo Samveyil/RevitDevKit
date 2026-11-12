@@ -19,7 +19,8 @@ namespace RevitDevKit.UI.ScriptEditor
 {
     // IntelliSense of the script editor. The completion list opens after '.', on the first letter of a name, or on Ctrl+Space.
     // After '(' and ',' (or on Ctrl+Shift+Space) the overloads of the call show above the line, and when variables
-    // of the argument's type are in scope, the completion list opens below with them on top.
+    // of the argument's type are in scope, the completion list opens below with only them; a typed name that is none
+    // of them brings the full list, as does Ctrl+Space.
     // After '<' of a generic (All<, walls.OfType<) the '<' gets its '>' and the list holds the types that fit.
     // Only members available in AvalonEdit 4.3 are used, as Revit may have that one loaded (see EditorFactory).
     internal sealed class CompletionController
@@ -29,6 +30,7 @@ namespace RevitDevKit.UI.ScriptEditor
         private readonly TextEditor _editor;
         private readonly BracketController _brackets;
         private CompletionWindow _window;
+        private bool _suggestionsOnly;
         private OverloadInsightWindow _insight;
         private CancellationTokenSource _pending;
         private CancellationTokenSource _pendingSignatures;
@@ -85,6 +87,14 @@ namespace RevitDevKit.UI.ScriptEditor
             if (c == ')')
                 _insight?.Close();
 
+            // A list of only the names that fit an argument gives way to the full one once the typed name is none of them.
+            if (_window != null && _suggestionsOnly && IsIdentifierChar(c) && !TypedTextMatchesAny())
+            {
+                _window.Close();
+                Request(false);
+                return;
+            }
+
             if (_window != null)
                 return;
 
@@ -113,6 +123,18 @@ namespace RevitDevKit.UI.ScriptEditor
                 _window.CompletionList.RequestInsertion(e);
             else
                 _window.Close();
+        }
+
+        // As the list filters: the typed letters anywhere in a name, in any case.
+        private bool TypedTextMatchesAny()
+        {
+            var typedLength = _editor.TextArea.Caret.Offset - _window.StartOffset;
+            if (typedLength <= 0)
+                return true;
+
+            var typed = _editor.Document.GetText(_window.StartOffset, typedLength);
+            return _window.CompletionList.CompletionData.Any(d =>
+                d.Text.IndexOf(typed, StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
         private bool SelectionMatchesTypedText()
@@ -200,12 +222,15 @@ namespace RevitDevKit.UI.ScriptEditor
         }
 
         // Suggested names go first and are preferred when typed letters match several items equally.
-        private void ShowWindow(IList<CompletionEntry> entries, int wordStart, string typed, IList<string> suggested = null)
+        // With suggestionsOnly the list holds them alone, e.g. the colours for the colour argument of Show.
+        private void ShowWindow(IList<CompletionEntry> entries, int wordStart, string typed, IList<string> suggested = null,
+            bool suggestionsOnly = false)
         {
             var window = new CompletionWindow(_editor.TextArea) { Width = 320 };
             window.StartOffset = wordStart;
 
             var data = window.CompletionList.CompletionData;
+            _suggestionsOnly = suggestionsOnly && suggested != null;
             if (suggested != null)
             {
                 foreach (var name in suggested)
@@ -216,7 +241,7 @@ namespace RevitDevKit.UI.ScriptEditor
                 }
             }
 
-            foreach (var entry in entries)
+            foreach (var entry in _suggestionsOnly ? Enumerable.Empty<CompletionEntry>() : entries)
             {
                 if (suggested == null || !suggested.Contains(entry.Name))
                     data.Add(new CompletionItem(entry, 0));
@@ -325,7 +350,7 @@ namespace RevitDevKit.UI.ScriptEditor
 
             // Opened after the overloads, so the list gets Up/Down first while both are shown.
             if (list != null && _window == null)
-                ShowWindow(list.Entries, caret, string.Empty, signatures.Suggestions);
+                ShowWindow(list.Entries, caret, string.Empty, signatures.Suggestions, suggestionsOnly: true);
         }
 
         // The overloads sit above the caret line, as in Visual Studio, so they do not cover the completion list below it.
