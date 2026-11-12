@@ -240,7 +240,7 @@ namespace RevitDevKit.UI.DllRunner
             node ??= SelectedNode as TargetNodeVM;
             if (node == null) return;
 
-            if (DebugLaunch.TryAttach())
+            if (DebugLaunch.TryAttach(node.Owner.FilePath))
                 ConsoleOutput.Info("Отладчик подключён: точки останова в проекте " + node.Owner.DisplayName + " сработают.");
 
             Run(node);
