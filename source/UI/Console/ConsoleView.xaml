@@ -12,19 +12,29 @@
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
             <TextBlock Text="Консоль" VerticalAlignment="Center"/>
 
-            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding ClearCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding ClearCommand}"
                     Style="{DynamicResource MaterialDesignFlatButton}" ToolTip="Очистить консоль (Ctrl+L)">
                 <materialDesign:PackIcon Kind="Broom" Width="25" Height="25" Foreground="{DynamicResource IconBrush}"/>
             </Button>
 
-            <Button Width="22" Height="22" Margin="10 0" Padding="0" VerticalAlignment="Center" Click="OnCopy"
+            <Button Width="22" Height="22" Margin="8 0 0 0" Padding="0" VerticalAlignment="Center" Click="OnCopy"
                     Style="{DynamicResource MaterialDesignFlatButton}" ToolTip="Скопировать весь вывод в буфер обмена">
                 <materialDesign:PackIcon Kind="ContentCopy" Width="22" Height="22" Foreground="{DynamicResource IconBrush}"/>
             </Button>
 
-            <CheckBox Content="Автопрокрутка" VerticalAlignment="Bottom" Margin="15 0 0 0" Padding="2 0" IsChecked="{Binding IsAutoScroll}"/>
-            <CheckBox Content="Время" VerticalAlignment="Bottom" Margin="10 0" Padding="2 0" IsChecked="{Binding IsTimestamps}"/>
-            <CheckBox Content="Стек вызовов" VerticalAlignment="Bottom" Padding="2 0" IsChecked="{Binding IsShowDebug}"/>
+            <Border Style="{DynamicResource ToolbarSeparator}"/>
+
+            <!-- What a run from DevKit does with the console: one setting for Script Editor and Add-in Explorer. -->
+            <CheckBox Content="Чистить консоль" VerticalAlignment="Bottom" Padding="2 0" IsChecked="{Binding IsClearOnRun}"
+                      ToolTip="Очищать консоль перед каждым запуском из Script Editor и Add-in Explorer"/>
+            <CheckBox Content="Скрыть предупреждения" VerticalAlignment="Bottom" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsHideWarnings}"
+                      ToolTip="Предупреждения Revit при запуске только пишутся в консоль, без окна Revit. Ошибки Revit показывает как обычно"/>
+
+            <Border Style="{DynamicResource ToolbarSeparator}"/>
+
+            <CheckBox Content="Автопрокрутка" VerticalAlignment="Bottom" Padding="2 0" IsChecked="{Binding IsAutoScroll}"/>
+            <CheckBox Content="Время" VerticalAlignment="Bottom" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsTimestamps}"/>
+            <CheckBox Content="Стек вызовов" VerticalAlignment="Bottom" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsShowDebug}"/>
         </StackPanel>
 
         <RichTextBox x:Name="Output" IsReadOnly="True" IsDocumentEnabled="True" FontFamily="Consolas" Margin="0 2 0 0"

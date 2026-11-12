@@ -18,8 +18,6 @@ namespace RevitDevKit.UI.DllRunner
     {
         private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
 
-        [ObservableProperty] private bool _isClearOnRun = true;
-        [ObservableProperty] private bool _isHideWarnings;
 
         [ObservableProperty] private string _searchText = string.Empty;
         [ObservableProperty] private bool _isNothingFound;
@@ -277,7 +275,7 @@ namespace RevitDevKit.UI.DllRunner
                 return;
             }
 
-            if (IsClearOnRun) ConsoleOutput.Clear();
+            if (RunOptions.ClearOnRun) ConsoleOutput.Clear();
 
             IsRunning = true;
 
@@ -286,7 +284,7 @@ namespace RevitDevKit.UI.DllRunner
                 Title = target.DisplayName,
                 TransactionName = "DevKit: " + target.Type.Name,
                 SourceDll = path,
-                HideWarnings = IsHideWarnings,
+                HideWarnings = RunOptions.HideWarnings,
                 Body = () =>
                 {
                     // The window closes on run; showing the console pane needs an API context, i.e. here.
