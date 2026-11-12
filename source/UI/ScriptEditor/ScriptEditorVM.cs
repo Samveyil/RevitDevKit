@@ -31,6 +31,7 @@ namespace RevitDevKit.UI.ScriptEditor
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(RunCommand))]
+        [NotifyCanExecuteChangedFor(nameof(RunWithDebuggerCommand))]
         private bool _isRunning;
 
         private int _untitledCounter;
@@ -213,7 +214,29 @@ namespace RevitDevKit.UI.ScriptEditor
         private bool CanRun() => !IsRunning;
 
         [RelayCommand(CanExecute = nameof(CanRun))]
-        private async Task RunAsync()
+        private Task RunAsync() => RunCoreAsync(debug: false);
+
+        // Asks to attach a debugger first; the script then stops on its first line.
+        [RelayCommand(CanExecute = nameof(CanRun))]
+        private Task RunWithDebuggerAsync() => RunCoreAsync(debug: true);
+
+        // The file the debugger shows: the tab's own when it is saved as it is, otherwise a snapshot of the text.
+        private static string DebugFile(ScriptTabVM tab, string code)
+        {
+            if (tab.HasFile && !tab.IsDirty && File.Exists(tab.FilePath))
+                return tab.FilePath;
+
+            var dir = Path.Combine(Path.GetTempPath(), "RevitDevKit", "Debug");
+            Directory.CreateDirectory(dir);
+            var name = string.Concat((tab.Title ?? "Скрипт").Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
+            if (!name.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)) name += ".cs";
+
+            var path = Path.Combine(dir, name);
+            File.WriteAllText(path, code, System.Text.Encoding.UTF8);
+            return path;
+        }
+
+        private async Task RunCoreAsync(bool debug)
         {
             var tab = SelectedTab;
             if (tab == null) return;
@@ -233,11 +256,18 @@ namespace RevitDevKit.UI.ScriptEditor
             var title = tab.Title;
             var autoTransaction = IsAutoTransaction;
 
+            string debugFile = null;
+            if (debug && DebugLaunch.TryAttach())
+            {
+                debugFile = DebugFile(tab, code);
+                ConsoleOutput.Info("Отладка: остановка на первой строке скрипта, файл " + debugFile);
+            }
+
             // An exception escaping an async command would reach Revit's dispatcher - catch it here.
             CompileResult result;
             try
             {
-                result = await Task.Run(() => ScriptCompiler.Compile(code));
+                result = await Task.Run(() => ScriptCompiler.Compile(code, debugFile));
             }
             catch (Exception ex)
             {

@@ -25,6 +25,7 @@ namespace RevitDevKit.UI.DllRunner
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(RunCommand))]
+        [NotifyCanExecuteChangedFor(nameof(RunWithDebuggerCommand))]
         [NotifyCanExecuteChangedFor(nameof(ReloadAssemblyCommand))]
         [NotifyCanExecuteChangedFor(nameof(RemoveAssemblyCommand))]
         [NotifyCanExecuteChangedFor(nameof(RevealInExplorerCommand))]
@@ -32,6 +33,7 @@ namespace RevitDevKit.UI.DllRunner
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(RunCommand))]
+        [NotifyCanExecuteChangedFor(nameof(RunWithDebuggerCommand))]
         private bool _isRunning;
 
         public ObservableCollection<AssemblyNodeVM> Assemblies { get; } = [];
@@ -230,6 +232,19 @@ namespace RevitDevKit.UI.DllRunner
         }
 
         private bool CanRun(TargetNodeVM node) => (node ?? SelectedNode as TargetNodeVM) != null && !IsRunning;
+
+        // The DLL's symbols load with its copy, so breakpoints set in the project in Visual Studio bind.
+        [RelayCommand(CanExecute = nameof(CanRun))]
+        private void RunWithDebugger(TargetNodeVM node)
+        {
+            node ??= SelectedNode as TargetNodeVM;
+            if (node == null) return;
+
+            if (DebugLaunch.TryAttach())
+                ConsoleOutput.Info("Отладчик подключён: точки останова в проекте " + node.Owner.DisplayName + " сработают.");
+
+            Run(node);
+        }
 
         [RelayCommand(CanExecute = nameof(CanRun))]
         // Always resolves the command from the DLL on disk, so a rebuilt class with the same
