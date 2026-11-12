@@ -9,7 +9,7 @@ using System.Text;
 namespace RevitDevKit.Core
 {
     // While a script or command runs from DevKit, the warnings and errors Revit raises on committing a transaction
-    // go to the console, with the elements they name. Revit still shows them as usual, unless "hide warnings" is
+    // go to the console, with the elements they name. Revit still shows them as usual, unless quiet mode is
     // on: warnings are then deleted once written, and no warning dialog appears. Errors are left to Revit.
     public static class FailureLog
     {
@@ -85,7 +85,7 @@ namespace RevitDevKit.Core
                 block.Append("  ").AppendLine(line.Trim());
 
             if (!warning) block.AppendLine("  Если ошибку не решить, Revit отменит транзакцию.");
-            else if (hidden) block.AppendLine("  Скрыто: окно Revit не показано.");
+            else if (hidden) block.AppendLine("  Тихий режим: окно Revit не показано.");
 
             if (count == 1)
             {

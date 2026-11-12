@@ -18,6 +18,7 @@
     <Window.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RunCommand}"/>
         <KeyBinding Key="Enter" Modifiers="Control" Command="{Binding RunCommand}"/>
+        <KeyBinding Key="F5" Modifiers="Control" Command="{Binding RunWithDebuggerCommand}"/>
         <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewTabCommand}"/>
         <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenFileCommand}"/>
         <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveFileCommand}"/>
@@ -39,7 +40,7 @@
 
             <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding RunWithDebuggerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}"
-                    ToolTip="Запустить под отладчиком: подключить Visual Studio и остановиться на первой строке скрипта">
+                    ToolTip="Запустить под отладчиком (Ctrl+F5): подключить открытую Visual Studio и остановиться на первой строке скрипта. Без открытой Visual Studio скрипт не запускается">
                 <materialDesign:PackIcon Kind="BugPlayOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 

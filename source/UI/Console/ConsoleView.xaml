@@ -27,8 +27,8 @@
             <!-- What a run from DevKit does with the console: one setting for Script Editor and Add-in Explorer. -->
             <CheckBox Content="Чистить консоль" VerticalAlignment="Bottom" Padding="2 0" IsChecked="{Binding IsClearOnRun}"
                       ToolTip="Очищать консоль перед каждым запуском из Script Editor и Add-in Explorer"/>
-            <CheckBox Content="Скрыть предупреждения" VerticalAlignment="Bottom" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsHideWarnings}"
-                      ToolTip="Предупреждения Revit при запуске только пишутся в консоль, без окна Revit. Ошибки Revit показывает как обычно"/>
+            <CheckBox Content="Тихий режим" VerticalAlignment="Bottom" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsHideWarnings}"
+                      ToolTip="Тихий режим: предупреждения Revit при запуске из DevKit пишутся только в консоль, без окна Revit. Ошибки Revit показывает как обычно"/>
 
             <Border Style="{DynamicResource ToolbarSeparator}"/>
 

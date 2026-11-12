@@ -82,6 +82,10 @@ namespace RevitDevKit.UI.DllRunner
             : SelectedTabIndex == AssembliesTab ? assemblies
             : commands;
 
+        // Ctrl+F5: only commands run under a debugger.
+        [RelayCommand]
+        private void DebugHotkey() => Execute(ForTab(RunWithDebuggerCommand, null, null, null, null));
+
         [RelayCommand]
         private void RunHotkey() => Execute(ForTab(RunCommand, Apps.ApplyCommand, Startup.RefreshCommand, Dependencies.RefreshCommand, LoadedAssemblies.RefreshCommand));
 

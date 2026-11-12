@@ -129,6 +129,7 @@
 
     <Window.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RunHotkeyCommand}"/>
+        <KeyBinding Key="F5" Modifiers="Control" Command="{Binding DebugHotkeyCommand}"/>
         <KeyBinding Key="O" Modifiers="Control" Command="{Binding AddHotkeyCommand}"/>
         <KeyBinding Key="R" Modifiers="Control" Command="{Binding ReloadHotkeyCommand}"/>
     </Window.InputBindings>
@@ -146,7 +147,7 @@
 
             <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding RunWithDebuggerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}"
-                    ToolTip="Выполнить под отладчиком: подключить Visual Studio, точки останова в проекте сработают">
+                    ToolTip="Выполнить под отладчиком (Ctrl+F5): подключить открытую Visual Studio с решением надстройки, точки останова в проекте сработают. Без открытой Visual Studio команда не запускается">
                 <materialDesign:PackIcon Kind="BugPlayOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
