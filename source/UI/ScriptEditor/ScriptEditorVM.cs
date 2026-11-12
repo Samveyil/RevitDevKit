@@ -147,6 +147,15 @@ namespace RevitDevKit.UI.ScriptEditor
             }
         }
 
+        // Takes away what scripts drew with Show(...) and redraws the views.
+        [RelayCommand]
+        private void ClearShown()
+        {
+            ShownGeometry.Clear();
+            RevitTaskRunner.Post(app => ShownGeometry.RefreshIfChanged(app.ActiveUIDocument));
+            TxtStatus = "Показанное убрано";
+        }
+
         [RelayCommand]
         private void SampleSelected(string value)
         {
@@ -248,6 +257,9 @@ namespace RevitDevKit.UI.ScriptEditor
             }
 
             if (ConsoleOptions.ClearOnRun) ConsoleOutput.Clear();
+
+            // The views show what the last run showed: what an earlier one did goes away when this one ends.
+            ShownGeometry.Clear();
 
             // Without a debugger nothing runs: the user has been told to open Visual Studio.
             string debugFile = null;

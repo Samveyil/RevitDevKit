@@ -42,6 +42,7 @@ namespace RevitDevKit
 
                 ConsoleOutput.Install();
                 RevitTaskRunner.Initialize();
+                ShownGeometryServer.Register();
                 LocateAddinFolders(application);
 
                 BuildRibbon(application);
@@ -63,6 +64,7 @@ namespace RevitDevKit
             UI.ScriptEditor.ScriptEditorWindow.CloseIfOpen();
             UI.DllRunner.AssemblyRunnerWindow.CloseIfOpen();
             RibbonPreview.Shutdown();
+            ShownGeometryServer.Unregister();
             ConsoleOutput.Uninstall();
             AppDomain.CurrentDomain.AssemblyResolve -= ResolveFromPluginFolder;
             return Result.Succeeded;
