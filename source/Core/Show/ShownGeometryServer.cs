@@ -1,11 +1,12 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.DirectContext3D;
 using Autodesk.Revit.DB.ExternalService;
+using RevitDevKit.Core.Output;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Show
 {
     // Draws ShownGeometry over the model through DirectContext3D, Revit's way of drawing graphics that are not
     // elements. Segments go in the opaque pass, faces see-through in the transparent one. Buffers are rebuilt only

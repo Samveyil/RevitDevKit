@@ -1,4 +1,6 @@
+using BIMPlugins.ExtStorage.Extensions;
 using Microsoft.CodeAnalysis;
+using RevitDevKit.Core.Output;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -8,9 +10,8 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
-using BIMPlugins.ExtStorage.Extensions;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.IntelliSense
 {
     // An XML documentation file for a metadata reference. Roslyn's own XmlDocumentationProvider lives in
     // Microsoft.CodeAnalysis.Workspaces, which DevKit does not ship, so the file is read here: once, on the first tooltip.

@@ -1,6 +1,6 @@
 using System;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Output
 {
     // The console's options, one set for every console: the one at the bottom of Script Editor and the dockable
     // pane show the same output, so they show it the same way, and runs from Script Editor and Add-in Explorer

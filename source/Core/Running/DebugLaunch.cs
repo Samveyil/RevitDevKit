@@ -1,3 +1,5 @@
+using BIMPlugins.ExtStorage.Extensions;
+using RevitDevKit.Core.Output;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,9 +9,8 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Threading;
-using BIMPlugins.ExtStorage.Extensions;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Running
 {
     // "Run with debugger". An open Visual Studio is attached to Revit through its automation (DTE), as
     // Debug > Attach to Process does: no dialog and no stop in DevKit's code. With several open, the one whose

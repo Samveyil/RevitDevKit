@@ -1,7 +1,7 @@
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using RevitDevKit.Core;
+using RevitDevKit.Core.Running;
 
 namespace RevitDevKit.Commands
 {

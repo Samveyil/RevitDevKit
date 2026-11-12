@@ -1,5 +1,5 @@
 using ICSharpCode.AvalonEdit.CodeCompletion;
-using RevitDevKit.Core;
+using RevitDevKit.Core.IntelliSense;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;

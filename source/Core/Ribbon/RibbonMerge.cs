@@ -1,5 +1,7 @@
 using Autodesk.Revit.UI;
+using BIMPlugins.ExtStorage.Extensions;
 using BIMPlugins.UI;
+using RevitDevKit.Core.Output;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,9 +12,8 @@ using System.Resources;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Adw = Autodesk.Windows;
-using BIMPlugins.ExtStorage.Extensions;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Ribbon
 {
     // Private members of RevitAPIUI the preview relies on (the same in Revit 2019–2024).
     // The API checks duplicate tab, panel and button names only against these registries.

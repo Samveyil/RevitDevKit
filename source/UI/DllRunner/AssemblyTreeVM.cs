@@ -1,10 +1,9 @@
+using BIMPlugins.ExtStorage.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using BIMPlugins.ExtStorage.Extensions;
-using BIMPlugins.ExtStorage.Comparers;
 
 namespace RevitDevKit.UI.DllRunner
 {
@@ -76,11 +75,11 @@ namespace RevitDevKit.UI.DllRunner
                 .Where(t => t.Namespace.Length > 0)
                 .GroupBy(t => t.Namespace)
                 .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
-                .Select(g => new NamespaceNodeVM(this, g.Key, g.OrderBy(t => t.DisplayName.ToUpperInvariant(), new NaturalComparer()), onSelected));
+                .Select(g => new NamespaceNodeVM(this, g.Key, g.OrderBy(t => t.DisplayName, StringComparer.OrdinalIgnoreCase), onSelected));
 
             var loose = Targets
                 .Where(t => t.Namespace.Length == 0)
-                .OrderBy(t => t.DisplayName.ToUpperInvariant(), new NaturalComparer());
+                .OrderBy(t => t.DisplayName, StringComparer.OrdinalIgnoreCase);
 
             Children = folders.Cast<AssemblyTreeNodeVM>().Concat(loose).ToList();
         }

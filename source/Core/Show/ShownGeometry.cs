@@ -1,12 +1,13 @@
 using Autodesk.Revit.DB;
-using BIMPlugins.ExtStorage.Extensions;
 using Autodesk.Revit.UI;
+using BIMPlugins.ExtStorage.Extensions;
+using RevitDevKit.Core.Output;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Show
 {
     // One Show(...) of a script: what it drew, as segments and triangles in model coordinates.
     public sealed class ShownShape

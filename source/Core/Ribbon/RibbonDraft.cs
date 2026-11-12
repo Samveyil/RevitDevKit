@@ -1,6 +1,8 @@
 using Autodesk.Revit.UI;
+using BIMPlugins.ExtStorage.Extensions;
 using BIMPlugins.UI;
 using HarmonyLib;
+using RevitDevKit.Core.Output;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,9 +10,8 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
 using Adw = Autodesk.Windows;
-using BIMPlugins.ExtStorage.Extensions;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Ribbon
 {
     // OnStartup of the new build runs against a name registry without any panels, so the add-in
     // builds its ribbon from scratch next to the live one. Live custom tabs stay registered for

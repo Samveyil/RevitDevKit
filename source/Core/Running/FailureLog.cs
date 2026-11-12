@@ -1,13 +1,14 @@
 using Autodesk.Revit.DB;
-using BIMPlugins.ExtStorage.Extensions;
 using Autodesk.Revit.DB.Events;
 using BIMPlugins.ExtStorage;
+using BIMPlugins.ExtStorage.Extensions;
+using RevitDevKit.Core.Output;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Running
 {
     // While a script or command runs from DevKit, the warnings and errors Revit raises on committing a transaction
     // go to the console, with the elements they name. Revit still shows them as usual, unless quiet mode is

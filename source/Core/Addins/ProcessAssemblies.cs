@@ -1,12 +1,13 @@
+using BIMPlugins.ExtStorage.Extensions;
+using RevitDevKit.Core.Compiler;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using BIMPlugins.ExtStorage.Extensions;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Addins
 {
     // Where a loaded assembly comes from, for the owner column and the "hide system" filter.
     public enum AssemblySource

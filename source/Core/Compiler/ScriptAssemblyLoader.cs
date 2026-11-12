@@ -1,4 +1,5 @@
 using BIMPlugins.ExtStorage.Extensions;
+using RevitDevKit.Core.Output;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,7 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 #endif
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Compiler
 {
     public static class ScriptAssemblyLoader
     {
