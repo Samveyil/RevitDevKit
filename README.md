@@ -16,6 +16,7 @@ The Add-Ins tab gets a DevKit panel with a pulldown button:
 - Script Editor opens the script editor;
 - Add-in Explorer opens a window with the commands and applications of a DLL, the add-ins Revit loads at startup, the loaded assemblies and the add-ins' DLLs;
 - Repeat Last runs the last script or command once more;
+- Repeat Last: Debug runs the last command of a DLL once more under the open Visual Studio;
 - Console, after a separator, shows the console pane or hides it when it is open.
 
 ## Script Editor
@@ -86,7 +87,7 @@ In the output of `Compare`, `-нет-` (none) means the element has no such para
 
 Add a built DLL, and its `IExternalCommand` classes appear in the list, grouped by namespace. A double click or F5 runs a command. The DLL file is not locked, so the project can be rebuilt without closing Revit. The command is taken from the DLL on disk every time, so after a build just run it again. The **Обновить** (Refresh) button is needed only when new commands appear. As in the editor, **Чистить консоль** (clear console) clears the console before each run. The bug button runs the command under a debugger: the Visual Studio with the add-in's solution open is attached, and breakpoints set in the project are hit.
 
-The window closes when a command runs. To run the same command again after changes, there is no need to open Add-in Explorer: build the project and press Repeat Last on the ribbon, and the command runs from the fresh DLL. Repeat Last can be given a keyboard shortcut in Revit.
+The window closes when a command runs. To run the same command again after changes, there is no need to open Add-in Explorer: build the project and press Repeat Last on the ribbon, and the command runs from the fresh DLL. Repeat Last can be given a keyboard shortcut in Revit. **Repeat Last: Debug** next to it repeats the command under the open Visual Studio, as the bug button does, so breakpoints set in the project are hit; it has its own shortcut. A script is debugged in Script Editor instead.
 
 ### Applications
 
