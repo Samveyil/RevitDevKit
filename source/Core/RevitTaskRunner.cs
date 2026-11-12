@@ -23,6 +23,9 @@ namespace RevitDevKit.Core
         // The DLL a command of Add-in Explorer comes from; null for a script. Repeat Last: Debug repeats only
         // commands, and attaches the Visual Studio whose solution holds this DLL.
         public string SourceDll { get; set; }
+
+        // Warnings Revit raises while it runs are written to the console and deleted, so no dialog shows.
+        public bool HideWarnings { get; set; }
     }
 
     public sealed class RevitTaskRunner : IExternalEventHandler
@@ -95,6 +98,8 @@ namespace RevitDevKit.Core
             ConsoleOutput.EnsureTraceListener();
             ConsoleOutput.Banner("Запуск: " + (request.Title ?? "скрипт"));
 
+            // Only transactions committed while this request runs: not the user's, nor other add-ins' between runs.
+            var failures = FailureLog.Watch(request.HideWarnings);
             Transaction transaction = null;
             try
             {
@@ -138,6 +143,7 @@ namespace RevitDevKit.Core
             }
             finally
             {
+                failures.Dispose();
                 CurrentCommandData = null;
 
                 if (transaction != null) transaction.Dispose();

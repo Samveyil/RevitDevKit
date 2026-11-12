@@ -148,23 +148,16 @@
                 <materialDesign:PackIcon Kind="FolderOpenOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding ReloadAssemblyCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Обновить список команд DLL (Ctrl+R). Для любой DLL — правой кнопкой по ней">
-                <materialDesign:PackIcon Kind="Refresh" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
-            </Button>
-
             <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RevealInExplorerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике DLL">
                 <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RemoveAssemblyCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Убрать из списка DLL">
-                <materialDesign:PackIcon Kind="DeleteOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
-            </Button>
-
             <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Чистить консоль" Margin="20 0 0 0" IsChecked="{Binding IsClearOnRun}"
                       ToolTip="Очищать консоль перед каждым запуском"/>
+
+            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Скрыть предупреждения" Margin="10 0 0 0" IsChecked="{Binding IsHideWarnings}"
+                      ToolTip="Предупреждения Revit при запуске только пишутся в консоль, без окна Revit. Ошибки Revit показывает как обычно"/>
         </StackPanel>
 
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource AppsToolbar}">
@@ -328,7 +321,7 @@
                                                     Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TreeView}}">
                                             <StackPanel.ContextMenu>
                                                 <ContextMenu materialDesign:MenuAssist.MenuItemsPresenterMargin="0">
-                                                    <MenuItem Header="Обновить список команд" CommandParameter="{Binding}"
+                                                    <MenuItem Header="Обновить список команд" InputGestureText="Ctrl+R" CommandParameter="{Binding}"
                                                               Command="{Binding PlacementTarget.Tag.ReloadAssemblyCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                                     <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
                                                               Command="{Binding PlacementTarget.Tag.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>

@@ -23,6 +23,7 @@ namespace RevitDevKit.UI.ScriptEditor
 
         [ObservableProperty] private bool _isAutoTransaction = false;
         [ObservableProperty] private bool _isClearOnRun = true;
+        [ObservableProperty] private bool _isHideWarnings;
 
         [ObservableProperty] private ScriptTabVM _selectedTab;
 
@@ -315,6 +316,7 @@ namespace RevitDevKit.UI.ScriptEditor
             {
                 Title = title,
                 AutoTransaction = autoTransaction,
+                HideWarnings = IsHideWarnings,
                 TransactionName = "DevKit: " + title,
                 Body = () => target.Invoke(),
                 Completed = error => _dispatcher.Invoke(() =>

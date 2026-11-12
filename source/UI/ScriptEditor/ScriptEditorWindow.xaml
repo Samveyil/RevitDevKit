@@ -85,6 +85,9 @@
 
             <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Чистить консоль" Margin="8 0" IsChecked="{Binding IsClearOnRun}"
                       ToolTip="Очищать консоль перед каждым запуском"/>
+
+            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Скрыть предупреждения" IsChecked="{Binding IsHideWarnings}"
+                      ToolTip="Предупреждения Revit при запуске только пишутся в консоль, без окна Revit. Ошибки Revit показывает как обычно"/>
         </StackPanel>
 
         <StatusBar DockPanel.Dock="Bottom">
