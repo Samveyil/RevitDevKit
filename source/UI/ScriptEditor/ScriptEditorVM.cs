@@ -250,18 +250,25 @@ namespace RevitDevKit.UI.ScriptEditor
 
             if (IsClearOnRun) ConsoleOutput.Clear();
 
+            // Without a debugger nothing runs: the user has been told to open Visual Studio.
+            string debugFile = null;
+            if (debug)
+            {
+                if (!DebugLaunch.TryAttach(tab.FilePath))
+                {
+                    TxtStatus = "Отладчик не подключён";
+                    return;
+                }
+
+                debugFile = DebugFile(tab, code);
+                ConsoleOutput.Info("Отладка: остановка на первой строке скрипта, файл " + debugFile);
+            }
+
             IsRunning = true;
             TxtStatus = "Компиляция…";
 
             var title = tab.Title;
             var autoTransaction = IsAutoTransaction;
-
-            string debugFile = null;
-            if (debug && DebugLaunch.TryAttach(tab.FilePath))
-            {
-                debugFile = DebugFile(tab, code);
-                ConsoleOutput.Info("Отладка: остановка на первой строке скрипта, файл " + debugFile);
-            }
 
             // An exception escaping an async command would reach Revit's dispatcher - catch it here.
             CompileResult result;

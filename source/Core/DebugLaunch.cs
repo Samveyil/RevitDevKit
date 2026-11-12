@@ -12,50 +12,60 @@ namespace RevitDevKit.Core
 {
     // "Run with debugger". An open Visual Studio is attached to Revit through its automation (DTE), as
     // Debug > Attach to Process does: no dialog and no stop in DevKit's code. With several open, the one whose
-    // solution holds the DLL or the script is taken. Without one, Windows asks which debugger to start
-    // (Debugger.Launch), and that one stops where it attached: Continue (F5) goes on.
+    // solution holds the DLL or the script is taken. Without one nothing runs: the user is asked to open it,
+    // or to attach another debugger (Rider, VS Code) by hand, which is then used as it is.
     public static class DebugLaunch
     {
-        // Tests answer for the debugger; the argument is the DLL or the script being run.
-        public static Func<string, bool> Attach { get; set; } = AttachDebugger;
+        // Tests answer for the debugger: null when attached, otherwise why not. The argument is the DLL or the script.
+        public static Func<string, string> Attach { get; set; } = AttachDebugger;
 
+        // Tests see the message instead of a dialog.
+        public static Action<string> Tell { get; set; } = text =>
+            System.Windows.MessageBox.Show(text, "DevKit", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+
+        // True when the run may go on under a debugger; otherwise the user has been told why it does not start.
         public static bool TryAttach(string hintPath = null)
         {
-            bool attached;
+            string problem;
             try
             {
-                attached = Attach(hintPath);
+                problem = Attach(hintPath);
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Отладчик: " + ex.Message);
-                attached = false;
+                problem = "Не удалось подключить Visual Studio: " + ex.Message;
             }
 
-            if (!attached)
-                ConsoleOutput.Warning("Отладчик не подключён: запуск без отладки.");
+            if (problem == null) return true;
 
-            return attached;
+            ConsoleOutput.Warning(problem);
+            Tell(problem);
+            return false;
         }
 
-        private static bool AttachDebugger(string hintPath)
+        private static string AttachDebugger(string hintPath)
         {
-            if (Debugger.IsAttached) return true;
+            if (Debugger.IsAttached) return null;
 
-            var studio = VisualStudio.Pick(hintPath);
-            if (studio != null && VisualStudio.AttachTo(studio.Item1, Process.GetCurrentProcess().Id))
-            {
-                // The attach is done in Visual Studio's process; the runtime sees it a moment later.
-                for (var i = 0; i < 100 && !Debugger.IsAttached; i++) Thread.Sleep(100);
-                if (Debugger.IsAttached)
-                {
-                    ConsoleOutput.Info("Подключена Visual Studio" + (string.IsNullOrEmpty(studio.Item2) ? "" : " с " + Path.GetFileName(studio.Item2)) + ".");
-                    return true;
-                }
-            }
+            var running = VisualStudio.Running();
+            if (running.Count == 0)
+                return "Откройте Visual Studio с решением надстройки и запустите под отладчиком ещё раз. " +
+                       "Или подключите свой отладчик (Rider, VS Code) к Revit вручную и нажмите ещё раз.";
 
-            ConsoleOutput.Info("Открытая Visual Studio не найдена: выберите отладчик в окне Windows. Он остановится в коде DevKit, продолжите (F5).");
-            return Debugger.Launch() && Debugger.IsAttached;
+            var studio = VisualStudio.Choose(hintPath, running, VisualStudio.IsDebugging);
+            if (studio == null)
+                return "Все открытые Visual Studio уже отлаживают другую программу. Остановите отладку в одной из них и запустите ещё раз.";
+
+            if (!VisualStudio.AttachTo(studio.Item1, Process.GetCurrentProcess().Id))
+                return "Visual Studio не подключилась к Revit. Подключите её вручную: Отладка › Подключиться к процессу.";
+
+            // The attach is done in Visual Studio's process; the runtime sees it a moment later.
+            for (var i = 0; i < 100 && !Debugger.IsAttached; i++) Thread.Sleep(100);
+            if (!Debugger.IsAttached)
+                return "Visual Studio не подключилась к Revit. Подключите её вручную: Отладка › Подключиться к процессу.";
+
+            ConsoleOutput.Info("Подключена Visual Studio" + (string.IsNullOrEmpty(studio.Item2) ? "" : " с " + Path.GetFileName(studio.Item2)) + ".");
+            return null;
         }
 
         // Visual Studio's automation, late bound: DevKit references none of its assemblies.
@@ -102,8 +112,6 @@ namespace RevitDevKit.Core
             }
 
             // The one whose solution folder holds the path, the deepest first; else the first not debugging already.
-            public static Tuple<object, string> Pick(string hintPath) => Choose(hintPath, Running(), IsDebugging);
-
             internal static Tuple<object, string> Choose(string hintPath, IEnumerable<Tuple<object, string>> studios, Func<object, bool> isDebugging)
             {
                 var running = studios.Where(s => !isDebugging(s.Item1)).ToList();
@@ -125,7 +133,7 @@ namespace RevitDevKit.Core
             }
 
             // dbgDesignMode = 1: not debugging anything now.
-            private static bool IsDebugging(object dte)
+            public static bool IsDebugging(object dte)
             {
                 try { return Convert.ToInt32(Get(Get(dte, "Debugger"), "CurrentMode")) != 1; }
                 catch { return true; }
