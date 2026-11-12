@@ -44,6 +44,11 @@
                 <materialDesign:PackIcon Kind="BugPlayOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding ClearShownCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Убрать с видов то, что скрипты нарисовали через Show(...)">
+                <materialDesign:PackIcon Kind="VectorSquareRemove" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+
             <Border Style="{StaticResource ToolbarSeparator}"/>
 
             <Button Width="25" Height="25" Padding="0" Command="{Binding NewTabCommand}"

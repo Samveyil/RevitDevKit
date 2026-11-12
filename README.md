@@ -68,6 +68,7 @@ Short scripts can use:
 | `Selection`, `S0`, `S1`, `S(i)` | the selected elements |
 | `Dump(element)` | all parameters of an element |
 | `Compare(a, b, ...)` | differences in the parameters of 2–5 elements |
+| `Show(x)`, `Show(x, Green, "label")`, `ClearShown()` | draw geometry over the model on the views, creating nothing |
 
 ```csharp
 var walls = All<Wall>();
@@ -79,6 +80,8 @@ Tx("Mark walls", () =>
         wall.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)?.Set("checked");
 });
 ```
+
+`Show` draws a point, a curve or an edge, a face, a solid, a mesh, a bounding box, an element, its location or a list of these over the model, through Revit's temporary graphics: nothing goes into the model and there is nothing to undo. Faces are see-through with their edges outlined, a point is a small cross, and every call gets a colour of its own unless one is given (`Orange`, `Green`, `Blue`, `Red`, `Purple`, `Teal`). The console says what each call drew. What is shown stays until the next run, `ClearShown()` or the toolbar button next to the bug. The **Примеры** menu has an example.
 
 In the output of `Compare`, `-нет-` (none) means the element has no such parameter, `-` means the parameter has no value, and `-пусто-` (empty) means an empty string.
 
