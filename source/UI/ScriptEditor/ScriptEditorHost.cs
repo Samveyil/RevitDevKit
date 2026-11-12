@@ -50,6 +50,7 @@ namespace RevitDevKit.UI.ScriptEditor
             editor.Document = tab.Document;
             CompletionController.Attach(editor);
             BoxSelectionController.Attach(editor);
+            CommentController.Attach(editor);
 
             tab.NavigateRequested += (line, column) =>
             {

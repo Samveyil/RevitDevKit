@@ -54,6 +54,8 @@ Indentation is coloured by level, as the Indent Rainbow extension for Visual Stu
 | Ctrl+Shift+Space | method overloads with parameter descriptions; the window also opens by itself after `(` and `,` |
 | Alt + mouse, Shift+Alt+arrows | carets on several lines |
 | Ctrl+D | duplicate the line |
+| Ctrl+/ | comment or uncomment the lines; a part of one line is wrapped in `/* */` |
+| Ctrl+K, Ctrl+C / Ctrl+K, Ctrl+U | comment / uncomment, as in Visual Studio |
 | Ctrl+L | clear the console |
 
 Short scripts can use:
