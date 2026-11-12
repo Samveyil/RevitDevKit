@@ -36,6 +36,16 @@ namespace RevitDevKit.UI.Console
             set => SetValue(IsPersistentProperty, value);
         }
 
+        // Characters a line of wrappable output may take before it wraps; 0: never wrapped.
+        public static readonly DependencyProperty WrapWidthProperty = DependencyProperty.Register(
+            nameof(WrapWidth), typeof(int), typeof(ConsoleView), new PropertyMetadata(0));
+
+        public int WrapWidth
+        {
+            get => (int)GetValue(WrapWidthProperty);
+            set => SetValue(WrapWidthProperty, value);
+        }
+
         public ConsoleView()
         {
             InitializeComponent();
@@ -150,6 +160,12 @@ namespace RevitDevKit.UI.Console
         {
             var brush = BrushFor(chunk.Level);
             var parts = chunk.Text.Replace("\r\n", "\n").Split('\n');
+            if (chunk.Wrappable && WrapWidth > 0)
+            {
+                // The last part is what follows the final line break: kept as it is.
+                parts = parts.Take(parts.Length - 1).SelectMany(p => ConsoleText.Wrap(p, WrapWidth))
+                    .Concat(new[] { parts[parts.Length - 1] }).ToArray();
+            }
 
             for (var i = 0; i < parts.Length; i++)
             {
