@@ -31,6 +31,7 @@ namespace RevitDevKit.UI.ScriptEditor
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(RunCommand))]
+        [NotifyCanExecuteChangedFor(nameof(RunWithDebuggerCommand))]
         private bool _isRunning;
 
         private int _untitledCounter;
@@ -213,7 +214,29 @@ namespace RevitDevKit.UI.ScriptEditor
         private bool CanRun() => !IsRunning;
 
         [RelayCommand(CanExecute = nameof(CanRun))]
-        private async Task RunAsync()
+        private Task RunAsync() => RunCoreAsync(debug: false);
+
+        // Asks to attach a debugger first; the script then stops on its first line.
+        [RelayCommand(CanExecute = nameof(CanRun))]
+        private Task RunWithDebuggerAsync() => RunCoreAsync(debug: true);
+
+        // The file the debugger shows: the tab's own when it is saved as it is, otherwise a snapshot of the text.
+        private static string DebugFile(ScriptTabVM tab, string code)
+        {
+            if (tab.HasFile && !tab.IsDirty && File.Exists(tab.FilePath))
+                return tab.FilePath;
+
+            var dir = Path.Combine(Path.GetTempPath(), "RevitDevKit", "Debug");
+            Directory.CreateDirectory(dir);
+            var name = string.Concat((tab.Title ?? "Скрипт").Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
+            if (!name.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)) name += ".cs";
+
+            var path = Path.Combine(dir, name);
+            File.WriteAllText(path, code, System.Text.Encoding.UTF8);
+            return path;
+        }
+
+        private async Task RunCoreAsync(bool debug)
         {
             var tab = SelectedTab;
             if (tab == null) return;
@@ -227,6 +250,20 @@ namespace RevitDevKit.UI.ScriptEditor
 
             if (IsClearOnRun) ConsoleOutput.Clear();
 
+            // Without a debugger nothing runs: the user has been told to open Visual Studio.
+            string debugFile = null;
+            if (debug)
+            {
+                if (!DebugLaunch.TryAttach(tab.FilePath))
+                {
+                    TxtStatus = "Отладчик не подключён";
+                    return;
+                }
+
+                debugFile = DebugFile(tab, code);
+                ConsoleOutput.Info("Отладка: остановка на первой строке скрипта, файл " + debugFile);
+            }
+
             IsRunning = true;
             TxtStatus = "Компиляция…";
 
@@ -237,7 +274,7 @@ namespace RevitDevKit.UI.ScriptEditor
             CompileResult result;
             try
             {
-                result = await Task.Run(() => ScriptCompiler.Compile(code));
+                result = await Task.Run(() => ScriptCompiler.Compile(code, debugFile));
             }
             catch (Exception ex)
             {

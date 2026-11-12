@@ -101,6 +101,13 @@ namespace RevitDevKit
                     "Скрипт повторяется в том виде, в каком его запустили; правки в редакторе применятся после F5."
                 );
 
+            pullBtn.CreatePushButton<DebugLastCmd, AlwaysAvailable>("Repeat Last: Debug")
+                .SetToolTip("Повторить последнюю команду из Add-in Explorer под отладчиком: подключить открытую Visual Studio.")
+                .SetLongDescription(
+                    "Точки останова, поставленные в проекте в Visual Studio, сработают. Visual Studio должна быть открыта " +
+                    "с решением надстройки. Скрипты отлаживаются в Script Editor, кнопкой с жуком."
+                );
+
             pullBtn.AddSeparator();
 
             pullBtn.CreatePushButton<ShowConsolePaneCmd>("Console")
