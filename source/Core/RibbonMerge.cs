@@ -10,6 +10,7 @@ using System.Resources;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Adw = Autodesk.Windows;
+using BIMPlugins.ExtStorage.Extensions;
 
 namespace RevitDevKit.Core
 {
@@ -198,9 +199,9 @@ namespace RevitDevKit.Core
         // How sure it is the same panel: buttons with the same Id, then the same title.
         private static int Likeness(Adw.RibbonPanel live, Adw.RibbonPanel draft)
         {
-            var ids = new HashSet<string>(Flatten(live.Source.Items).Select(i => i.Id).Where(id => !string.IsNullOrEmpty(id)));
-            var score = 2 * Flatten(draft.Source.Items).Count(i => !string.IsNullOrEmpty(i.Id) && ids.Contains(i.Id));
-            if (!string.IsNullOrEmpty(draft.Source.Title) && draft.Source.Title == live.Source.Title) score++;
+            var ids = new HashSet<string>(Flatten(live.Source.Items).Select(i => i.Id).Where(id => !id.IsNullOrEmpty()));
+            var score = 2 * Flatten(draft.Source.Items).Count(i => !i.Id.IsNullOrEmpty() && ids.Contains(i.Id));
+            if (!draft.Source.Title.IsNullOrEmpty() && draft.Source.Title == live.Source.Title) score++;
             return score;
         }
 
@@ -237,10 +238,10 @@ namespace RevitDevKit.Core
             {
                 var item = draftItems[i];
                 Adw.RibbonItem match;
-                if (!string.IsNullOrEmpty(item.Id))
+                if (!item.Id.IsNullOrEmpty())
                     match = oldOrder.FirstOrDefault(l => l.Id == item.Id && l.GetType() == item.GetType() && !order.Contains(l));
                 else
-                    match = i < oldOrder.Count && string.IsNullOrEmpty(oldOrder[i].Id) && oldOrder[i].GetType() == item.GetType() && !order.Contains(oldOrder[i])
+                    match = i < oldOrder.Count && oldOrder[i].Id.IsNullOrEmpty() && oldOrder[i].GetType() == item.GetType() && !order.Contains(oldOrder[i])
                         ? oldOrder[i] : null;
 
                 if (match == null || item is Adw.RibbonRowPanel)

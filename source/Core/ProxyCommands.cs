@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using BIMPlugins.ExtStorage.Extensions;
 
 namespace RevitDevKit.Core
 {
@@ -46,7 +47,7 @@ namespace RevitDevKit.Core
                         continue;
                     }
 
-                    var availability = string.IsNullOrEmpty(button.AvailabilityClassName)
+                    var availability = button.AvailabilityClassName.IsNullOrEmpty()
                         ? null
                         : assembly.GetType(button.AvailabilityClassName);
 
@@ -119,7 +120,7 @@ namespace RevitDevKit.Core
         // the original build folder is mapped to the copy too, so the original is never locked.
         private static string ShadowPath(string assemblyPath, RibbonPreview.ShadowFolder folder, string originalDirectory)
         {
-            if (string.IsNullOrEmpty(assemblyPath)) return null;
+            if (assemblyPath.IsNullOrEmpty()) return null;
             if (folder.Owns(assemblyPath)) return Path.GetFullPath(assemblyPath);
 
             var dir = Path.GetDirectoryName(Path.GetFullPath(assemblyPath));

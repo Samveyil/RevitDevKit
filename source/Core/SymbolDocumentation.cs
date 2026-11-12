@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
+using BIMPlugins.ExtStorage.Extensions;
 
 namespace RevitDevKit.Core
 {
@@ -101,7 +102,7 @@ namespace RevitDevKit.Core
             try
             {
                 var xml = symbol.GetDocumentationCommentXml(cancellationToken: token);
-                return string.IsNullOrWhiteSpace(xml) ? null : XElement.Parse(xml);
+                return xml.IsNullOrWhiteSpace() ? null : XElement.Parse(xml);
             }
             catch (Exception ex) when (!(ex is OperationCanceledException))
             {

@@ -267,7 +267,7 @@ namespace RevitDevKit.Core
             public override void Write(char value) => Write(value.ToString());
             public override void Write(string value)
             {
-                if (string.IsNullOrEmpty(value)) return;
+                if (value.IsNullOrEmpty()) return;
                 ConsoleOutput.Write(value, _level);
 
                 try

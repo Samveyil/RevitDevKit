@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using BIMPlugins.ExtStorage.Extensions;
 
 namespace RevitDevKit.Core
 {
@@ -54,7 +55,7 @@ namespace RevitDevKit.Core
                         continue;
 
                     found.Add(assemblyName.Version + "   " +
-                              (string.IsNullOrEmpty(assembly.Location) ? "<память>" : assembly.Location));
+                              (assembly.Location.IsNullOrEmpty() ? "<память>" : assembly.Location));
                 }
                 catch
                 {

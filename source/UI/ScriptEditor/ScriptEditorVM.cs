@@ -14,6 +14,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
+using BIMPlugins.ExtStorage.Extensions;
 
 namespace RevitDevKit.UI.ScriptEditor
 {
@@ -96,7 +97,7 @@ namespace RevitDevKit.UI.ScriptEditor
             if (tab == null)
                 return;
 
-            var path = string.IsNullOrEmpty(tab.FilePath) ? AskPath(tab) : tab.FilePath;
+            var path = tab.FilePath.IsNullOrEmpty() ? AskPath(tab) : tab.FilePath;
             if (path != null)
                 Save(tab, path);
         }
@@ -119,7 +120,7 @@ namespace RevitDevKit.UI.ScriptEditor
 
         private static string AskPathInDialog(ScriptTabVM tab)
         {
-            var hasFile = !string.IsNullOrEmpty(tab.FilePath);
+            var hasFile = !tab.FilePath.IsNullOrEmpty();
             var dialog = new Microsoft.Win32.SaveFileDialog
             {
                 Filter = "C# файлы (*.cs)|*.cs|Все файлы (*.*)|*.*",
@@ -197,7 +198,7 @@ namespace RevitDevKit.UI.ScriptEditor
         private void RevealInExplorer(ScriptTabVM tab)
         {
             tab ??= SelectedTab;
-            if (tab == null || string.IsNullOrEmpty(tab.FilePath) || !File.Exists(tab.FilePath)) return;
+            if (tab == null || tab.FilePath.IsNullOrEmpty() || !File.Exists(tab.FilePath)) return;
             Process.Start("explorer.exe", "/select,\"" + tab.FilePath + "\"");
         }
 
@@ -250,7 +251,7 @@ namespace RevitDevKit.UI.ScriptEditor
             if (tab == null) return;
 
             var code = tab.Document.Text;
-            if (string.IsNullOrWhiteSpace(code))
+            if (code.IsNullOrWhiteSpace())
             {
                 TxtStatus = "Пустой скрипт";
                 return;
@@ -366,7 +367,7 @@ namespace RevitDevKit.UI.ScriptEditor
         private string _filePath;
 
         // Only such a tab has a file to show in Explorer.
-        public bool HasFile => !string.IsNullOrEmpty(FilePath);
+        public bool HasFile => !FilePath.IsNullOrEmpty();
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(Header))]

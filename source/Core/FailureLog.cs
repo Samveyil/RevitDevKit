@@ -1,4 +1,5 @@
 using Autodesk.Revit.DB;
+using BIMPlugins.ExtStorage.Extensions;
 using Autodesk.Revit.DB.Events;
 using BIMPlugins.ExtStorage;
 using System;
@@ -77,7 +78,7 @@ namespace RevitDevKit.Core
             var count = occurrences?.Count ?? 0;
             var block = new StringBuilder();
             block.Append(warning ? "Предупреждение" : "Ошибка");
-            if (!string.IsNullOrEmpty(transaction)) block.Append(" · Транзакция «").Append(transaction).Append('»');
+            if (!transaction.IsNullOrEmpty()) block.Append(" · Транзакция «").Append(transaction).Append('»');
             if (count > 1) block.Append(" · ").Append(Times(count));
             block.AppendLine();
 
@@ -127,11 +128,11 @@ namespace RevitDevKit.Core
             var parts = new List<string>();
             try
             {
-                var element = document?.GetElement(id);
+                var element = id.ToElement(document);
                 if (element != null)
                 {
                     parts.Add(element.Category?.Name);
-                    if (document.GetElement(element.GetTypeId()) is ElementType type)
+                    if (element.ToElementType() is ElementType type)
                     {
                         parts.Add(type.FamilyName);
                         parts.Add(type.Name);
@@ -147,15 +148,11 @@ namespace RevitDevKit.Core
                 // Read what can be read; the Id is always there.
             }
 
-            var name = string.Join(" · ", parts.Where(p => !string.IsNullOrWhiteSpace(p)).Distinct());
+            var name = string.Join(" · ", parts.Where(p => !p.IsNullOrWhiteSpace()).Distinct());
             return (name.Length > 0 ? name + " : " : string.Empty) + "Id " + Id(id);
         }
 
-#if R2024_OR_GREATER
-        private static string Id(ElementId id) => id.Value.ToString();
-#else
-        private static string Id(ElementId id) => id.IntegerValue.ToString();
-#endif
+        private static string Id(ElementId id) => id.GetValue().ToString();
 
         private sealed class Subscription : IDisposable
         {

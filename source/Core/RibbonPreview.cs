@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using BIMPlugins.ExtStorage.Extensions;
 
 namespace RevitDevKit.Core
 {
@@ -107,7 +108,7 @@ namespace RevitDevKit.Core
             var commandFiles = draft.CommandFiles();
             var merge = new RibbonMerge(button =>
                 commandFiles.Contains(RibbonDraft.FileName(button.AssemblyName) ?? string.Empty) ||
-                folder.Loaded.Any(a => !string.IsNullOrEmpty(button.ClassName) && a.GetType(button.ClassName) != null));
+                folder.Loaded.Any(a => !button.ClassName.IsNullOrEmpty() && a.GetType(button.ClassName) != null));
             merge.Apply(draft);
             // Every button of the new build runs through a proxy, also one the add-in moved to a panel of its own:
             // Revit would load a second copy's DLL by its name and get the first copy, whose XAML is no longer found.
@@ -277,7 +278,7 @@ namespace RevitDevKit.Core
             public IReadOnlyCollection<Assembly> Loaded => _loaded.Values;
 
             public bool Owns(string path) =>
-                !string.IsNullOrEmpty(path) &&
+                !path.IsNullOrEmpty() &&
                 string.Equals(Path.GetDirectoryName(Path.GetFullPath(path)), Directory, StringComparison.OrdinalIgnoreCase);
 
             public Assembly Load(string path)
@@ -321,7 +322,7 @@ namespace RevitDevKit.Core
                         if (assembly.IsDynamic || !string.Equals(assembly.GetName().Name, name, StringComparison.OrdinalIgnoreCase)) continue;
 
                         var location = assembly.Location;
-                        if (string.IsNullOrEmpty(location) || !File.Exists(location) || new FileInfo(location).Length != length) continue;
+                        if (location.IsNullOrEmpty() || !File.Exists(location) || new FileInfo(location).Length != length) continue;
 
                         hash ??= Hash(path);
                         if (Hash(location) == hash) return assembly;
@@ -353,7 +354,7 @@ namespace RevitDevKit.Core
                 return AppDomain.CurrentDomain.GetAssemblies()
                     .Where(a => !a.IsDynamic && !Folders.Any(f => f.Contains(a)))
                     .Select(a => { try { return a.Location; } catch { return null; } })
-                    .Where(l => !string.IsNullOrEmpty(l) && !l.StartsWith(windows, StringComparison.OrdinalIgnoreCase)
+                    .Where(l => !l.IsNullOrEmpty() && !l.StartsWith(windows, StringComparison.OrdinalIgnoreCase)
                                 && !l.StartsWith(ShadowBase, StringComparison.OrdinalIgnoreCase))
                     .Select(Path.GetDirectoryName)
                     .Distinct(StringComparer.OrdinalIgnoreCase)

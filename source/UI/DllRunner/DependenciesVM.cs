@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
+using BIMPlugins.ExtStorage.Extensions;
 
 namespace RevitDevKit.UI.DllRunner
 {
@@ -249,7 +250,7 @@ namespace RevitDevKit.UI.DllRunner
             {
                 try
                 {
-                    if (assembly.IsDynamic || string.IsNullOrEmpty(assembly.Location)) continue;
+                    if (assembly.IsDynamic || assembly.Location.IsNullOrEmpty()) continue;
                     result.Add(Tuple.Create(assembly.GetName().Name, assembly.Location));
                 }
                 catch
@@ -285,7 +286,7 @@ namespace RevitDevKit.UI.DllRunner
             }
 
             var query = SearchText?.Trim() ?? string.Empty;
-            bool Matches(params string[] values) => query.Length == 0 || values.Any(v => v != null && v.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
+            bool Matches(params string[] values) => query.Length == 0 || values.Any(v => v.Contains(query, StringComparison.OrdinalIgnoreCase));
 
             // Conflicts always; with the box cleared, also what loads side by side, what is the same everywhere,
             // and what only Revit and Autodesk add-ins share, which the user cannot change anyway.

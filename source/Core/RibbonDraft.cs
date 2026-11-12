@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
 using Adw = Autodesk.Windows;
+using BIMPlugins.ExtStorage.Extensions;
 
 namespace RevitDevKit.Core
 {
@@ -122,7 +123,7 @@ namespace RevitDevKit.Core
 
         internal static string FileName(string path)
         {
-            try { return string.IsNullOrEmpty(path) ? null : Path.GetFileName(path); }
+            try { return path.IsNullOrEmpty() ? null : Path.GetFileName(path); }
             catch { return null; }
         }
     }

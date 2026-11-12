@@ -1,4 +1,5 @@
 using Autodesk.Revit.DB;
+using BIMPlugins.ExtStorage.Extensions;
 using Autodesk.Revit.UI;
 using System;
 using System.Collections;
@@ -202,10 +203,10 @@ namespace RevitDevKit.Core
                     else Add(shape, element.Location, document, transform, counts, depth + 1);
                     return;
                 case ElementId id:
-                    Add(shape, document?.GetElement(id), document, transform, counts, depth + 1);
+                    Add(shape, id.ToElement(document), document, transform, counts, depth + 1);
                     return;
                 case Reference reference:
-                    Add(shape, document?.GetElement(reference)?.GetGeometryObjectFromReference(reference), document, transform, counts, depth + 1);
+                    Add(shape, reference.ToElement(document)?.GetGeometryObjectFromReference(reference), document, transform, counts, depth + 1);
                     return;
                 case string _:
                     return;
@@ -302,10 +303,6 @@ namespace RevitDevKit.Core
             return n + " " + word;
         }
 
-#if R2024_OR_GREATER
-        private static string Id(ElementId id) => id.Value.ToString();
-#else
-        private static string Id(ElementId id) => id.IntegerValue.ToString();
-#endif
+        private static string Id(ElementId id) => id.GetValue().ToString();
     }
 }

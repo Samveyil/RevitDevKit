@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using BIMPlugins.ExtStorage.Extensions;
+using BIMPlugins.ExtStorage.Comparers;
 
 namespace RevitDevKit.UI.DllRunner
 {
@@ -28,7 +30,7 @@ namespace RevitDevKit.UI.DllRunner
         }
 
         protected static bool Matches(string text, string query) =>
-            text.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
+            text.Contains(query, StringComparison.OrdinalIgnoreCase);
 
         // A matching parent shows all its children; while searching, nodes expand only along
         // the paths that lead to a name match.
@@ -74,17 +76,17 @@ namespace RevitDevKit.UI.DllRunner
                 .Where(t => t.Namespace.Length > 0)
                 .GroupBy(t => t.Namespace)
                 .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
-                .Select(g => new NamespaceNodeVM(this, g.Key, g.OrderBy(t => t.DisplayName, StringComparer.OrdinalIgnoreCase), onSelected));
+                .Select(g => new NamespaceNodeVM(this, g.Key, g.OrderBy(t => t.DisplayName.ToUpperInvariant(), new NaturalComparer()), onSelected));
 
             var loose = Targets
                 .Where(t => t.Namespace.Length == 0)
-                .OrderBy(t => t.DisplayName, StringComparer.OrdinalIgnoreCase);
+                .OrderBy(t => t.DisplayName.ToUpperInvariant(), new NaturalComparer());
 
             Children = folders.Cast<AssemblyTreeNodeVM>().Concat(loose).ToList();
         }
 
         public override bool Filter(string query, bool parentMatched = false) =>
-            ApplyFilter(DisplayName, Children, query ?? string.Empty, parentMatched || string.IsNullOrEmpty(query));
+            ApplyFilter(DisplayName, Children, query ?? string.Empty, parentMatched || query.IsNullOrEmpty());
     }
 
     public sealed class NamespaceNodeVM : AssemblyTreeNodeVM
