@@ -4,6 +4,7 @@ using BIMPlugins.ExtStorage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace RevitDevKit.Core
 {
@@ -12,8 +13,6 @@ namespace RevitDevKit.Core
     // on: warnings are then deleted once written, and no warning dialog appears. Errors are left to Revit.
     public static class FailureLog
     {
-        private const int ShownIds = 10;
-
         public static IDisposable Watch(bool hideWarnings)
         {
             Autodesk.Revit.ApplicationServices.Application application;
@@ -34,14 +33,19 @@ namespace RevitDevKit.Core
         {
             try
             {
+                var document = accessor.GetDocument();
                 var transaction = accessor.GetTransactionName();
                 foreach (var message in accessor.GetFailureMessages())
                 {
                     var severity = message.GetSeverity();
                     if (severity == FailureSeverity.None) continue;
 
-                    var hidden = hideWarnings && severity == FailureSeverity.Warning;
-                    Write(severity, transaction, message.GetDescriptionText(), message.GetFailingElementIds(), hidden);
+                    var warning = severity == FailureSeverity.Warning;
+                    var hidden = hideWarnings && warning;
+                    var elements = message.GetFailingElementIds().Select(id => Describe(document, id)).ToList();
+
+                    ConsoleOutput.WriteWrapped(Format(warning, transaction, message.GetDescriptionText(), elements, hidden),
+                        warning ? LogLevel.Warning : LogLevel.Error);
 
                     if (hidden) accessor.DeleteWarning(message);
                 }
@@ -52,28 +56,63 @@ namespace RevitDevKit.Core
             }
         }
 
-        // Предупреждение · «Пометить стены»: Выделенные стены перекрываются. (2): 412873, 412990
-        internal static string Line(FailureSeverity severity, string transaction, string text, ICollection<ElementId> ids, bool hidden)
+        // Предупреждение · «Пометить стены»
+        //   Выделенные стены перекрываются. …
+        //   Элементы (2):
+        //     Стены · Базовая стена · Наружная - 300 : Id 412873
+        internal static string Format(bool warning, string transaction, string text, IList<string> elements, bool hidden)
         {
-            var kind = severity == FailureSeverity.Warning ? "Предупреждение" : "Ошибка";
-            var line = kind + (string.IsNullOrEmpty(transaction) ? "" : " · «" + transaction + "»") + ": " + (text ?? "").Trim();
+            var block = new StringBuilder();
+            block.Append(warning ? "Предупреждение" : "Ошибка");
+            if (!string.IsNullOrEmpty(transaction)) block.Append(" · «").Append(transaction).Append('»');
+            block.AppendLine();
 
-            if (ids != null && ids.Count > 0)
+            foreach (var line in (text ?? string.Empty).Trim().Replace("\r\n", "\n").Split('\n'))
+                block.Append("  ").AppendLine(line.Trim());
+
+            if (!warning) block.AppendLine("  Если ошибку не решить, Revit отменит транзакцию.");
+            else if (hidden) block.AppendLine("  Скрыто: окно Revit не показано.");
+
+            if (elements != null && elements.Count > 0)
             {
-                line += " (" + ids.Count + "): " + string.Join(", ", ids.Take(ShownIds).Select(Id));
-                if (ids.Count > ShownIds) line += " и ещё " + (ids.Count - ShownIds);
+                block.Append("  Элементы (").Append(elements.Count).AppendLine("):");
+                foreach (var element in elements)
+                    block.Append("    ").AppendLine(element);
             }
 
-            if (severity != FailureSeverity.Warning)
-                line += " — если её не решить, Revit отменит транзакцию";
-            else if (hidden)
-                line += " — скрыто";
-
-            return line;
+            return block.ToString();
         }
 
-        private static void Write(FailureSeverity severity, string transaction, string text, ICollection<ElementId> ids, bool hidden) =>
-            ConsoleOutput.WriteLine(Line(severity, transaction, text, ids, hidden), severity == FailureSeverity.Warning ? LogLevel.Warning : LogLevel.Error);
+        // "Стены · Базовая стена · Наружная - 300 : Id 412873": category, family and type, or the element's name
+        // when it has no type. An element already gone (the transaction rolled back) is just its Id.
+        private static string Describe(Document document, ElementId id)
+        {
+            var parts = new List<string>();
+            try
+            {
+                var element = document?.GetElement(id);
+                if (element != null)
+                {
+                    parts.Add(element.Category?.Name);
+                    if (document.GetElement(element.GetTypeId()) is ElementType type)
+                    {
+                        parts.Add(type.FamilyName);
+                        parts.Add(type.Name);
+                    }
+                    else
+                    {
+                        parts.Add(element.Name);
+                    }
+                }
+            }
+            catch
+            {
+                // Read what can be read; the Id is always there.
+            }
+
+            var name = string.Join(" · ", parts.Where(p => !string.IsNullOrWhiteSpace(p)).Distinct());
+            return (name.Length > 0 ? name + " : " : string.Empty) + "Id " + Id(id);
+        }
 
 #if R2024_OR_GREATER
         private static string Id(ElementId id) => id.Value.ToString();
