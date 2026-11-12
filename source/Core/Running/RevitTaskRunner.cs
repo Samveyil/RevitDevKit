@@ -2,12 +2,14 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BIMPlugins.ExtStorage;
 using RevitDevKit.Commands;
+using RevitDevKit.Core.Output;
+using RevitDevKit.Core.Show;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Running
 {
     public sealed class RunRequest
     {

@@ -1,10 +1,10 @@
+using BIMPlugins.ExtStorage.Extensions;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using BIMPlugins.ExtStorage.Extensions;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Addins
 {
     // Reports of Add-in Explorer go to a text file in the temp folder, shown in Explorer, rather than to the clipboard:
     // the user opens it in any editor, attaches it to an issue or keeps it.

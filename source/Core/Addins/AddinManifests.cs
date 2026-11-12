@@ -1,3 +1,4 @@
+using BIMPlugins.ExtStorage.Extensions;
 using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
@@ -5,10 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Xml.Linq;
-using BIMPlugins.ExtStorage.Extensions;
-using BIMPlugins.ExtStorage.Comparers;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Addins
 {
     public enum AddinScope
     {
@@ -99,7 +98,7 @@ namespace RevitDevKit.Core
             return files
                 .Select(f => Read(f, scope, twin: !IsEnabledFile(f) && names.Contains(NameOf(f))
                                                 || IsEnabledFile(f) && File.Exists(f + ".disable")))
-                .OrderBy(m => m.Name.ToUpperInvariant(), new NaturalComparer())
+                .OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase)
                 .ThenBy(m => m.IsEnabled ? 0 : 1)
                 .ToList();
         }

@@ -2,13 +2,13 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
+using RevitDevKit.Core.Compiler;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.IntelliSense
 {
     public enum CompletionKind
     {

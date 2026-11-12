@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Output
 {
     public enum LogLevel
     {

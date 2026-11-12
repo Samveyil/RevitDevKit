@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Compiler
 {
     public sealed class PreparedSource
     {
@@ -25,7 +25,7 @@ namespace RevitDevKit.Core
             "using System.Text; using System.IO; " +
             "using Autodesk.Revit.DB; using Autodesk.Revit.DB.Structure; " +
             "using Autodesk.Revit.UI; using Autodesk.Revit.UI.Selection; " +
-            "using RevitDevKit.Core; using RevitDevKit.Scripting; " +
+            "using RevitDevKit.Core.Output; using RevitDevKit.ScriptApi; " +
             "using BIMPlugins.ExtStorage.Extensions; using BIMPlugins.ExtStorage.Extensions.UtilsExtensions;";
 
         private static readonly Regex UsingLine = new Regex(
@@ -93,7 +93,7 @@ namespace RevitDevKit.Core
                 sb.Append(' ').Append(u);
             
             sb.Append('\n');
-            sb.Append("namespace RevitDevKit.UserScripts { public class __ScriptEntry : RevitDevKit.Scripting.ScriptBase { public void Main() {\n");
+            sb.Append("namespace RevitDevKit.UserScripts { public class __ScriptEntry : RevitDevKit.ScriptApi.ScriptBase { public void Main() {\n");
             if (debugFile != null)
             {
                 // The break shows as the script's first line, which then runs on F10.

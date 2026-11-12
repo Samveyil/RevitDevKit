@@ -1,10 +1,10 @@
+using BIMPlugins.ExtStorage.Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using BIMPlugins.ExtStorage.Extensions;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Output
 {
     internal static class RuntimeDiagnostics
     {

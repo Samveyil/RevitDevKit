@@ -1,7 +1,10 @@
 using BIMPlugins.ExtStorage;
+using BIMPlugins.ExtStorage.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using RevitDevKit.Core;
+using RevitDevKit.Core.Compiler;
+using RevitDevKit.Core.Output;
+using RevitDevKit.Core.Running;
 using RevitDevKit.UI.Console;
 using System;
 using System.Collections.Generic;
@@ -11,7 +14,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Threading;
-using BIMPlugins.ExtStorage.Extensions;
 
 namespace RevitDevKit.UI.DllRunner
 {

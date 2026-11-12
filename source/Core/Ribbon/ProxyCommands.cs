@@ -1,16 +1,17 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using BIMPlugins.ExtStorage.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using RevitDevKit.Core.Output;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using BIMPlugins.ExtStorage.Extensions;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Ribbon
 {
     // Revit loads a button's command from the DLL path stored in it, and a second DLL with the
     // same assembly name resolves to the one already loaded. So buttons taken from a fresh build
@@ -142,9 +143,9 @@ namespace RevitDevKit.Core
                 source.AppendLine("[Autodesk.Revit.Attributes.Transaction(Autodesk.Revit.Attributes.TransactionMode.Manual)]");
                 source.AppendLine("public sealed class " + ClassName(id) + " : Autodesk.Revit.UI.IExternalCommand, Autodesk.Revit.UI.IExternalCommandAvailability {");
                 source.AppendLine("  public Autodesk.Revit.UI.Result Execute(Autodesk.Revit.UI.ExternalCommandData d, ref string m, Autodesk.Revit.DB.ElementSet e)");
-                source.AppendLine("    => RevitDevKit.Core.ProxyCommands.Execute(" + id + ", d, ref m, e);");
+                source.AppendLine("    => RevitDevKit.Core.Ribbon.ProxyCommands.Execute(" + id + ", d, ref m, e);");
                 source.AppendLine("  public bool IsCommandAvailable(Autodesk.Revit.UI.UIApplication a, Autodesk.Revit.DB.CategorySet c)");
-                source.AppendLine("    => RevitDevKit.Core.ProxyCommands.IsAvailable(" + id + ", a, c);");
+                source.AppendLine("    => RevitDevKit.Core.Ribbon.ProxyCommands.IsAvailable(" + id + ", a, c);");
                 source.AppendLine("}");
             }
 

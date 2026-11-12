@@ -2,6 +2,8 @@ using BIMPlugins.ExtStorage.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
+using RevitDevKit.Core.IntelliSense;
+using RevitDevKit.Core.Output;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,7 +13,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Compiler
 {
     public sealed class CompileMessage
     {

@@ -1,3 +1,4 @@
+using BIMPlugins.ExtStorage.Extensions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -10,9 +11,8 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading;
-using BIMPlugins.ExtStorage.Extensions;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Addins
 {
     // One DLL file as its header describes it; nothing is loaded.
     public sealed class DllInfo
