@@ -56,7 +56,7 @@ namespace RevitDevKit.Core
             }
         }
 
-        // Предупреждение · «Пометить стены»
+        // Предупреждение · Транзакция «Пометить стены»
         //   Выделенные стены перекрываются. …
         //   Элементы (2):
         //     Стены · Базовая стена · Наружная - 300 : Id 412873
@@ -64,7 +64,7 @@ namespace RevitDevKit.Core
         {
             var block = new StringBuilder();
             block.Append(warning ? "Предупреждение" : "Ошибка");
-            if (!string.IsNullOrEmpty(transaction)) block.Append(" · «").Append(transaction).Append('»');
+            if (!string.IsNullOrEmpty(transaction)) block.Append(" · Транзакция «").Append(transaction).Append('»');
             block.AppendLine();
 
             foreach (var line in (text ?? string.Empty).Trim().Replace("\r\n", "\n").Split('\n'))

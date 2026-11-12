@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace RevitDevKit.Core
@@ -39,7 +40,8 @@ namespace RevitDevKit.Core
     public static class ConsoleText
     {
         // Wraps one line at spaces so no piece is longer than width; the pieces after the first keep the line's
-        // own indent. A word longer than width stays whole. Width 0 or less: the line as it is.
+        // own indent. A word longer than width stays whole, and punctuation set apart by a space ("другую .")
+        // stays with the word before it. Width 0 or less: the line as it is.
         public static IEnumerable<string> Wrap(string line, int width)
         {
             if (line == null || width <= 0 || line.Length <= width)
@@ -51,9 +53,17 @@ namespace RevitDevKit.Core
             var indent = line.Substring(0, line.Length - line.TrimStart(' ').Length);
             var current = new StringBuilder(indent);
             var empty = true;
-            foreach (var word in line.Substring(indent.Length).Split(' '))
+            // Punctuation set apart by a space is one word with the word before it, so it moves along.
+            var words = new List<string>();
+            foreach (var token in line.Substring(indent.Length).Split(' '))
             {
-                if (word.Length == 0) continue;
+                if (token.Length == 0) continue;
+                if (words.Count > 0 && token.All(char.IsPunctuation)) words[words.Count - 1] += " " + token;
+                else words.Add(token);
+            }
+
+            foreach (var word in words)
+            {
 
                 if (!empty && current.Length + 1 + word.Length > width)
                 {
