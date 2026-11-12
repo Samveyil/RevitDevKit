@@ -18,6 +18,12 @@ namespace RevitDevKit.Commands
             lock (Sync) _pending = request;
         }
 
+        // The last run, for Repeat Last: Debug.
+        internal static RunRequest Last
+        {
+            get { lock (Sync) return _last; }
+        }
+
         internal static void Remember(RunRequest request)
         {
             if (request == null) return;

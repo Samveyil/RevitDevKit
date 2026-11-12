@@ -137,6 +137,12 @@
                 </StackPanel>
             </Button>
 
+            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RunWithDebuggerCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    ToolTip="Выполнить под отладчиком: подключить Visual Studio, точки останова в проекте сработают">
+                <materialDesign:PackIcon Kind="BugPlayOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+
             <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding AddAssemblyCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Добавить DLL (Ctrl+O)">
                 <materialDesign:PackIcon Kind="FolderOpenOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>

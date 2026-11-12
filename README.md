@@ -16,6 +16,7 @@ The Add-Ins tab gets a DevKit panel with a pulldown button:
 - Script Editor opens the script editor;
 - Add-in Explorer opens a window with the commands and applications of a DLL, the add-ins Revit loads at startup, the loaded assemblies and the add-ins' DLLs;
 - Repeat Last runs the last script or command once more;
+- Repeat Last: Debug runs the last command of a DLL once more under the open Visual Studio;
 - Console, after a separator, shows the console pane or hides it when it is open.
 
 ## Script Editor
@@ -33,6 +34,8 @@ An assembly that Revit does not load can be referenced with `#r`:
 The **Примеры** (Samples) menu has a few ready-made scripts. The **Автотранзакция** (auto transaction) checkbox wraps the run in a transaction, for scripts that change the model without opening one themselves. If a script does not compile, the errors go to the console and the caret moves to the first of them. **Чистить консоль** (clear console) clears the console before each run.
 
 Scripts are saved to `%AppData%\RevitDevKit\Scripts` unless you pick another folder. A right click on a tab closes it, saves it under another name (**Сохранить как…**, also a toolbar button and Ctrl+Shift+S), and for a tab saved to a file shows the file in Explorer. Repeat Last on the ribbon repeats a script as it was compiled: edits take effect after F5 in the editor.
+
+The bug button next to **Запустить** (Run) runs the script under a debugger. An open Visual Studio is attached to Revit by itself, as Debug › Attach to Process does; with several open, the one whose solution folder holds the script or the DLL. The run stops on the first line of the script, or at the start of `Execute`, `Main` or `Run` of a class. With no Visual Studio open, nothing runs and DevKit asks to open it first. Another debugger, Rider or VS Code, is attached to Revit by hand (Attach to Process), and then the button runs under it. From there F10 and F11 step through the script and breakpoints can be set in it. The debugger shows the script's own file when the tab is saved as it is, otherwise a copy of the text in `%TEMP%\RevitDevKit\Debug`.
 
 The editor suggests as you type: after a dot it lists the members of the type, after `(` it shows the method's overloads with parameter descriptions from the Revit API documentation. After `<` of a generic method the list keeps only the types that fit: `All<` offers element classes, and `walls.OfType<` puts the subclasses of the collection's element first. Brackets `()`, `[]`, `{}`, `<>` of generics and quotes close by themselves, and Enter between `{}` opens a block.
 
@@ -82,9 +85,9 @@ In the output of `Compare`, `-нет-` (none) means the element has no such para
 
 <img src="assets/dll-runner-commands.png" width="580" alt="Add-in Explorer, the Commands tab" />
 
-Add a built DLL, and its `IExternalCommand` classes appear in the list, grouped by namespace. A double click or F5 runs a command. The DLL file is not locked, so the project can be rebuilt without closing Revit. The command is taken from the DLL on disk every time, so after a build just run it again. The **Обновить** (Refresh) button is needed only when new commands appear. As in the editor, **Чистить консоль** (clear console) clears the console before each run.
+Add a built DLL, and its `IExternalCommand` classes appear in the list, grouped by namespace. A double click or F5 runs a command. The DLL file is not locked, so the project can be rebuilt without closing Revit. The command is taken from the DLL on disk every time, so after a build just run it again. The **Обновить** (Refresh) button is needed only when new commands appear. As in the editor, **Чистить консоль** (clear console) clears the console before each run. The bug button runs the command under a debugger: the Visual Studio with the add-in's solution open is attached, and breakpoints set in the project are hit.
 
-The window closes when a command runs. To run the same command again after changes, there is no need to open Add-in Explorer: build the project and press Repeat Last on the ribbon, and the command runs from the fresh DLL. Repeat Last can be given a keyboard shortcut in Revit.
+The window closes when a command runs. To run the same command again after changes, there is no need to open Add-in Explorer: build the project and press Repeat Last on the ribbon, and the command runs from the fresh DLL. Repeat Last can be given a keyboard shortcut in Revit. **Repeat Last: Debug** next to it repeats the command under the open Visual Studio, as the bug button does, so breakpoints set in the project are hit; it has its own shortcut. A script is debugged in Script Editor instead.
 
 ### Applications
 

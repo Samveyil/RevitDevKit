@@ -45,12 +45,12 @@ namespace RevitDevKit.Core
 
         private static readonly object CacheSync = new object();
 
-        public static CompileResult Compile(string userCode)
+        public static CompileResult Compile(string userCode, string debugFile = null)
         {
             var sw = Stopwatch.StartNew();
             var messages = new List<CompileMessage>();
 
-            var prepared = ScriptSource.Prepare(userCode);
+            var prepared = ScriptSource.Prepare(userCode, debugFile);
             var assemblyName = "RevitScript_" + Guid.NewGuid().ToString("N");
 
             var syntaxTree = CSharpSyntaxTree.ParseText(prepared.Code, CreateParseOptions(), assemblyName + ".cs", Encoding.UTF8);
