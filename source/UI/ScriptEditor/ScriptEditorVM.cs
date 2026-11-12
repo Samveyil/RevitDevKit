@@ -22,7 +22,6 @@ namespace RevitDevKit.UI.ScriptEditor
         private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
 
         [ObservableProperty] private bool _isAutoTransaction = false;
-        [ObservableProperty] private bool _isClearOnRun = true;
 
         [ObservableProperty] private ScriptTabVM _selectedTab;
 
@@ -248,7 +247,7 @@ namespace RevitDevKit.UI.ScriptEditor
                 return;
             }
 
-            if (IsClearOnRun) ConsoleOutput.Clear();
+            if (ConsoleOptions.ClearOnRun) ConsoleOutput.Clear();
 
             // Without a debugger nothing runs: the user has been told to open Visual Studio.
             string debugFile = null;
@@ -315,6 +314,7 @@ namespace RevitDevKit.UI.ScriptEditor
             {
                 Title = title,
                 AutoTransaction = autoTransaction,
+                HideWarnings = ConsoleOptions.HideWarnings,
                 TransactionName = "DevKit: " + title,
                 Body = () => target.Invoke(),
                 Completed = error => _dispatcher.Invoke(() =>
