@@ -240,9 +240,10 @@ namespace RevitDevKit.UI.DllRunner
             node ??= SelectedNode as TargetNodeVM;
             if (node == null) return;
 
-            if (DebugLaunch.TryAttach(node.Owner.FilePath))
-                ConsoleOutput.Info("Отладчик подключён: точки останова в проекте " + node.Owner.DisplayName + " сработают.");
+            // Without a debugger nothing runs: the user has been told to open Visual Studio.
+            if (!DebugLaunch.TryAttach(node.Owner.FilePath)) return;
 
+            ConsoleOutput.Info("Точки останова в проекте " + node.Owner.DisplayName + " сработают.");
             Run(node);
         }
 
