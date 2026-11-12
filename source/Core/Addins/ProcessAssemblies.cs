@@ -1,3 +1,5 @@
+using BIMPlugins.ExtStorage.Extensions;
+using RevitDevKit.Core.Compiler;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -5,7 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Addins
 {
     // Where a loaded assembly comes from, for the owner column and the "hide system" filter.
     public enum AssemblySource
@@ -49,7 +51,7 @@ namespace RevitDevKit.Core
                                 || Source == AssemblySource.Framework || Source == AssemblySource.Memory;
 
         // The file "Show in Explorer" goes to: its own, or the DLL it is a copy of.
-        public string FilePath => Location ?? (string.IsNullOrEmpty(Origin) ? null : Origin);
+        public string FilePath => Location ?? (Origin.IsNullOrEmpty() ? null : Origin);
     }
 
     // Every assembly loaded into Revit's AppDomain, numbered as the AppDomain lists them, with who brought it.
@@ -117,7 +119,7 @@ namespace RevitDevKit.Core
             {
                 if (assembly.IsDynamic) return null;
                 var location = assembly.Location;
-                return string.IsNullOrEmpty(location) ? null : location;
+                return location.IsNullOrEmpty() ? null : location;
             }
             catch
             {
@@ -159,7 +161,7 @@ namespace RevitDevKit.Core
                 item.Source = AssemblySource.AddIn;
                 item.Owner = owner.Item2;
             }
-            else if (!string.IsNullOrEmpty(revitFolder) && AddinDependencies.IsUnder(path, revitFolder))
+            else if (!revitFolder.IsNullOrEmpty() && AddinDependencies.IsUnder(path, revitFolder))
             {
                 item.Source = AssemblySource.Revit;
                 item.Owner = "Revit";
@@ -205,6 +207,6 @@ namespace RevitDevKit.Core
             return text.ToString();
         }
 
-        private static string Cell(string value) => string.IsNullOrEmpty(value) ? "-" : value.Replace("|", "\\|");
+        private static string Cell(string value) => value.IsNullOrEmpty() ? "-" : value.Replace("|", "\\|");
     }
 }

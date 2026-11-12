@@ -1,3 +1,4 @@
+using BIMPlugins.ExtStorage.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System;
 using System.Collections.Generic;
@@ -28,7 +29,7 @@ namespace RevitDevKit.UI.DllRunner
         }
 
         protected static bool Matches(string text, string query) =>
-            text.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
+            text.Contains(query, StringComparison.OrdinalIgnoreCase);
 
         // A matching parent shows all its children; while searching, nodes expand only along
         // the paths that lead to a name match.
@@ -84,7 +85,7 @@ namespace RevitDevKit.UI.DllRunner
         }
 
         public override bool Filter(string query, bool parentMatched = false) =>
-            ApplyFilter(DisplayName, Children, query ?? string.Empty, parentMatched || string.IsNullOrEmpty(query));
+            ApplyFilter(DisplayName, Children, query ?? string.Empty, parentMatched || query.IsNullOrEmpty());
     }
 
     public sealed class NamespaceNodeVM : AssemblyTreeNodeVM

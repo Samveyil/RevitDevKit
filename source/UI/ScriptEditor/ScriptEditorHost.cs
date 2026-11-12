@@ -1,5 +1,6 @@
+using BIMPlugins.ExtStorage.Extensions;
 using ICSharpCode.AvalonEdit;
-using RevitDevKit.Core;
+using RevitDevKit.Core.Output;
 using System;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -49,6 +50,7 @@ namespace RevitDevKit.UI.ScriptEditor
             editor.Document = tab.Document;
             CompletionController.Attach(editor);
             BoxSelectionController.Attach(editor);
+            CommentController.Attach(editor);
 
             tab.NavigateRequested += (line, column) =>
             {
@@ -158,7 +160,7 @@ namespace RevitDevKit.UI.ScriptEditor
                 var location = assembly.Location;
 
                 ConsoleOutput.Debug("AvalonEdit " + assembly.GetName().Version +
-                                    " из " + (string.IsNullOrEmpty(location) ? "<память>" : location));
+                                    " из " + (location.IsNullOrEmpty() ? "<память>" : location));
             }
             catch (Exception ex)
             {

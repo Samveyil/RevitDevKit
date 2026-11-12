@@ -1,6 +1,9 @@
+using BIMPlugins.ExtStorage.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using RevitDevKit.Core;
+using RevitDevKit.Core.Output;
+using RevitDevKit.Core.Ribbon;
+using RevitDevKit.Core.Running;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -219,7 +222,7 @@ namespace RevitDevKit.UI.DllRunner
                     if (path != null)
                         Items.Add(new AppNodeVM(path, types));
 
-                    path = string.IsNullOrWhiteSpace(line) ? null : line.Trim();
+                    path = line.IsNullOrWhiteSpace() ? null : line.Trim();
                     types = new List<string>();
                 }
             }

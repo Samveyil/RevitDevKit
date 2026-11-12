@@ -2,6 +2,8 @@ using BIMPlugins.ExtStorage.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
+using RevitDevKit.Core.IntelliSense;
+using RevitDevKit.Core.Output;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,7 +13,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Compiler
 {
     public sealed class CompileMessage
     {
@@ -274,7 +276,7 @@ namespace RevitDevKit.Core
 
             foreach (var dir in PlatformSearchDirectories())
             {
-                if (string.IsNullOrEmpty(dir))
+                if (dir.IsNullOrEmpty())
                     continue;
                 candidate = Path.Combine(dir, fileName);
                 if (File.Exists(candidate))
@@ -353,11 +355,11 @@ namespace RevitDevKit.Core
             }
 #else
             var tpa = AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") as string;
-            if (string.IsNullOrEmpty(tpa)) yield break;
+            if (tpa.IsNullOrEmpty()) yield break;
 
             foreach (var path in tpa.Split(Path.PathSeparator))
             {
-                if (!string.IsNullOrEmpty(path)) yield return path;
+                if (!path.IsNullOrEmpty()) yield return path;
             }
 #endif
         }

@@ -2,12 +2,14 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BIMPlugins.ExtStorage;
 using RevitDevKit.Commands;
+using RevitDevKit.Core.Output;
+using RevitDevKit.Core.Show;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Running
 {
     public sealed class RunRequest
     {
@@ -34,6 +36,16 @@ namespace RevitDevKit.Core
         private static ExternalEvent _event;
 
         private readonly ConcurrentQueue<RunRequest> _queue = new ConcurrentQueue<RunRequest>();
+
+        // Small things that need an API context and say nothing in the console, such as redrawing the views.
+        private readonly ConcurrentQueue<Action<UIApplication>> _actions = new ConcurrentQueue<Action<UIApplication>>();
+
+        public static void Post(Action<UIApplication> action)
+        {
+            if (action == null || _event == null) return;
+            _instance._actions.Enqueue(action);
+            _event.Raise();
+        }
 
         internal static ExternalCommandData CurrentCommandData { get; private set; }
 
@@ -83,6 +95,12 @@ namespace RevitDevKit.Core
 
         public void Execute(UIApplication app)
         {
+            while (_actions.TryDequeue(out var action))
+            {
+                try { action(app); }
+                catch (Exception ex) { ConsoleOutput.Debug("DevKit: " + ex.Message); }
+            }
+
             RunRequest request;
             while (_queue.TryDequeue(out request))
                 RunOne(request, null);
@@ -145,6 +163,9 @@ namespace RevitDevKit.Core
             {
                 failures.Dispose();
                 CurrentCommandData = null;
+
+                // What the run showed with Show(...), or cleared, appears on the views.
+                ShownGeometry.RefreshIfChanged(RevitAPI.UIDocument);
 
                 if (transaction != null) transaction.Dispose();
 

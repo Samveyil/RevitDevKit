@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Output
 {
     public enum LogLevel
     {
@@ -267,7 +267,7 @@ namespace RevitDevKit.Core
             public override void Write(char value) => Write(value.ToString());
             public override void Write(string value)
             {
-                if (string.IsNullOrEmpty(value)) return;
+                if (value.IsNullOrEmpty()) return;
                 ConsoleOutput.Write(value, _level);
 
                 try

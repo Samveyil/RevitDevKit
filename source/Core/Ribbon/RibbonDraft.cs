@@ -1,6 +1,8 @@
 using Autodesk.Revit.UI;
+using BIMPlugins.ExtStorage.Extensions;
 using BIMPlugins.UI;
 using HarmonyLib;
+using RevitDevKit.Core.Output;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,7 +11,7 @@ using System.Reflection;
 using System.Runtime.ExceptionServices;
 using Adw = Autodesk.Windows;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Ribbon
 {
     // OnStartup of the new build runs against a name registry without any panels, so the add-in
     // builds its ribbon from scratch next to the live one. Live custom tabs stay registered for
@@ -122,7 +124,7 @@ namespace RevitDevKit.Core
 
         internal static string FileName(string path)
         {
-            try { return string.IsNullOrEmpty(path) ? null : Path.GetFileName(path); }
+            try { return path.IsNullOrEmpty() ? null : Path.GetFileName(path); }
             catch { return null; }
         }
     }

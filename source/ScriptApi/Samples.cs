@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace RevitDevKit.Scripting
+namespace RevitDevKit.ScriptApi
 {
     public sealed class Sample
     {
@@ -13,7 +13,7 @@ namespace RevitDevKit.Scripting
         public const string Starter =
 @"// Короткий фрагмент: плагин сам обернёт его в класс.
 // Доступны Doc, UIDoc, UIApp, App, ActiveView, Selection, S0, S1, S2.
-// Также Print() / Tx() / S() / All() / Instances() / Types() / Table() / Dump() / Compare().
+// Также Print() / Tx() / S() / All() / Instances() / Types() / Table() / Dump() / Compare() / Show().
 // Запуск — F5 или Ctrl+Enter.
 
 Print(""Документ: "" + Doc.Title);
@@ -137,9 +137,33 @@ Compare(Selection);
 // Compare(Selection, true);   — с параметрами типов
 "
             },
+
             new Sample
             {
-                Title = "7. Полноценный IExternalCommand",
+                Title = "7. Показать геометрию на видах",
+                Code =
+@"// Show(...) рисует поверх модели, ничего не создавая в ней. Выберите стену или любой элемент.
+// Нарисованное держится до следующего запуска; убрать раньше — ClearShown() или кнопка на панели.
+if (Selection.Count == 0) { Warn(""Выберите элемент.""); return; }
+
+var element = S0;
+Show(element);                                    // вся геометрия: грани полупрозрачные, рёбра линиями
+Show(element.get_BoundingBox(null), Orange);      // рамка
+Show(element.Location, Red, ""расположение"");      // точка или линия расположения
+
+if (element is Wall wall)
+{
+    var side = HostObjectUtils.GetSideFaces(wall, ShellLayerType.Exterior).FirstOrDefault();
+    if (side != null) Show(wall.GetGeometryObjectFromReference(side), Green, ""наружная грань"");
+}
+
+Show(XYZ.Zero, Purple, ""начало координат"");
+"
+            },
+
+            new Sample
+            {
+                Title = "8. Полноценный IExternalCommand",
                 Code =
 @"// Если в коде есть объявление класса, плагин компилирует файл как есть.
 using System;
@@ -172,7 +196,7 @@ public class MyCommand : IExternalCommand
 
             new Sample
             {
-                Title = "8. Свой класс с методом Main",
+                Title = "9. Свой класс с методом Main",
                 Code =
 @"using System;
 using System.Linq;
@@ -203,7 +227,7 @@ public class Report
 
             new Sample
             {
-                Title = "9. Подключение внешней библиотеки через #r",
+                Title = "10. Подключение внешней библиотеки через #r",
                 Code =
 @"// Директива #r добавляет ссылку на сборку: по имени или по полному пути.
 #r ""System.Xml""

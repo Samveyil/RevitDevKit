@@ -1,6 +1,8 @@
+using BIMPlugins.ExtStorage.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using RevitDevKit.Core;
+using RevitDevKit.Core.Addins;
+using RevitDevKit.Core.Output;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -108,7 +110,7 @@ namespace RevitDevKit.UI.DllRunner
         // %AppData%\…\Addins\2022: the root as a variable and the last two folders, to fit the narrow window.
         private static string Short(string folder, Environment.SpecialFolder root, string variable)
         {
-            if (string.IsNullOrEmpty(folder)) return "папка не найдена";
+            if (folder.IsNullOrEmpty()) return "папка не найдена";
 
             var rootPath = Environment.GetFolderPath(root).TrimEnd('\\');
             if (!folder.StartsWith(rootPath + "\\", StringComparison.OrdinalIgnoreCase)) return folder;

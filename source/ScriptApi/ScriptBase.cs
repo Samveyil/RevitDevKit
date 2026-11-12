@@ -2,12 +2,14 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BIMPlugins.ExtStorage;
 using BIMPlugins.ExtStorage.Extensions;
-using RevitDevKit.Core;
+using RevitDevKit.Core.Output;
+using RevitDevKit.Core.Running;
+using RevitDevKit.Core.Show;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace RevitDevKit.Scripting
+namespace RevitDevKit.ScriptApi
 {
     public abstract class ScriptBase
     {
@@ -136,6 +138,31 @@ namespace RevitDevKit.Scripting
             return S(index) as T;
         }
 
+        // Draws geometry over the model on the views, without creating anything: a point, a curve, an edge, a face,
+        // a solid, a mesh, a bounding box or an outline, an element, its location, or a list of these. Every call has
+        // a colour of its own unless one is given. What is shown stays until the next run or ClearShown().
+        public void Show(object geometry) => Show(geometry, null, null);
+
+        public void Show(object geometry, string label) => Show(geometry, null, label);
+
+        public void Show(object geometry, Color color, string label = null)
+        {
+            var shape = ShownGeometry.Add(Doc, geometry, color, label);
+            var line = "Показано: " + shape.What + ", " + shape.ColorName + (label.IsNullOrEmpty() ? "" : " — " + label);
+            ConsoleOutput.WriteLine(line, shape.Lines.Count + shape.Triangles.Count == 0 ? LogLevel.Warning : LogLevel.Info);
+        }
+
+        // Clears what Show(...) drew; it is also cleared before each run.
+        public void ClearShown() => ShownGeometry.Clear();
+
+        // Colours for Show(..., colour).
+        public Color Orange => ShownGeometry.Palette[0].Item2;
+        public Color Green => ShownGeometry.Palette[1].Item2;
+        public Color Blue => ShownGeometry.Palette[2].Item2;
+        public Color Red => ShownGeometry.Palette[3].Item2;
+        public Color Purple => ShownGeometry.Palette[4].Item2;
+        public Color Teal => ShownGeometry.Palette[5].Item2;
+
         public void Dump(Element element, bool useType=false)
         {
             if (element == null)
@@ -261,7 +288,7 @@ namespace RevitDevKit.Scripting
                 if (!p.HasValue) return "-";
 
                 var text = p.StorageType == StorageType.String ? p.AsString() : p.AsValueString();
-                return string.IsNullOrEmpty(text) ? "-пусто-" : text;
+                return text.IsNullOrEmpty() ? "-пусто-" : text;
             }
             catch
             {
@@ -303,14 +330,9 @@ namespace RevitDevKit.Scripting
 
                 if (a.StorageType != b.StorageType) return ReadValue(a) == ReadValue(b);
 
-                switch (a.StorageType)
-                {
-                    case StorageType.Double: return Math.Abs(a.AsDouble() - b.AsDouble()) < 1e-9;
-                    case StorageType.Integer: return a.AsInteger() == b.AsInteger();
-                    case StorageType.String: return a.AsString() == b.AsString();
-                    case StorageType.ElementId: return a.AsElementId().Equals(b.AsElementId());
-                    default: return ReadValue(a) == ReadValue(b);
-                }
+                var valueA = a.GetValue();
+                var valueB = b.GetValue();
+                return valueA is double x && valueB is double y ? Math.Abs(x - y) < 1e-9 : Equals(valueA, valueB);
             }
             catch
             {

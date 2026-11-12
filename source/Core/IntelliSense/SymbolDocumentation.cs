@@ -1,4 +1,6 @@
+using BIMPlugins.ExtStorage.Extensions;
 using Microsoft.CodeAnalysis;
+using RevitDevKit.Core.Output;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -9,7 +11,7 @@ using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.IntelliSense
 {
     // An XML documentation file for a metadata reference. Roslyn's own XmlDocumentationProvider lives in
     // Microsoft.CodeAnalysis.Workspaces, which DevKit does not ship, so the file is read here: once, on the first tooltip.
@@ -101,7 +103,7 @@ namespace RevitDevKit.Core
             try
             {
                 var xml = symbol.GetDocumentationCommentXml(cancellationToken: token);
-                return string.IsNullOrWhiteSpace(xml) ? null : XElement.Parse(xml);
+                return xml.IsNullOrWhiteSpace() ? null : XElement.Parse(xml);
             }
             catch (Exception ex) when (!(ex is OperationCanceledException))
             {

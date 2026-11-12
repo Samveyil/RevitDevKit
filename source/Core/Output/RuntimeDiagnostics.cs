@@ -1,9 +1,10 @@
+using BIMPlugins.ExtStorage.Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Output
 {
     internal static class RuntimeDiagnostics
     {
@@ -54,7 +55,7 @@ namespace RevitDevKit.Core
                         continue;
 
                     found.Add(assemblyName.Version + "   " +
-                              (string.IsNullOrEmpty(assembly.Location) ? "<память>" : assembly.Location));
+                              (assembly.Location.IsNullOrEmpty() ? "<память>" : assembly.Location));
                 }
                 catch
                 {

@@ -1,7 +1,10 @@
 using BIMPlugins.ExtStorage;
+using BIMPlugins.ExtStorage.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using RevitDevKit.Core;
+using RevitDevKit.Core.Compiler;
+using RevitDevKit.Core.Output;
+using RevitDevKit.Core.Running;
 using RevitDevKit.UI.Console;
 using System;
 using System.Collections.Generic;
@@ -360,7 +363,7 @@ namespace RevitDevKit.UI.DllRunner
                     if (path != null)
                         Assemblies.Add(new AssemblyNodeVM(path, commands, n => SelectedNode = n));
 
-                    path = string.IsNullOrWhiteSpace(line) ? null : line.Trim();
+                    path = line.IsNullOrWhiteSpace() ? null : line.Trim();
                     commands = new List<string>();
                 }
             }

@@ -1,3 +1,4 @@
+using BIMPlugins.ExtStorage.Extensions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading;
 
-namespace RevitDevKit.Core
+namespace RevitDevKit.Core.Addins
 {
     // One DLL file as its header describes it; nothing is loaded.
     public sealed class DllInfo
@@ -220,11 +221,11 @@ namespace RevitDevKit.Core
 
             string OwnerOf(string path)
             {
-                if (string.IsNullOrEmpty(path)) return null;
+                if (path.IsNullOrEmpty()) return null;
                 var owner = participants.FirstOrDefault(p => p.Own.Contains(path) || !p.Shared && p.Folders.Any(f => IsUnder(path, f)));
                 if (owner != null) return owner.Name;
                 if (string.Equals(Path.GetDirectoryName(path), revitFolder, StringComparison.OrdinalIgnoreCase)) return RevitOwner;
-                return path.IndexOf(@"\assembly\GAC", StringComparison.OrdinalIgnoreCase) >= 0 ? "GAC" : null;
+                return path.Contains(@"\assembly\GAC", StringComparison.OrdinalIgnoreCase) ? "GAC" : null;
             }
 
             // One copy per add-in and name: several files of one name inside an add-in (x64\ and x86\, a stale
@@ -295,7 +296,7 @@ namespace RevitDevKit.Core
                 foreach (var dependent in System.Xml.Linq.XDocument.Load(configPath).Descendants().Where(e => e.Name.LocalName == "dependentAssembly"))
                 {
                     var name = (string)dependent.Elements().FirstOrDefault(e => e.Name.LocalName == "assemblyIdentity")?.Attribute("name");
-                    if (string.IsNullOrEmpty(name)) continue;
+                    if (name.IsNullOrEmpty()) continue;
 
                     foreach (var redirect in dependent.Elements().Where(e => e.Name.LocalName == "bindingRedirect"))
                     {
@@ -414,7 +415,7 @@ namespace RevitDevKit.Core
         // and a native DLL without a version has nothing to compare.
         private static bool IsComparable(DllInfo dll) =>
             !dll.FileName.EndsWith(".resources.dll", StringComparison.OrdinalIgnoreCase)
-            && string.IsNullOrEmpty(dll.Culture)
+            && dll.Culture.IsNullOrEmpty()
             && (dll.IsManaged || dll.FileVersion != NoVersion);
 
         // How many folders below the add-in's own folder the file lies.
@@ -530,7 +531,7 @@ namespace RevitDevKit.Core
                 var version = FileVersionInfo.GetVersionInfo(path);
                 company = version.CompanyName?.Trim() ?? string.Empty;
                 if (version.FileMajorPart == 0 && version.FileMinorPart == 0 && version.FileBuildPart == 0 && version.FilePrivatePart == 0)
-                    return string.IsNullOrWhiteSpace(version.FileVersion) ? NoVersion : version.FileVersion.Trim();
+                    return version.FileVersion.IsNullOrWhiteSpace() ? NoVersion : version.FileVersion.Trim();
                 return version.FileMajorPart + "." + version.FileMinorPart + "." + version.FileBuildPart;
             }
             catch
