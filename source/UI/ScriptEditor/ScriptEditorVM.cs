@@ -247,7 +247,7 @@ namespace RevitDevKit.UI.ScriptEditor
                 return;
             }
 
-            if (RunOptions.ClearOnRun) ConsoleOutput.Clear();
+            if (ConsoleOptions.ClearOnRun) ConsoleOutput.Clear();
 
             // Without a debugger nothing runs: the user has been told to open Visual Studio.
             string debugFile = null;
@@ -314,7 +314,7 @@ namespace RevitDevKit.UI.ScriptEditor
             {
                 Title = title,
                 AutoTransaction = autoTransaction,
-                HideWarnings = RunOptions.HideWarnings,
+                HideWarnings = ConsoleOptions.HideWarnings,
                 TransactionName = "DevKit: " + title,
                 Body = () => target.Invoke(),
                 Completed = error => _dispatcher.Invoke(() =>

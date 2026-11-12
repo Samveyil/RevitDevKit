@@ -64,6 +64,13 @@
 
             <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
 
+            <!-- MaterialDesign's tree keeps 8 left of each expander: the rows move 4 left, inside the tree, so the
+                 expanders start 4 from the frame as the lists do. Moved inside, they are clipped by the scrolling area,
+                 and the tree with its scroll bars stays within the frame. -->
+            <ItemsPanelTemplate x:Key="TreeFromEdge">
+                <StackPanel Margin="-4 0 0 0"/>
+            </ItemsPanelTemplate>
+
             <!-- Red for what fails or may fail, orange for what works on someone else's or another copy. -->
             <Style x:Key="SeverityText" TargetType="TextBlock">
                 <Style.Triggers>
@@ -291,7 +298,7 @@
             </StatusBar>
         </StackPanel>
 
-        <TabControl Margin="5 0 5 5" Style="{StaticResource FramedTabControl}" SelectedIndex="{Binding SelectedTabIndex}">
+        <TabControl Margin="5 5 5 5" Style="{StaticResource FramedTabControl}" SelectedIndex="{Binding SelectedTabIndex}">
             <TabItem Header="Commands" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
                     <!-- The tree comes first in focus order, as on Dependencies: a click on the tab does not land in the search box. -->
                     <DockPanel KeyboardNavigation.TabNavigation="Local">
@@ -310,8 +317,7 @@
                         </DockPanel>
 
                         <Grid>
-                            <!-- MaterialDesign's expander keeps 8 to its left; the tree moves over so it starts 4 from the frame, as the lists do. -->
-                            <TreeView ItemsSource="{Binding Assemblies}" Margin="-4 0 0 0" TabIndex="0">
+                            <TreeView ItemsSource="{Binding Assemblies}" ItemsPanel="{StaticResource TreeFromEdge}" TabIndex="0">
                                 <TreeView.Resources>
                                     <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
 
@@ -754,8 +760,8 @@
                     </DockPanel>
 
                     <Grid>
-                        <!-- As on Commands: the expander starts 4 from the frame. -->
-                        <TreeView ItemsSource="{Binding Dependencies.Sections}" Margin="-4 0 0 0" Grid.IsSharedSizeScope="True" TabIndex="0">
+                        <TreeView ItemsSource="{Binding Dependencies.Sections}" Grid.IsSharedSizeScope="True" TabIndex="0"
+                                  ItemsPanel="{StaticResource TreeFromEdge}">
                             <TreeView.Resources>
                                 <!-- Compact: a small expander (it is also the indent of each level) and no padding. -->
                                 <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
