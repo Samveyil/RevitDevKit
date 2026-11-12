@@ -43,7 +43,7 @@
         </Setter>
     </Style>
 
-    <!-- No margin on top: the gap above the tabs is the toolbar's, the same as the window's edge on the left. -->
+    <!-- No margin on top: the gap above the tabs is the toolbar's and the tab control's, 10 in every window. -->
     <Style x:Key="FramedTabItem" TargetType="TabItem">
         <Setter Property="Margin" Value="2 0 2 1"/>
         <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>

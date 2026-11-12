@@ -106,7 +106,7 @@
                 <RowDefinition Height="240" MinHeight="80"/>
             </Grid.RowDefinitions>
 
-            <TabControl Grid.Row="0" Margin="5 0 5 5" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
+            <TabControl Grid.Row="0" Margin="5 5 5 5" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
                         Style="{StaticResource FramedTabControl}">
 
                 <TabControl.ItemContainerStyle>

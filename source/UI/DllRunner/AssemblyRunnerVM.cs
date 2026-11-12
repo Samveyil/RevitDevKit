@@ -275,7 +275,7 @@ namespace RevitDevKit.UI.DllRunner
                 return;
             }
 
-            if (RunOptions.ClearOnRun) ConsoleOutput.Clear();
+            if (ConsoleOptions.ClearOnRun) ConsoleOutput.Clear();
 
             IsRunning = true;
 
@@ -284,7 +284,7 @@ namespace RevitDevKit.UI.DllRunner
                 Title = target.DisplayName,
                 TransactionName = "DevKit: " + target.Type.Name,
                 SourceDll = path,
-                HideWarnings = RunOptions.HideWarnings,
+                HideWarnings = ConsoleOptions.HideWarnings,
                 Body = () =>
                 {
                     // The window closes on run; showing the console pane needs an API context, i.e. here.

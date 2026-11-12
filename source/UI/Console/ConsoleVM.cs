@@ -5,30 +5,23 @@ using System;
 
 namespace RevitDevKit.UI.Console
 {
+    // A console's view model. Its options are ConsoleOptions, the same for every console: a change in one shows in
+    // the others at once.
     public partial class ConsoleVM : ObservableObject
     {
-        [ObservableProperty] private bool _isAutoScroll = true;
-        [ObservableProperty] private bool _isTimestamps = false;
-        [ObservableProperty] private bool _isShowDebug = true;
-
         public ConsoleVM()
         {
-            // Both consoles show the same options: a change in one shows in the other.
-            RunOptions.Changed += name => OnPropertyChanged(name == nameof(RunOptions.ClearOnRun) ? nameof(IsClearOnRun) : nameof(IsHideWarnings));
+            ConsoleOptions.Changed += name => OnPropertyChanged("Is" + name);
         }
 
-        // Options of the runs that write here, shared by Script Editor and Add-in Explorer.
-        public bool IsClearOnRun
-        {
-            get => RunOptions.ClearOnRun;
-            set => RunOptions.ClearOnRun = value;
-        }
+        // What runs from Script Editor and Add-in Explorer do with the console.
+        public bool IsClearOnRun { get => ConsoleOptions.ClearOnRun; set => ConsoleOptions.ClearOnRun = value; }
+        public bool IsHideWarnings { get => ConsoleOptions.HideWarnings; set => ConsoleOptions.HideWarnings = value; }
 
-        public bool IsHideWarnings
-        {
-            get => RunOptions.HideWarnings;
-            set => RunOptions.HideWarnings = value;
-        }
+        // How the console shows its output.
+        public bool IsAutoScroll { get => ConsoleOptions.AutoScroll; set => ConsoleOptions.AutoScroll = value; }
+        public bool IsTimestamps { get => ConsoleOptions.Timestamps; set => ConsoleOptions.Timestamps = value; }
+        public bool IsShowDebug { get => ConsoleOptions.ShowDebug; set => ConsoleOptions.ShowDebug = value; }
 
         public event Action<string> StatusReported;
 
