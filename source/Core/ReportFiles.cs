@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using BIMPlugins.ExtStorage.Extensions;
 
 namespace RevitDevKit.Core
 {
@@ -17,7 +18,7 @@ namespace RevitDevKit.Core
         public static string Save(string name, string text)
         {
             Directory.CreateDirectory(Folder);
-            var version = string.IsNullOrEmpty(AddinManifests.RevitVersion) ? string.Empty : "-Revit" + AddinManifests.RevitVersion;
+            var version = AddinManifests.RevitVersion.IsNullOrEmpty() ? string.Empty : "-Revit" + AddinManifests.RevitVersion;
             var path = Path.Combine(Folder, name + version + "-" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".txt");
             File.WriteAllText(path, text, new UTF8Encoding(true));
             Reveal(path);

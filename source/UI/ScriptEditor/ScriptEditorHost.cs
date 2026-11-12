@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using BIMPlugins.ExtStorage.Extensions;
 
 namespace RevitDevKit.UI.ScriptEditor
 {
@@ -158,7 +159,7 @@ namespace RevitDevKit.UI.ScriptEditor
                 var location = assembly.Location;
 
                 ConsoleOutput.Debug("AvalonEdit " + assembly.GetName().Version +
-                                    " из " + (string.IsNullOrEmpty(location) ? "<память>" : location));
+                                    " из " + (location.IsNullOrEmpty() ? "<память>" : location));
             }
             catch (Exception ex)
             {

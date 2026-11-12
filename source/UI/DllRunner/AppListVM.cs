@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Threading;
+using BIMPlugins.ExtStorage.Extensions;
 
 namespace RevitDevKit.UI.DllRunner
 {
@@ -219,7 +220,7 @@ namespace RevitDevKit.UI.DllRunner
                     if (path != null)
                         Items.Add(new AppNodeVM(path, types));
 
-                    path = string.IsNullOrWhiteSpace(line) ? null : line.Trim();
+                    path = line.IsNullOrWhiteSpace() ? null : line.Trim();
                     types = new List<string>();
                 }
             }

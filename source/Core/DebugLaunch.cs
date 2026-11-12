@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Threading;
+using BIMPlugins.ExtStorage.Extensions;
 
 namespace RevitDevKit.Core
 {
@@ -64,7 +65,7 @@ namespace RevitDevKit.Core
             if (!Debugger.IsAttached)
                 return "Visual Studio не подключилась к Revit. Подключите её вручную: Отладка › Подключиться к процессу.";
 
-            ConsoleOutput.Info("Подключена Visual Studio" + (string.IsNullOrEmpty(studio.Item2) ? "" : " с " + Path.GetFileName(studio.Item2)) + ".");
+            ConsoleOutput.Info("Подключена Visual Studio" + (studio.Item2.IsNullOrEmpty() ? "" : " с " + Path.GetFileName(studio.Item2)) + ".");
             return null;
         }
 
@@ -117,10 +118,10 @@ namespace RevitDevKit.Core
                 var running = studios.Where(s => !isDebugging(s.Item1)).ToList();
                 if (running.Count == 0) return null;
 
-                if (!string.IsNullOrEmpty(hintPath))
+                if (!hintPath.IsNullOrEmpty())
                 {
                     var match = running
-                        .Where(s => !string.IsNullOrEmpty(s.Item2))
+                        .Where(s => !s.Item2.IsNullOrEmpty())
                         .Select(s => new { Studio = s, Folder = Path.GetDirectoryName(s.Item2) })
                         .Where(s => s.Folder != null && hintPath.StartsWith(s.Folder.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase))
                         .OrderByDescending(s => s.Folder.Length)

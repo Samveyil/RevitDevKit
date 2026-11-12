@@ -6,6 +6,7 @@ using RevitDevKit.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using BIMPlugins.ExtStorage.Comparers;
 
 namespace RevitDevKit.Scripting
 {
@@ -146,7 +147,7 @@ namespace RevitDevKit.Scripting
         public void Show(object geometry, Color color, string label = null)
         {
             var shape = ShownGeometry.Add(Doc, geometry, color, label);
-            var line = "Показано: " + shape.What + ", " + shape.ColorName + (string.IsNullOrEmpty(label) ? "" : " — " + label);
+            var line = "Показано: " + shape.What + ", " + shape.ColorName + (label.IsNullOrEmpty() ? "" : " — " + label);
             ConsoleOutput.WriteLine(line, shape.Lines.Count + shape.Triangles.Count == 0 ? LogLevel.Warning : LogLevel.Info);
         }
 
@@ -173,7 +174,7 @@ namespace RevitDevKit.Scripting
             ConsoleOutput.WriteLine("Класс:     " + element.GetType().FullName);
             ConsoleOutput.WriteLine("Категория: " + (element.Category != null ? element.Category.Name : "—"));
 
-            foreach (var p in ReadParameters(element, useType).OrderBy(p => p.Definition.Name))
+            foreach (var p in ReadParameters(element, useType).OrderBy(p => p.Definition.Name.ToUpperInvariant(), new NaturalComparer()))
                 ConsoleOutput.WriteLine("  " + p.Definition.Name.PadRight(NameWidth) + " = " + ReadValue(p));
         }
 
@@ -212,7 +213,7 @@ namespace RevitDevKit.Scripting
                     Name = ps.First(p => p != null).Definition.Name,
                     Values = ps.Select(p => p == null ? null : ReadValue(p)).ToList()
                 })
-                .OrderBy(r => r.Name)
+                .OrderBy(r => r.Name.ToUpperInvariant(), new NaturalComparer())
                 .ToList();
 
             var titles = items.Select(e => e.Id + " " + (e.Name ?? "<без имени>")).ToList();
@@ -286,7 +287,7 @@ namespace RevitDevKit.Scripting
                 if (!p.HasValue) return "-";
 
                 var text = p.StorageType == StorageType.String ? p.AsString() : p.AsValueString();
-                return string.IsNullOrEmpty(text) ? "-пусто-" : text;
+                return text.IsNullOrEmpty() ? "-пусто-" : text;
             }
             catch
             {
@@ -328,14 +329,9 @@ namespace RevitDevKit.Scripting
 
                 if (a.StorageType != b.StorageType) return ReadValue(a) == ReadValue(b);
 
-                switch (a.StorageType)
-                {
-                    case StorageType.Double: return Math.Abs(a.AsDouble() - b.AsDouble()) < 1e-9;
-                    case StorageType.Integer: return a.AsInteger() == b.AsInteger();
-                    case StorageType.String: return a.AsString() == b.AsString();
-                    case StorageType.ElementId: return a.AsElementId().Equals(b.AsElementId());
-                    default: return ReadValue(a) == ReadValue(b);
-                }
+                var valueA = a.GetValue();
+                var valueB = b.GetValue();
+                return valueA is double x && valueB is double y ? Math.Abs(x - y) < 1e-9 : Equals(valueA, valueB);
             }
             catch
             {

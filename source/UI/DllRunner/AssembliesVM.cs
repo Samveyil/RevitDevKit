@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Threading;
+using BIMPlugins.ExtStorage.Extensions;
 
 namespace RevitDevKit.UI.DllRunner
 {
@@ -20,11 +21,11 @@ namespace RevitDevKit.UI.DllRunner
             Assembly = assembly;
             Number = assembly.Number.ToString().PadLeft(digits);
             ToolTip = (assembly.FullName ?? assembly.Name)
-                      + (string.IsNullOrEmpty(assembly.FileVersion) ? string.Empty : "\nВерсия файла " + assembly.FileVersion)
+                      + (assembly.FileVersion.IsNullOrEmpty() ? string.Empty : "\nВерсия файла " + assembly.FileVersion)
                       + "\n" + ProcessAssemblies.Where(assembly)
                       + (sameName.Count > 1
                           ? "\nЗагружена " + sameName.Count + " раза: " + string.Join(", ", sameName.Select(a => "№" + a.Number + " " + a.Version
-                              + (string.IsNullOrEmpty(a.Owner) ? string.Empty : " (" + a.Owner + ")")))
+                              + (a.Owner.IsNullOrEmpty() ? string.Empty : " (" + a.Owner + ")")))
                           : string.Empty);
         }
 
@@ -90,7 +91,7 @@ namespace RevitDevKit.UI.DllRunner
             var query = SearchText?.Trim() ?? string.Empty;
             bool Matches(ProcessAssembly a) => query.Length == 0
                 || new[] { a.Number.ToString(), a.Name, a.Version?.ToString(), a.FileVersion, a.Owner, ProcessAssemblies.Where(a) }
-                    .Any(v => v != null && v.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
+                    .Any(v => v.Contains(query, StringComparison.OrdinalIgnoreCase));
 
             var byName = _all.GroupBy(a => a.Name, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => (IReadOnlyList<ProcessAssembly>)g.ToList(), StringComparer.OrdinalIgnoreCase);

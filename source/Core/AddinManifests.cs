@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Xml.Linq;
+using BIMPlugins.ExtStorage.Extensions;
+using BIMPlugins.ExtStorage.Comparers;
 
 namespace RevitDevKit.Core
 {
@@ -63,16 +65,16 @@ namespace RevitDevKit.Core
         public static void Locate(string currentUserFolder, string allUsersFolder, string revitVersion)
         {
             RevitVersion = revitVersion;
-            CurrentUserFolder = string.IsNullOrEmpty(currentUserFolder)
+            CurrentUserFolder = currentUserFolder.IsNullOrEmpty()
                 ? StandardFolder(Environment.SpecialFolder.ApplicationData, revitVersion)
                 : currentUserFolder;
-            AllUsersFolder = string.IsNullOrEmpty(allUsersFolder)
+            AllUsersFolder = allUsersFolder.IsNullOrEmpty()
                 ? StandardFolder(Environment.SpecialFolder.CommonApplicationData, revitVersion)
                 : allUsersFolder;
         }
 
         private static string StandardFolder(Environment.SpecialFolder root, string revitVersion) =>
-            string.IsNullOrEmpty(revitVersion)
+            revitVersion.IsNullOrEmpty()
                 ? null
                 : Path.Combine(Environment.GetFolderPath(root), "Autodesk", "Revit", "Addins", revitVersion);
 
@@ -86,7 +88,7 @@ namespace RevitDevKit.Core
 
         public static IEnumerable<AddinManifest> Scan(string folder, AddinScope scope)
         {
-            if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
+            if (folder.IsNullOrEmpty() || !Directory.Exists(folder))
                 return Enumerable.Empty<AddinManifest>();
 
             var files = Directory.GetFiles(folder)
@@ -97,7 +99,7 @@ namespace RevitDevKit.Core
             return files
                 .Select(f => Read(f, scope, twin: !IsEnabledFile(f) && names.Contains(NameOf(f))
                                                 || IsEnabledFile(f) && File.Exists(f + ".disable")))
-                .OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(m => m.Name.ToUpperInvariant(), new NaturalComparer())
                 .ThenBy(m => m.IsEnabled ? 0 : 1)
                 .ToList();
         }
@@ -143,7 +145,7 @@ namespace RevitDevKit.Core
                         manifest.Applications++;
 
                     var assembly = addin.Elements().FirstOrDefault(e => e.Name.LocalName == "Assembly")?.Value.Trim();
-                    if (string.IsNullOrEmpty(assembly))
+                    if (assembly.IsNullOrEmpty())
                         continue;
 
                     // Revit takes a relative path from the folder of the .addin file.
