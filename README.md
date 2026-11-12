@@ -34,6 +34,8 @@ The **Примеры** (Samples) menu has a few ready-made scripts. The **Авт
 
 Scripts are saved to `%AppData%\RevitDevKit\Scripts` unless you pick another folder. A right click on a tab closes it, saves it under another name (**Сохранить как…**, also a toolbar button and Ctrl+Shift+S), and for a tab saved to a file shows the file in Explorer. Repeat Last on the ribbon repeats a script as it was compiled: edits take effect after F5 in the editor.
 
+The bug button next to **Запустить** (Run) runs the script under a debugger. Windows asks which debugger to attach, an open Visual Studio among them, and the run stops on the first line of the script, or at the start of `Execute`, `Main` or `Run` of a class. From there F10 and F11 step through the script and breakpoints can be set in it. The debugger shows the script's own file when the tab is saved as it is, otherwise a copy of the text in `%TEMP%\RevitDevKit\Debug`.
+
 The editor suggests as you type: after a dot it lists the members of the type, after `(` it shows the method's overloads with parameter descriptions from the Revit API documentation. After `<` of a generic method the list keeps only the types that fit: `All<` offers element classes, and `walls.OfType<` puts the subclasses of the collection's element first. Brackets `()`, `[]`, `{}`, `<>` of generics and quotes close by themselves, and Enter between `{}` opens a block.
 
 Alt with a mouse selection, or Shift+Alt with the arrow keys, puts a caret on several lines at once, as in Visual Studio. Typed text goes into every line, Tab and Shift+Tab shift them together, and the arrow keys move all the carets. In this mode no suggestions open and no brackets close.
@@ -82,7 +84,7 @@ In the output of `Compare`, `-нет-` (none) means the element has no such para
 
 <img src="assets/dll-runner-commands.png" width="580" alt="Add-in Explorer, the Commands tab" />
 
-Add a built DLL, and its `IExternalCommand` classes appear in the list, grouped by namespace. A double click or F5 runs a command. The DLL file is not locked, so the project can be rebuilt without closing Revit. The command is taken from the DLL on disk every time, so after a build just run it again. The **Обновить** (Refresh) button is needed only when new commands appear. As in the editor, **Чистить консоль** (clear console) clears the console before each run.
+Add a built DLL, and its `IExternalCommand` classes appear in the list, grouped by namespace. A double click or F5 runs a command. The DLL file is not locked, so the project can be rebuilt without closing Revit. The command is taken from the DLL on disk every time, so after a build just run it again. The **Обновить** (Refresh) button is needed only when new commands appear. As in the editor, **Чистить консоль** (clear console) clears the console before each run. The bug button runs the command under a debugger: attach the Visual Studio with the add-in's solution, and breakpoints set in the project are hit.
 
 The window closes when a command runs. To run the same command again after changes, there is no need to open Add-in Explorer: build the project and press Repeat Last on the ribbon, and the command runs from the fresh DLL. Repeat Last can be given a keyboard shortcut in Revit.
 

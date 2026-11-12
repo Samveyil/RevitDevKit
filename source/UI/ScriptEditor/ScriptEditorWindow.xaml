@@ -37,6 +37,12 @@
                 </StackPanel>
             </Button>
 
+            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RunWithDebuggerCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    ToolTip="Запустить под отладчиком: подключить Visual Studio и остановиться на первой строке скрипта">
+                <materialDesign:PackIcon Kind="BugPlayOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+
             <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding NewTabCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Новая вкладка (Ctrl+N)">
                 <materialDesign:PackIcon Kind="FileCodeOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
