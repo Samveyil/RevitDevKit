@@ -137,27 +137,23 @@
                 </StackPanel>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RunWithDebuggerCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding RunWithDebuggerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}"
                     ToolTip="Выполнить под отладчиком: подключить Visual Studio, точки останова в проекте сработают">
                 <materialDesign:PackIcon Kind="BugPlayOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding AddAssemblyCommand}"
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <Button Width="25" Height="25" Padding="0" Command="{Binding AddAssemblyCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Добавить DLL (Ctrl+O)">
                 <materialDesign:PackIcon Kind="FolderOpenOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RevealInExplorerCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding RevealInExplorerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике DLL">
                 <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
-
-            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Чистить консоль" Margin="20 0 0 0" IsChecked="{Binding IsClearOnRun}"
-                      ToolTip="Очищать консоль перед каждым запуском"/>
-
-            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Скрыть предупреждения" Margin="10 0 0 0" IsChecked="{Binding IsHideWarnings}"
-                      ToolTip="Предупреждения Revit при запуске только пишутся в консоль, без окна Revit. Ошибки Revit показывает как обычно"/>
         </StackPanel>
 
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource AppsToolbar}">
@@ -170,22 +166,24 @@
                 </StackPanel>
             </Button>
 
-            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding Apps.AddAssemblyCommand}"
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <Button Width="25" Height="25" Padding="0" Command="{Binding Apps.AddAssemblyCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Добавить собранную DLL и сразу обновить по ней ленту (Ctrl+O)">
                 <materialDesign:PackIcon Kind="FolderOpenOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Apps.RevertCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding Apps.RevertCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Вернуть как было: лента снова такая, как её создал .addin">
                 <materialDesign:PackIcon Kind="Restore" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Apps.RevealInExplorerCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding Apps.RevealInExplorerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике DLL">
                 <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Apps.RemoveCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding Apps.RemoveCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Вернуть ленту и убрать DLL из списка">
                 <materialDesign:PackIcon Kind="DeleteOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
@@ -201,12 +199,14 @@
                 </StackPanel>
             </Button>
 
-            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding Startup.RevealInExplorerCommand}"
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <Button Width="25" Height="25" Padding="0" Command="{Binding Startup.RevealInExplorerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике .addin">
                 <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Startup.OpenFileCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding Startup.OpenFileCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Открыть .addin в Блокноте (Ctrl+O)">
                 <materialDesign:PackIcon Kind="FileDocumentOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
@@ -222,17 +222,21 @@
                 </StackPanel>
             </Button>
 
-            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding Dependencies.SaveReportCommand}"
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <Button Width="25" Height="25" Padding="0" Command="{Binding Dependencies.SaveReportCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить отчёт в текстовый файл (markdown) и показать его в проводнике">
                 <materialDesign:PackIcon Kind="FileDocumentArrowRightOutline" Width="24" Height="24" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Dependencies.RevealInExplorerCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding Dependencies.RevealInExplorerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике выбранную DLL">
                 <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Только конфликты" Margin="20 0 0 0" IsChecked="{Binding Dependencies.OnlyProblems}"
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Только конфликты" IsChecked="{Binding Dependencies.OnlyProblems}"
                       ToolTip="Снимите, чтобы видеть и подписанные DLL, которые загрузятся рядом, и одинаковые у нескольких надстроек"/>
         </StackPanel>
 
@@ -246,17 +250,21 @@
                 </StackPanel>
             </Button>
 
-            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding LoadedAssemblies.SaveListCommand}"
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <Button Width="25" Height="25" Padding="0" Command="{Binding LoadedAssemblies.SaveListCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить показанный список в текстовый файл (markdown) и показать его в проводнике">
                 <materialDesign:PackIcon Kind="FileDocumentArrowRightOutline" Width="24" Height="24" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding LoadedAssemblies.RevealInExplorerCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding LoadedAssemblies.RevealInExplorerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике выбранную сборку">
                 <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Скрыть системные" Margin="20 0 0 0" IsChecked="{Binding LoadedAssemblies.HideSystem}"
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Скрыть системные" IsChecked="{Binding LoadedAssemblies.HideSystem}"
                       ToolTip="Скрыть сборки .NET, GAC, Revit и созданные в памяти: останутся надстройки и их DLL"/>
         </StackPanel>
 

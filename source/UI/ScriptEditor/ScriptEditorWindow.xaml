@@ -37,33 +37,37 @@
                 </StackPanel>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RunWithDebuggerCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding RunWithDebuggerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}"
                     ToolTip="Запустить под отладчиком: подключить Visual Studio и остановиться на первой строке скрипта">
                 <materialDesign:PackIcon Kind="BugPlayOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding NewTabCommand}"
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <Button Width="25" Height="25" Padding="0" Command="{Binding NewTabCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Новая вкладка (Ctrl+N)">
                 <materialDesign:PackIcon Kind="FileCodeOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0" Padding="0" Command="{Binding OpenFileCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding OpenFileCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Открыть .cs (Ctrl+O)">
                 <materialDesign:PackIcon Kind="FolderOpenOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Padding="0" Command="{Binding SaveFileCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding SaveFileCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить (Ctrl+S)">
                 <materialDesign:PackIcon Kind="ContentSaveOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding SaveFileAsCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding SaveFileAsCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить как (Ctrl+Shift+S)">
                 <materialDesign:PackIcon Kind="ContentSaveEditOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Border BorderThickness="1" BorderBrush="{StaticResource AccentBrush}" CornerRadius="3" Margin="20 0">
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <Border BorderThickness="1" BorderBrush="{StaticResource AccentBrush}" CornerRadius="3">
                 <materialDesign:PopupBox ToolTip="Вставить готовый пример в новую вкладку">
                     <materialDesign:PopupBox.ToggleContent>
                         <TextBlock Text="Примеры ▾" Margin="10 0 5 0" />
@@ -80,14 +84,10 @@
                 </materialDesign:PopupBox>
             </Border>
 
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
             <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Автотранзакция" IsChecked="{Binding IsAutoTransaction}"
                       ToolTip="Обернуть выполнение в транзакцию. Выключите, если скрипт открывает транзакции сам."/>
-
-            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Чистить консоль" Margin="8 0" IsChecked="{Binding IsClearOnRun}"
-                      ToolTip="Очищать консоль перед каждым запуском"/>
-
-            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Скрыть предупреждения" IsChecked="{Binding IsHideWarnings}"
-                      ToolTip="Предупреждения Revit при запуске только пишутся в консоль, без окна Revit. Ошибки Revit показывает как обычно"/>
         </StackPanel>
 
         <StatusBar DockPanel.Dock="Bottom">
