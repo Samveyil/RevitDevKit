@@ -1,8 +1,10 @@
 using BIMPlugins.ExtStorage.Extensions;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace RevitDevKit.Core
@@ -19,16 +21,64 @@ namespace RevitDevKit.Core
 
     public sealed class LogChunkEventArgs : EventArgs
     {
-        public LogChunkEventArgs(string text, LogLevel level)
+        public LogChunkEventArgs(string text, LogLevel level, bool wrappable = false)
         {
             Text = text;
             Level = level;
             Timestamp = DateTime.Now;
+            Wrappable = wrappable;
         }
 
         public string Text { get; }
         public LogLevel Level { get; }
         public DateTime Timestamp { get; }
+
+        // Prose a narrow console may wrap at word boundaries, not a table whose columns must stay.
+        public bool Wrappable { get; }
+    }
+
+    public static class ConsoleText
+    {
+        // Wraps one line at spaces so no piece is longer than width; the pieces after the first keep the line's
+        // own indent. A word longer than width stays whole, and punctuation set apart by a space ("другую .")
+        // stays with the word before it. Width 0 or less: the line as it is.
+        public static IEnumerable<string> Wrap(string line, int width)
+        {
+            if (line == null || width <= 0 || line.Length <= width)
+            {
+                yield return line;
+                yield break;
+            }
+
+            var indent = line.Substring(0, line.Length - line.TrimStart(' ').Length);
+            var current = new StringBuilder(indent);
+            var empty = true;
+            // Punctuation set apart by a space is one word with the word before it, so it moves along.
+            var words = new List<string>();
+            foreach (var token in line.Substring(indent.Length).Split(' '))
+            {
+                if (token.Length == 0) continue;
+                if (words.Count > 0 && token.All(char.IsPunctuation)) words[words.Count - 1] += " " + token;
+                else words.Add(token);
+            }
+
+            foreach (var word in words)
+            {
+
+                if (!empty && current.Length + 1 + word.Length > width)
+                {
+                    yield return current.ToString();
+                    current.Clear().Append(indent);
+                    empty = true;
+                }
+
+                if (!empty) current.Append(' ');
+                current.Append(word);
+                empty = false;
+            }
+
+            yield return current.ToString();
+        }
     }
 
     public static class ConsoleOutput
@@ -106,6 +156,16 @@ namespace RevitDevKit.Core
         public static void WriteLine(string text = "", LogLevel level = LogLevel.Info)
         {
             Write((text ?? string.Empty) + Environment.NewLine, level);
+        }
+
+        // Text a narrow console may wrap: the script editor's wraps it, the dockable pane does not.
+        public static void WriteWrapped(string text, LogLevel level = LogLevel.Info)
+        {
+            if (text.IsNullOrEmpty())
+                return;
+
+            if (!text.EndsWith("\n")) text += Environment.NewLine;
+            ChunkWritten?.Invoke(null, new LogChunkEventArgs(text, level, wrappable: true));
         }
 
         public static void WriteObject(object value, LogLevel level = LogLevel.Info)

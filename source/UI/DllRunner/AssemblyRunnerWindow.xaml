@@ -64,6 +64,13 @@
 
             <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
 
+            <!-- MaterialDesign's tree keeps 8 left of each expander: the rows move 4 left, inside the tree, so the
+                 expanders start 4 from the frame as the lists do. Moved inside, they are clipped by the scrolling area,
+                 and the tree with its scroll bars stays within the frame. -->
+            <ItemsPanelTemplate x:Key="TreeFromEdge">
+                <StackPanel Margin="-4 0 0 0"/>
+            </ItemsPanelTemplate>
+
             <!-- Red for what fails or may fail, orange for what works on someone else's or another copy. -->
             <Style x:Key="SeverityText" TargetType="TextBlock">
                 <Style.Triggers>
@@ -122,6 +129,7 @@
 
     <Window.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RunHotkeyCommand}"/>
+        <KeyBinding Key="F5" Modifiers="Control" Command="{Binding DebugHotkeyCommand}"/>
         <KeyBinding Key="O" Modifiers="Control" Command="{Binding AddHotkeyCommand}"/>
         <KeyBinding Key="R" Modifiers="Control" Command="{Binding ReloadHotkeyCommand}"/>
     </Window.InputBindings>
@@ -137,34 +145,23 @@
                 </StackPanel>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RunWithDebuggerCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding RunWithDebuggerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}"
-                    ToolTip="Выполнить под отладчиком: подключить Visual Studio, точки останова в проекте сработают">
+                    ToolTip="Выполнить под отладчиком (Ctrl+F5): подключить открытую Visual Studio с решением надстройки, точки останова в проекте сработают. Без открытой Visual Studio команда не запускается">
                 <materialDesign:PackIcon Kind="BugPlayOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding AddAssemblyCommand}"
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <Button Width="25" Height="25" Padding="0" Command="{Binding AddAssemblyCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Добавить DLL (Ctrl+O)">
                 <materialDesign:PackIcon Kind="FolderOpenOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding ReloadAssemblyCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Обновить список команд DLL (Ctrl+R). Для любой DLL — правой кнопкой по ней">
-                <materialDesign:PackIcon Kind="Refresh" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
-            </Button>
-
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RevealInExplorerCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding RevealInExplorerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике DLL">
                 <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
-
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding RemoveAssemblyCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Убрать из списка DLL">
-                <materialDesign:PackIcon Kind="DeleteOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
-            </Button>
-
-            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Чистить консоль" Margin="20 0 0 0" IsChecked="{Binding IsClearOnRun}"
-                      ToolTip="Очищать консоль перед каждым запуском"/>
         </StackPanel>
 
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource AppsToolbar}">
@@ -177,22 +174,24 @@
                 </StackPanel>
             </Button>
 
-            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding Apps.AddAssemblyCommand}"
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <Button Width="25" Height="25" Padding="0" Command="{Binding Apps.AddAssemblyCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Добавить собранную DLL и сразу обновить по ней ленту (Ctrl+O)">
                 <materialDesign:PackIcon Kind="FolderOpenOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Apps.RevertCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding Apps.RevertCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Вернуть как было: лента снова такая, как её создал .addin">
                 <materialDesign:PackIcon Kind="Restore" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Apps.RevealInExplorerCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding Apps.RevealInExplorerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике DLL">
                 <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Apps.RemoveCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding Apps.RemoveCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Вернуть ленту и убрать DLL из списка">
                 <materialDesign:PackIcon Kind="DeleteOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
@@ -208,12 +207,14 @@
                 </StackPanel>
             </Button>
 
-            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding Startup.RevealInExplorerCommand}"
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <Button Width="25" Height="25" Padding="0" Command="{Binding Startup.RevealInExplorerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике .addin">
                 <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Startup.OpenFileCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding Startup.OpenFileCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Открыть .addin в Блокноте (Ctrl+O)">
                 <materialDesign:PackIcon Kind="FileDocumentOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
@@ -229,17 +230,21 @@
                 </StackPanel>
             </Button>
 
-            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding Dependencies.SaveReportCommand}"
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <Button Width="25" Height="25" Padding="0" Command="{Binding Dependencies.SaveReportCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить отчёт в текстовый файл (markdown) и показать его в проводнике">
                 <materialDesign:PackIcon Kind="FileDocumentArrowRightOutline" Width="24" Height="24" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding Dependencies.RevealInExplorerCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding Dependencies.RevealInExplorerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике выбранную DLL">
                 <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Только конфликты" Margin="20 0 0 0" IsChecked="{Binding Dependencies.OnlyProblems}"
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Только конфликты" IsChecked="{Binding Dependencies.OnlyProblems}"
                       ToolTip="Снимите, чтобы видеть и подписанные DLL, которые загрузятся рядом, и одинаковые у нескольких надстроек"/>
         </StackPanel>
 
@@ -253,17 +258,21 @@
                 </StackPanel>
             </Button>
 
-            <Button Width="25" Height="25" Margin="15 0 0 0" Padding="0" Command="{Binding LoadedAssemblies.SaveListCommand}"
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <Button Width="25" Height="25" Padding="0" Command="{Binding LoadedAssemblies.SaveListCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить показанный список в текстовый файл (markdown) и показать его в проводнике">
                 <materialDesign:PackIcon Kind="FileDocumentArrowRightOutline" Width="24" Height="24" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="10 0 0 0" Padding="0" Command="{Binding LoadedAssemblies.RevealInExplorerCommand}"
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding LoadedAssemblies.RevealInExplorerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Показать в проводнике выбранную сборку">
                 <materialDesign:PackIcon Kind="FolderSearchOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Скрыть системные" Margin="20 0 0 0" IsChecked="{Binding LoadedAssemblies.HideSystem}"
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Скрыть системные" IsChecked="{Binding LoadedAssemblies.HideSystem}"
                       ToolTip="Скрыть сборки .NET, GAC, Revit и созданные в памяти: останутся надстройки и их DLL"/>
         </StackPanel>
 
@@ -290,7 +299,7 @@
             </StatusBar>
         </StackPanel>
 
-        <TabControl Margin="5 0 5 5" Style="{StaticResource FramedTabControl}" SelectedIndex="{Binding SelectedTabIndex}">
+        <TabControl Margin="5 5 5 5" Style="{StaticResource FramedTabControl}" SelectedIndex="{Binding SelectedTabIndex}">
             <TabItem Header="Commands" Style="{StaticResource FramedTabItem}" HeaderTemplate="{StaticResource TabHeader}">
                     <!-- The tree comes first in focus order, as on Dependencies: a click on the tab does not land in the search box. -->
                     <DockPanel KeyboardNavigation.TabNavigation="Local">
@@ -309,8 +318,7 @@
                         </DockPanel>
 
                         <Grid>
-                            <!-- MaterialDesign's expander keeps 8 to its left; the tree moves over so it starts 4 from the frame, as the lists do. -->
-                            <TreeView ItemsSource="{Binding Assemblies}" Margin="-4 0 0 0" TabIndex="0">
+                            <TreeView ItemsSource="{Binding Assemblies}" ItemsPanel="{StaticResource TreeFromEdge}" TabIndex="0">
                                 <TreeView.Resources>
                                     <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
 
@@ -328,7 +336,7 @@
                                                     Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TreeView}}">
                                             <StackPanel.ContextMenu>
                                                 <ContextMenu materialDesign:MenuAssist.MenuItemsPresenterMargin="0">
-                                                    <MenuItem Header="Обновить список команд" CommandParameter="{Binding}"
+                                                    <MenuItem Header="Обновить список команд" InputGestureText="Ctrl+R" CommandParameter="{Binding}"
                                                               Command="{Binding PlacementTarget.Tag.ReloadAssemblyCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                                     <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
                                                               Command="{Binding PlacementTarget.Tag.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
@@ -753,8 +761,8 @@
                     </DockPanel>
 
                     <Grid>
-                        <!-- As on Commands: the expander starts 4 from the frame. -->
-                        <TreeView ItemsSource="{Binding Dependencies.Sections}" Margin="-4 0 0 0" Grid.IsSharedSizeScope="True" TabIndex="0">
+                        <TreeView ItemsSource="{Binding Dependencies.Sections}" Grid.IsSharedSizeScope="True" TabIndex="0"
+                                  ItemsPanel="{StaticResource TreeFromEdge}">
                             <TreeView.Resources>
                                 <!-- Compact: a small expander (it is also the indent of each level) and no padding. -->
                                 <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">

@@ -31,7 +31,9 @@ An assembly that Revit does not load can be referenced with `#r`:
 #r "D:\Libs\MyHelpers.dll"
 ```
 
-The **Примеры** (Samples) menu has a few ready-made scripts. The **Автотранзакция** (auto transaction) checkbox wraps the run in a transaction, for scripts that change the model without opening one themselves. If a script does not compile, the errors go to the console and the caret moves to the first of them. **Чистить консоль** (clear console) clears the console before each run.
+The **Примеры** (Samples) menu has a few ready-made scripts. The **Автотранзакция** (auto transaction) checkbox wraps the run in a transaction, for scripts that change the model without opening one themselves. If a script does not compile, the errors go to the console and the caret moves to the first of them.
+
+Warnings and errors Revit raises when a transaction of the script is committed go to the console, in orange and red, with the transaction's name and the Ids of the elements. The same failure raised several times is one block, its elements numbered by occurrence. Revit still shows them as usual; with **Тихий режим** (quiet mode) ticked in the console's header, warnings are only written to the console and no warning dialog appears, while errors are still shown by Revit. The same works for DLL commands and for Repeat Last.
 
 Scripts are saved to `%AppData%\RevitDevKit\Scripts` unless you pick another folder. A right click on a tab closes it, saves it under another name (**Сохранить как…**, also a toolbar button and Ctrl+Shift+S), and for a tab saved to a file shows the file in Explorer. Repeat Last on the ribbon repeats a script as it was compiled: edits take effect after F5 in the editor.
 
@@ -46,6 +48,7 @@ Indentation is coloured by level, as the Indent Rainbow extension for Visual Stu
 | Keys | |
 |---|---|
 | F5, Ctrl+Enter | run |
+| Ctrl+F5 | run under the debugger |
 | Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+Shift+S, Ctrl+W | new tab, open, save, save as, close |
 | Ctrl+Space | suggestions; the list also opens by itself after a dot and on the first letter of a name |
 | Ctrl+Shift+Space | method overloads with parameter descriptions; the window also opens by itself after `(` and `,` |
@@ -85,7 +88,7 @@ In the output of `Compare`, `-нет-` (none) means the element has no such para
 
 <img src="assets/dll-runner-commands.png" width="580" alt="Add-in Explorer, the Commands tab" />
 
-Add a built DLL, and its `IExternalCommand` classes appear in the list, grouped by namespace. A double click or F5 runs a command. The DLL file is not locked, so the project can be rebuilt without closing Revit. The command is taken from the DLL on disk every time, so after a build just run it again. The **Обновить** (Refresh) button is needed only when new commands appear. As in the editor, **Чистить консоль** (clear console) clears the console before each run. The bug button runs the command under a debugger: the Visual Studio with the add-in's solution open is attached, and breakpoints set in the project are hit.
+Add a built DLL, and its `IExternalCommand` classes appear in the list, grouped by namespace. A double click or F5 runs a command. The DLL file is not locked, so the project can be rebuilt without closing Revit. The command is taken from the DLL on disk every time, so after a build just run it again. The list needs refreshing only when new commands appear: Ctrl+R, or a right click on the DLL, which also removes it from the list. The bug button or Ctrl+F5 runs the command under a debugger: the Visual Studio with the add-in's solution open is attached, and breakpoints set in the project are hit.
 
 The window closes when a command runs. To run the same command again after changes, there is no need to open Add-in Explorer: build the project and press Repeat Last on the ribbon, and the command runs from the fresh DLL. Repeat Last can be given a keyboard shortcut in Revit. **Repeat Last: Debug** next to it repeats the command under the open Visual Studio, as the bug button does, so breakpoints set in the project are hit; it has its own shortcut. A script is debugged in Script Editor instead.
 
@@ -132,7 +135,7 @@ The copy loaded in this session is marked. A right click on a DLL or an add-in s
 
 ![Console](assets/console.png)
 
-Everything that scripts and DLL commands write goes here: `Console.WriteLine`, `Debug.WriteLine`, `Trace` and exceptions with their call stacks. The console opens as a separate Revit pane and is also shown at the bottom of the script editor. The Console button on the ribbon shows the pane, or hides it when it is open. The output can be cleared (Ctrl+L) and copied. The checkboxes are **Автопрокрутка** (auto scroll), **Время** (timestamps) and **Стек вызовов** (call stacks), the last one showing call stacks and other debug lines.
+Everything that scripts and DLL commands write goes here: `Console.WriteLine`, `Debug.WriteLine`, `Trace` and exceptions with their call stacks. The console opens as a separate Revit pane and is also shown at the bottom of the script editor. The Console button on the ribbon shows the pane, or hides it when it is open. The output can be cleared (Ctrl+L) and copied. Two checkboxes in its header set how runs from Script Editor and Add-in Explorer alike treat it: **Чистить консоль** (clear console) clears it before each run, and **Тихий режим** (quiet mode) keeps Revit's warning dialogs away, writing the warnings here only. The others are **Автопрокрутка** (auto scroll), **Время** (timestamps) and **Стек вызовов** (call stacks), the last one showing call stacks and other debug lines. All of them are one setting for the console in the editor and the console pane: switched in one, they switch in the other.
 
 ## License
 

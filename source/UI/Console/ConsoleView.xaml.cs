@@ -36,6 +36,17 @@ namespace RevitDevKit.UI.Console
             set => SetValue(IsPersistentProperty, value);
         }
 
+        // Characters a line of wrappable output may take before it wraps; -1: as many as the console shows now;
+        // 0: never wrapped.
+        public static readonly DependencyProperty WrapWidthProperty = DependencyProperty.Register(
+            nameof(WrapWidth), typeof(int), typeof(ConsoleView), new PropertyMetadata(0));
+
+        public int WrapWidth
+        {
+            get => (int)GetValue(WrapWidthProperty);
+            set => SetValue(WrapWidthProperty, value);
+        }
+
         public ConsoleView()
         {
             InitializeComponent();
@@ -131,15 +142,35 @@ namespace RevitDevKit.UI.Console
             if (options?.IsAutoScroll ?? true) Output.ScrollToEnd();
         }
 
+        private void EnsureCharWidth()
+        {
+            if (_charWidth > 0) return;
+
+            var sample = new FormattedText("0", System.Globalization.CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+                new Typeface(Output.FontFamily, Output.FontStyle, Output.FontWeight, Output.FontStretch),
+                Output.FontSize, Brushes.Black, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+            _charWidth = sample.WidthIncludingTrailingWhitespace;
+        }
+
+        // The columns wrappable output may take: WrapWidth, or with -1 what fits in the console's visible width
+        // now, less the time stamp when it is shown. Output already written is not wrapped again on a resize.
+        private int WrapColumns(bool showTime)
+        {
+            if (WrapWidth >= 0) return WrapWidth;
+
+            EnsureCharWidth();
+            var padding = Output.Document.PagePadding;
+            var width = Output.ActualWidth - Output.Padding.Left - Output.Padding.Right
+                        - Output.BorderThickness.Left - Output.BorderThickness.Right
+                        - padding.Left - padding.Right - SystemParameters.VerticalScrollBarWidth - _charWidth;
+            if (width <= 0 || _charWidth <= 0) return 100;
+
+            return Math.Max(40, (int)(width / _charWidth) - (showTime ? 14 : 0));
+        }
+
         private void UpdatePageWidth()
         {
-            if (_charWidth <= 0)
-            {
-                var sample = new FormattedText("0", System.Globalization.CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
-                    new Typeface(Output.FontFamily, Output.FontStyle, Output.FontWeight, Output.FontStretch),
-                    Output.FontSize, Brushes.Black, VisualTreeHelper.GetDpi(this).PixelsPerDip);
-                _charWidth = sample.WidthIncludingTrailingWhitespace;
-            }
+            EnsureCharWidth();
 
             var padding = Output.Document.PagePadding;
             var longest = Math.Max(_longestLine, _lineLength);
@@ -150,6 +181,13 @@ namespace RevitDevKit.UI.Console
         {
             var brush = BrushFor(chunk.Level);
             var parts = chunk.Text.Replace("\r\n", "\n").Split('\n');
+            var columns = chunk.Wrappable ? WrapColumns(showTime) : 0;
+            if (columns > 0)
+            {
+                // The last part is what follows the final line break: kept as it is.
+                parts = parts.Take(parts.Length - 1).SelectMany(p => ConsoleText.Wrap(p, columns))
+                    .Concat(new[] { parts[parts.Length - 1] }).ToArray();
+            }
 
             for (var i = 0; i < parts.Length; i++)
             {
