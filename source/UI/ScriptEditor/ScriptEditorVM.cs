@@ -257,7 +257,7 @@ namespace RevitDevKit.UI.ScriptEditor
             var autoTransaction = IsAutoTransaction;
 
             string debugFile = null;
-            if (debug && DebugLaunch.TryAttach())
+            if (debug && DebugLaunch.TryAttach(tab.FilePath))
             {
                 debugFile = DebugFile(tab, code);
                 ConsoleOutput.Info("Отладка: остановка на первой строке скрипта, файл " + debugFile);
