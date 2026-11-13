@@ -45,7 +45,7 @@
             </Button>
 
             <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding ClearShownCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Убрать с видов то, что скрипты нарисовали через Show(...)">
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Убрать с видов то, что нарисовано через Show(...) в скриптах и Debug.WriteLine(геометрия) в надстройках">
                 <materialDesign:PackIcon Kind="VectorSquareRemove" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
@@ -176,7 +176,7 @@
 
             <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
 
-            <console:ConsoleView Grid.Row="2" Margin="5" DataContext="{Binding Output}" WrapWidth="-1"/>
+            <console:ConsoleView Grid.Row="2" Margin="5" DataContext="{Binding Output}" WrapWidth="-1" IsClearShownVisible="False"/>
         </Grid>
     </DockPanel>
 </Window>

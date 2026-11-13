@@ -2,10 +2,12 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BIMPlugins.ExtStorage.Extensions;
 using RevitDevKit.Core.Output;
+using RevitDevKit.Core.Running;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace RevitDevKit.Core.Show
 {
@@ -27,13 +29,23 @@ namespace RevitDevKit.Core.Show
     }
 
     // What scripts showed on the views of a document, drawn by ShownGeometryServer over the model. Nothing goes into
-    // the model. Cleared before each script run, so the views show the last run; ClearShown() clears it on demand.
+    // the model. Cleared before each run from DevKit, so the views show the last run; ClearShown() clears it on demand.
+    // Add-ins show geometry too, with Debug.WriteLine(geometry) (see TraceShow).
     public static class ShownGeometry
     {
         private static readonly object Sync = new object();
         private static readonly List<ShownShape> Shapes = new List<ShownShape>();
         private static int _nextColor;
         private static bool _dirty;
+        private static int _refreshPosted;
+
+        // The thread Revit runs the API on, taken at start-up. Geometry from another thread is not touched.
+        public static int ApiThreadId { get; set; }
+
+        public static bool IsApiThread => ApiThreadId == 0 || Thread.CurrentThread.ManagedThreadId == ApiThreadId;
+
+        // The names a colour goes by in Debug.WriteLine(geometry, "Red: label"), as the ScriptBase properties are named.
+        internal static readonly string[] PaletteNames = { "Orange", "Green", "Blue", "Red", "Purple", "Teal" };
 
         // Bumped on every change: the server rebuilds its buffers when it differs from the one they were built for.
         public static int Version { get; private set; }
@@ -85,6 +97,50 @@ namespace RevitDevKit.Core.Show
             }
 
             return shape;
+        }
+
+        // Show(...) of a script, or Debug.WriteLine(geometry) of an add-in: draws and writes what it drew to the console.
+        public static ShownShape Show(Document document, object what, Color color, string label)
+        {
+            var shape = Add(document, what, color, label);
+            var line = "Показано: " + shape.What + ", " + shape.ColorName + (label.IsNullOrEmpty() ? "" : " — " + label);
+            ConsoleOutput.WriteLine(line, shape.Lines.Count + shape.Triangles.Count == 0 ? LogLevel.Warning : LogLevel.Info);
+            return shape;
+        }
+
+        // Out of a run from DevKit (an add-in's own command or event) nothing redraws the views after it: they redraw
+        // when Revit is next free. One request covers any number of shapes added before it runs.
+        public static void RequestRefresh()
+        {
+            if (Interlocked.Exchange(ref _refreshPosted, 1) == 1)
+                return;
+
+            RevitTaskRunner.Post(app =>
+            {
+                Interlocked.Exchange(ref _refreshPosted, 0);
+                RefreshIfChanged(app.ActiveUIDocument);
+            });
+        }
+
+        // "Red", "red", "красный", "#FF8000": a colour of the palette or any RGB; null for anything else.
+        public static Color ColorByName(string name)
+        {
+            if (name.IsNullOrWhiteSpace())
+                return null;
+
+            name = name.Trim();
+            for (var i = 0; i < Palette.Length; i++)
+            {
+                if (string.Equals(name, PaletteNames[i], StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(name, Palette[i].Item1, StringComparison.OrdinalIgnoreCase))
+                    return Palette[i].Item2;
+            }
+
+            if (name.Length == 7 && name[0] == '#' &&
+                int.TryParse(name.Substring(1), System.Globalization.NumberStyles.HexNumber, null, out var rgb))
+                return new Color((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
+
+            return null;
         }
 
         public static void Clear()
@@ -149,6 +205,10 @@ namespace RevitDevKit.Core.Show
             {
                 case XYZ point:
                     AddPoint(shape, transform.OfPoint(point));
+                    counts.Points++;
+                    return;
+                case Point point:
+                    AddPoint(shape, transform.OfPoint(point.Coord));
                     counts.Points++;
                     return;
                 case Curve curve:

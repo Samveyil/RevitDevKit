@@ -29,9 +29,11 @@ namespace RevitDevKit.Core.Show
         private List<Batch> _faces = new List<Batch>();
         private Outline _bounds;
 
+        // Called at start-up, on the thread Revit runs the API on.
         public static void Register()
         {
             if (_instance != null) return;
+            ShownGeometry.ApiThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
             try
             {
                 var service = (MultiServerService)ExternalServiceRegistry.GetService(ExternalServices.BuiltInExternalServices.DirectContext3DService);

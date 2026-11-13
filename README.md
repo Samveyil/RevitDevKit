@@ -97,6 +97,17 @@ Add a built DLL, and its `IExternalCommand` classes appear in the list, grouped 
 
 The window closes when a command runs. To run the same command again after changes, there is no need to open Add-in Explorer: build the project and press Repeat Last on the ribbon, and the command runs from the fresh DLL. Repeat Last can be given a keyboard shortcut in Revit. **Repeat Last: Debug** next to it repeats the command under the open Visual Studio, as the bug button does, so breakpoints set in the project are hit; it has its own shortcut. A script is debugged in Script Editor instead.
 
+An add-in draws geometry over the model as `Show` does in scripts, with `Debug.WriteLine`, without a reference to DevKit:
+
+```csharp
+Debug.WriteLine(wall);                    // the next colour of the palette
+Debug.WriteLine(wall.ToSolid(), "Red");   // in red
+Debug.WriteLine(axis, "Blue: axis");      // in blue, labelled "axis" in the console
+Debug.WriteLine(openings);                // a list of elements, curves or points
+```
+
+DevKit's console takes what `Debug` and `Trace` write. When it is geometry (a point, a curve or an edge, a face, a solid, a mesh, a bounding box, an element, its location or a list of these), it is drawn, and the console says what was drawn; anything else is written as text, as before. The category gives the colour, the label or both: `"Red"`, `"Red: label"`, `"#FF8000"`, `"label"`. An `ElementId` is written as a number, as usual. Without DevKit the call only writes the object's name to Visual Studio's Output window, and a Release build has no `Debug` calls at all; `Trace.WriteLine` draws in Release too. Geometry is drawn only from the Revit API thread. What is drawn is cleared before each run from DevKit and by the button in the console header.
+
 ### Applications
 
 <img src="assets/dll-runner-apps.png" width="580" alt="Add-in Explorer, the Applications tab" />

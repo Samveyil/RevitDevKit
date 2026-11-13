@@ -270,12 +270,7 @@ namespace RevitDevKit.ScriptApi
         /// <param name="color">The color: Orange, Green, Blue, Red, Purple, Teal, or new Color(r, g, b).</param>
         /// <param name="label">The label written to the console next to the color.</param>
         /// <remarks>What is drawn stays until the next run or ClearShown().</remarks>
-        public void Show(object geometry, Color color, string label = null)
-        {
-            var shape = ShownGeometry.Add(Doc, geometry, color, label);
-            var line = "Показано: " + shape.What + ", " + shape.ColorName + (label.IsNullOrEmpty() ? "" : " — " + label);
-            ConsoleOutput.WriteLine(line, shape.Lines.Count + shape.Triangles.Count == 0 ? LogLevel.Warning : LogLevel.Info);
-        }
+        public void Show(object geometry, Color color, string label = null) => ShownGeometry.Show(Doc, geometry, color, label);
 
         /// <summary>Clears all geometry drawn by Show.</summary>
         /// <remarks>It is also cleared before each run.</remarks>

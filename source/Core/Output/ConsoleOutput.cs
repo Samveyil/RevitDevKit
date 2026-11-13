@@ -1,4 +1,5 @@
 using BIMPlugins.ExtStorage.Extensions;
+using RevitDevKit.Core.Show;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -282,11 +283,32 @@ namespace RevitDevKit.Core.Output
             public override void WriteLine() => Write(Environment.NewLine);
         }
 
+        // Debug.WriteLine(object) gets the object itself here: geometry is drawn on the views (TraceShow), the rest is text.
         private sealed class ConsoleTraceListener : TraceListener
         {
             public override void Write(string message) => ConsoleOutput.Write(message, LogLevel.Debug);
 
             public override void WriteLine(string message) => ConsoleOutput.WriteLine(message, LogLevel.Debug);
+
+            public override void Write(object o)
+            {
+                if (!TraceShow.TryShow(o, null)) base.Write(o);
+            }
+
+            public override void Write(object o, string category)
+            {
+                if (!TraceShow.TryShow(o, category)) base.Write(o, category);
+            }
+
+            public override void WriteLine(object o)
+            {
+                if (!TraceShow.TryShow(o, null)) base.WriteLine(o);
+            }
+
+            public override void WriteLine(object o, string category)
+            {
+                if (!TraceShow.TryShow(o, category)) base.WriteLine(o, category);
+            }
         }
     }
 }

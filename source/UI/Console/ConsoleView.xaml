@@ -8,6 +8,10 @@
              d:DataContext="{d:DesignInstance local:ConsoleVM}"
              mc:Ignorable="d">
 
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="ClearShownVisibility"/>
+    </UserControl.Resources>
+
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
             <TextBlock Text="Консоль" VerticalAlignment="Center"/>
@@ -20,6 +24,13 @@
             <Button Width="22" Height="22" Margin="8 0 0 0" Padding="0" VerticalAlignment="Center" Click="OnCopy"
                     Style="{DynamicResource MaterialDesignFlatButton}" ToolTip="Скопировать весь вывод в буфер обмена">
                 <materialDesign:PackIcon Kind="ContentCopy" Width="22" Height="22" Foreground="{DynamicResource IconBrush}"/>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding ClearShownCommand}"
+                    Visibility="{Binding IsClearShownVisible, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource ClearShownVisibility}}"
+                    Style="{DynamicResource MaterialDesignFlatButton}"
+                    ToolTip="Убрать с видов то, что нарисовано через Show(...) в скриптах и Debug.WriteLine(геометрия) в надстройках">
+                <materialDesign:PackIcon Kind="VectorSquareRemove" Width="25" Height="25" Foreground="{DynamicResource IconBrush}"/>
             </Button>
 
             <Border Style="{DynamicResource ToolbarSeparator}"/>

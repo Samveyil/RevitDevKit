@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using RevitDevKit.Core.Output;
+using RevitDevKit.Core.Show;
 using System;
 
 namespace RevitDevKit.UI.Console
@@ -27,6 +28,14 @@ namespace RevitDevKit.UI.Console
 
         [RelayCommand]
         private void Clear() => ConsoleOutput.Clear();
+
+        // Takes away what scripts drew with Show(...) and add-ins with Debug.WriteLine(geometry).
+        [RelayCommand]
+        private void ClearShown()
+        {
+            ShownGeometry.Clear();
+            ShownGeometry.RequestRefresh();
+        }
 
         public void ReportStatus(string text) => StatusReported?.Invoke(text);
     }

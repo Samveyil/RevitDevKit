@@ -151,12 +151,12 @@ namespace RevitDevKit.UI.ScriptEditor
             }
         }
 
-        // Takes away what scripts drew with Show(...) and redraws the views.
+        // Takes away what scripts drew with Show(...) and add-ins with Debug.WriteLine(geometry), and redraws the views.
         [RelayCommand]
         private void ClearShown()
         {
             ShownGeometry.Clear();
-            RevitTaskRunner.Post(app => ShownGeometry.RefreshIfChanged(app.ActiveUIDocument));
+            ShownGeometry.RequestRefresh();
             TxtStatus = "Показанное убрано";
         }
 
