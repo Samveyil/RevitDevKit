@@ -9,6 +9,12 @@
 		<ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<!-- The script editor's tooltips read the doc comments of ScriptBase from this copy of its source
+		     (EmbeddedDocumentation), so no XML file is needed next to the DLL. -->
+		<EmbeddedResource Include="ScriptApi\ScriptBase.cs" LogicalName="RevitDevKit.ScriptBase.cs" />
+	</ItemGroup>
+
 	<PropertyGroup Condition="$(Configuration.Contains('2019'))">
 		<TargetFramework>net48</TargetFramework>
 		<RevitVersion>2019</RevitVersion>
@@ -57,7 +63,7 @@
 	<PropertyGroup Condition="!$(Configuration.Contains('Debug'))">
 		<Optimize>true</Optimize>
 		<OutputPath>bin\Release\$(RevitVersion)\</OutputPath>
-		<NoWarn>MSB3052</NoWarn>
+		<NoWarn>$(NoWarn);MSB3052</NoWarn>
 		<DebugType>none</DebugType>
 	</PropertyGroup>
 

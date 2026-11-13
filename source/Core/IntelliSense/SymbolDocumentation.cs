@@ -1,9 +1,13 @@
 using BIMPlugins.ExtStorage.Extensions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using RevitDevKit.Core.Compiler;
 using RevitDevKit.Core.Output;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -73,6 +77,74 @@ namespace RevitDevKit.Core.IntelliSense
         public override bool Equals(object obj) => obj is XmlDocumentation other && other._path == _path;
 
         public override int GetHashCode() => _path.GetHashCode();
+    }
+
+    // Docs of DevKit's own script API (ScriptBase), for tooltips without RevitDevKit.xml next to the DLL.
+    // The compiler writes doc comments only to that separate file, and it cannot go into the DLL being built,
+    // so the DLL carries ScriptBase.cs itself as a resource. On the first tooltip the source is parsed and bound
+    // against the scripts' references, and every member's comment is kept under its documentation ID.
+    internal sealed class EmbeddedDocumentation : DocumentationProvider
+    {
+        public const string ResourceName = "RevitDevKit.ScriptBase.cs";
+
+        private readonly Func<IEnumerable<MetadataReference>> _references;
+        private readonly object _sync = new object();
+        private Dictionary<string, string> _members;
+
+        public EmbeddedDocumentation(Func<IEnumerable<MetadataReference>> references)
+        {
+            _references = references;
+        }
+
+        public static bool IsAvailable => typeof(EmbeddedDocumentation).Assembly.GetManifestResourceInfo(ResourceName) != null;
+
+        protected override string GetDocumentationForSymbol(string documentationMemberID, CultureInfo preferredCulture,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return Members().TryGetValue(documentationMemberID, out var xml) ? xml : string.Empty;
+        }
+
+        private Dictionary<string, string> Members()
+        {
+            lock (_sync)
+            {
+                if (_members != null)
+                    return _members;
+
+                var members = new Dictionary<string, string>(StringComparer.Ordinal);
+                try
+                {
+                    string source;
+                    using (var stream = typeof(EmbeddedDocumentation).Assembly.GetManifestResourceStream(ResourceName))
+                    using (var reader = new StreamReader(stream))
+                        source = reader.ReadToEnd();
+
+                    var tree = CSharpSyntaxTree.ParseText(source,
+                        ScriptCompiler.CreateParseOptions().WithDocumentationMode(DocumentationMode.Parse));
+                    var model = ScriptCompiler.CreateCompilation("RevitDevKitDocs", new[] { tree }, _references())
+                        .GetSemanticModel(tree);
+
+                    foreach (var declaration in tree.GetRoot().DescendantNodes().OfType<MemberDeclarationSyntax>())
+                    {
+                        var symbol = model.GetDeclaredSymbol(declaration);
+                        var id = symbol?.GetDocumentationCommentId();
+                        var xml = symbol?.GetDocumentationCommentXml();
+                        if (!id.IsNullOrEmpty() && !xml.IsNullOrWhiteSpace())
+                            members[id] = xml;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ConsoleOutput.Debug("Не удалось прочитать встроенную документацию DevKit: " + ex.Message);
+                }
+
+                return _members = members;
+            }
+        }
+
+        public override bool Equals(object obj) => ReferenceEquals(this, obj);
+
+        public override int GetHashCode() => ResourceName.GetHashCode();
     }
 
     // Plain text from XML documentation comments, for the editor's tooltips.

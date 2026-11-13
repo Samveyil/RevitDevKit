@@ -296,9 +296,7 @@ namespace RevitDevKit.Core.Compiler
 
                 try
                 {
-                    var documentation = FindDocumentation(path);
-                    cached = MetadataReference.CreateFromFile(path,
-                        documentation: documentation == null ? null : new XmlDocumentation(documentation));
+                    cached = MetadataReference.CreateFromFile(path, documentation: DocumentationFor(path));
                 }
                 catch
                 {
@@ -308,6 +306,17 @@ namespace RevitDevKit.Core.Compiler
                 ReferenceCache[path] = cached;
                 return cached;
             }
+        }
+
+        // DevKit's own docs (ScriptBase) come from the DLL itself, other assemblies' from their XML files.
+        private static DocumentationProvider DocumentationFor(string path)
+        {
+            if (string.Equals(Path.GetFullPath(path), Path.GetFullPath(typeof(ScriptCompiler).Assembly.Location), StringComparison.OrdinalIgnoreCase)
+                && EmbeddedDocumentation.IsAvailable)
+                return new EmbeddedDocumentation(() => BuildReferences(new List<string>(), new List<CompileMessage>()));
+
+            var file = FindDocumentation(path);
+            return file == null ? null : new XmlDocumentation(file);
         }
 
         // XML documentation for the editor's tooltips: next to the assembly (Revit API, NuGet packages),

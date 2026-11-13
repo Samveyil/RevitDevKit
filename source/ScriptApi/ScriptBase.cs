@@ -11,30 +11,72 @@ using System.Linq;
 
 namespace RevitDevKit.ScriptApi
 {
+    /// <summary>
+    /// Основа каждого скрипта: его код выполняется внутри наследника этого класса, поэтому всё ниже доступно
+    /// без префикса: Doc, Print(...), All&lt;Wall&gt;() и так далее.
+    /// </summary>
     public abstract class ScriptBase
     {
+        /// <summary>Приложение Revit с интерфейсом: открытые документы, активный документ, лента.</summary>
         public UIApplication UIApp { get => RevitAPI.UIApplication; }
+
+        /// <summary>Приложение Revit без интерфейса: версия, язык, единицы, открытие и создание документов.</summary>
         public Autodesk.Revit.ApplicationServices.Application App { get => RevitAPI.Application; }
+
+        /// <summary>Активный документ с интерфейсом: выделение, показ элементов, активный вид.</summary>
         public UIDocument UIDoc { get => RevitAPI.UIDocument; }
+
+        /// <summary>Активный документ: модель, из которой читают элементы и в которой меняют их в транзакции (Tx).</summary>
         public Document Doc { get => RevitAPI.Document; }
+
+        /// <summary>Вид, открытый сейчас в Revit.</summary>
         public View ActiveView { get => RevitAPI.ActiveView; }
+
+        /// <summary>
+        /// Данные внешней команды, как в IExternalCommand.Execute. Есть, когда запуск идёт через команду Revit
+        /// (так запускаются команды из DLL и Repeat Last); иначе null.
+        /// </summary>
         public ExternalCommandData CommandData { get => RevitTaskRunner.CurrentCommandData; }
 
+        /// <summary>
+        /// Пишет значение в консоль. Список выводится как [a, b, c] (первые 200), null — как "null".
+        /// </summary>
+        /// <param name="value">Что вывести: строка, число, элемент, список и так далее.</param>
         public void Print(object value) => ConsoleOutput.WriteObject(value);
+
+        /// <summary>Пишет в консоль строку по шаблону, как string.Format: Print("Стен: {0}", walls.Count).</summary>
+        /// <param name="format">Шаблон с местами {0}, {1}...</param>
+        /// <param name="args">Значения для мест в шаблоне.</param>
         public void Print(string format, params object[] args)
         {
             ConsoleOutput.WriteLine(args == null || args.Length == 0 ? format : string.Format(format, args));
         }
 
+        /// <summary>Пишет в консоль зелёную строку: всё получилось.</summary>
+        /// <param name="text">Текст сообщения.</param>
         public void Ok(string text) => ConsoleOutput.Success(text);
+
+        /// <summary>Пишет в консоль жёлтую строку: предупреждение.</summary>
+        /// <param name="text">Текст предупреждения.</param>
         public void Warn(string text) => ConsoleOutput.Warning(text);
+
+        /// <summary>Пишет в консоль красную строку: ошибка. Скрипт при этом продолжает работу.</summary>
+        /// <param name="text">Текст ошибки.</param>
         public void Fail(string text) => ConsoleOutput.Error(text);
+
+        /// <summary>Очищает консоль.</summary>
         public void Clear() => ConsoleOutput.Clear();
 
-        // Every column is as wide as its longest value, up to MaxTableWidth, so the separators line up
-        // in the console's monospaced font. Line breaks inside a value would split the row, so they become spaces.
+        /// <summary>
+        /// Выводит в консоль таблицу: строка на каждый элемент, столбец на каждую функцию.
+        /// Например: Table(walls, w =&gt; w.Id, w =&gt; w.Name).
+        /// </summary>
+        /// <param name="items">Строки таблицы.</param>
+        /// <param name="columns">Что показать в столбцах; без них каждый элемент выводится как Print.</param>
         public void Table<T>(IEnumerable<T> items, params Func<T, object>[] columns)
         {
+            // Every column is as wide as its longest value, up to MaxTableWidth, so the separators line up
+            // in the console's monospaced font. Line breaks inside a value would split the row, so they become spaces.
             if (items == null)
             {
                 Print("null");
@@ -69,6 +111,12 @@ namespace RevitDevKit.ScriptApi
             }
         }
 
+        /// <summary>
+        /// Выполняет изменения модели в транзакции: Tx("Перенос", () =&gt; { ... }). При исключении всё
+        /// откатывается. Не нужна, если включена «Автотранзакция».
+        /// </summary>
+        /// <param name="name">Имя транзакции, оно будет в списке отмены Revit.</param>
+        /// <param name="action">Код, который меняет модель.</param>
         public void Tx(string name, Action action)
         {
             if (action == null)
@@ -95,6 +143,12 @@ namespace RevitDevKit.ScriptApi
             }
         }
 
+        /// <summary>
+        /// Выполняет изменения модели в транзакции и возвращает результат:
+        /// var wall = Tx("Стена", () =&gt; Wall.Create(...)). При исключении всё откатывается.
+        /// </summary>
+        /// <param name="name">Имя транзакции, оно будет в списке отмены Revit.</param>
+        /// <param name="func">Код, который меняет модель и возвращает результат.</param>
         public TResult Tx<TResult>(string name, Func<TResult> func)
         {
             var result = default(TResult);
@@ -102,30 +156,54 @@ namespace RevitDevKit.ScriptApi
             return result;
         }
 
+        /// <summary>Все экземпляры категории в документе, без типов: Instances(BuiltInCategory.OST_Walls).</summary>
+        /// <param name="category">Категория, например BuiltInCategory.OST_Doors.</param>
         public IList<Element> Instances(BuiltInCategory category) => Doc.ToElements(category);
 
+        /// <summary>Экземпляры категории, видимые на виде.</summary>
+        /// <param name="viewId">Id вида, например ActiveView.Id.</param>
+        /// <param name="category">Категория, например BuiltInCategory.OST_Doors.</param>
         public IList<Element> Instances(ElementId viewId, BuiltInCategory category) => Doc.ToElements(viewId, category);
 
+        /// <summary>Все типы категории в документе: Types(BuiltInCategory.OST_Walls) вернёт типы стен.</summary>
+        /// <param name="category">Категория, например BuiltInCategory.OST_Walls.</param>
         public IList<Element> Types(BuiltInCategory category) => Doc.ToElements(category, true);
 
+        /// <summary>Типы категории, отобранные по виду.</summary>
+        /// <param name="viewId">Id вида, например ActiveView.Id.</param>
+        /// <param name="category">Категория, например BuiltInCategory.OST_Walls.</param>
         public IList<Element> Types(ElementId viewId, BuiltInCategory category) => Doc.ToElements(viewId, category, true);
 
+        /// <summary>Все элементы класса T в документе: All&lt;Wall&gt;(), All&lt;FamilyInstance&gt;().</summary>
         public IList<T> All<T>() where T : Element => Doc.ToElements<T>();
 
+        /// <summary>Элементы класса T, видимые на виде: All&lt;Wall&gt;(ActiveView.Id).</summary>
+        /// <param name="viewId">Id вида, например ActiveView.Id.</param>
         public IList<T> All<T>(ElementId viewId) where T : Element => Doc.ToElements<T>(viewId);
 
+        /// <summary>Элементы класса T из категории: All&lt;FamilyInstance&gt;(BuiltInCategory.OST_Doors).</summary>
+        /// <param name="category">Категория, например BuiltInCategory.OST_Doors.</param>
         public IList<T> All<T>(BuiltInCategory category) where T : Element => Doc.ToElements<T>(category);
 
+        /// <summary>Элементы класса T из категории, видимые на виде.</summary>
+        /// <param name="viewId">Id вида, например ActiveView.Id.</param>
+        /// <param name="category">Категория, например BuiltInCategory.OST_Doors.</param>
         public IList<T> All<T>(ElementId viewId, BuiltInCategory category) where T : Element => Doc.ToElements<T>(viewId, category);
 
+        /// <summary>Элементы, выделенные сейчас в Revit.</summary>
         public ICollection<Element> Selection { get => UIDoc.ToSelectedElements(); }
 
+        /// <summary>Первый выделенный элемент, или null, если ничего не выделено.</summary>
         public Element S0 { get => S(0); }
 
+        /// <summary>Второй выделенный элемент, или null.</summary>
         public Element S1 { get => S(1); }
 
+        /// <summary>Третий выделенный элемент, или null.</summary>
         public Element S2 { get => S(2); }
 
+        /// <summary>Выделенный элемент по номеру, с нуля; null, если столько не выделено.</summary>
+        /// <param name="index">Номер в выделении: 0 — первый.</param>
         public Element S(int index)
         {
             if (index < 0) return null;
@@ -133,18 +211,38 @@ namespace RevitDevKit.ScriptApi
             return Selection.Skip(index).FirstOrDefault();
         }
 
+        /// <summary>Выделенный элемент по номеру как T: S&lt;Wall&gt;(0); null, если это не T.</summary>
+        /// <param name="index">Номер в выделении: 0 — первый.</param>
         public T S<T>(int index) where T : Element
         {
             return S(index) as T;
         }
 
-        // Draws geometry over the model on the views, without creating anything: a point, a curve, an edge, a face,
-        // a solid, a mesh, a bounding box or an outline, an element, its location, or a list of these. Every call has
-        // a colour of its own unless one is given. What is shown stays until the next run or ClearShown().
+        /// <summary>
+        /// Рисует геометрию поверх модели на видах, ничего не создавая в ней. Каждый вызов получает свой цвет.
+        /// Нарисованное остаётся до следующего запуска или ClearShown().
+        /// </summary>
+        /// <param name="geometry">
+        /// Точка, кривая, ребро, грань, тело, сетка, BoundingBoxXYZ или Outline, элемент или его Id, Reference,
+        /// LocationPoint или LocationCurve, или список из них.
+        /// </param>
         public void Show(object geometry) => Show(geometry, null, null);
 
+        /// <summary>Рисует геометрию поверх модели и подписывает её в консоли.</summary>
+        /// <param name="geometry">
+        /// Точка, кривая, ребро, грань, тело, сетка, BoundingBoxXYZ или Outline, элемент или его Id, Reference,
+        /// LocationPoint или LocationCurve, или список из них.
+        /// </param>
+        /// <param name="label">Подпись, которая выводится в консоли рядом с цветом.</param>
         public void Show(object geometry, string label) => Show(geometry, null, label);
 
+        /// <summary>Рисует геометрию поверх модели заданным цветом: Show(wall, Red, "стена").</summary>
+        /// <param name="geometry">
+        /// Точка, кривая, ребро, грань, тело, сетка, BoundingBoxXYZ или Outline, элемент или его Id, Reference,
+        /// LocationPoint или LocationCurve, или список из них.
+        /// </param>
+        /// <param name="color">Цвет: Orange, Green, Blue, Red, Purple, Teal или new Color(r, g, b).</param>
+        /// <param name="label">Подпись, которая выводится в консоли рядом с цветом.</param>
         public void Show(object geometry, Color color, string label = null)
         {
             var shape = ShownGeometry.Add(Doc, geometry, color, label);
@@ -152,17 +250,30 @@ namespace RevitDevKit.ScriptApi
             ConsoleOutput.WriteLine(line, shape.Lines.Count + shape.Triangles.Count == 0 ? LogLevel.Warning : LogLevel.Info);
         }
 
-        // Clears what Show(...) drew; it is also cleared before each run.
+        /// <summary>Стирает всё, что нарисовал Show(...). Перед каждым запуском это происходит и само.</summary>
         public void ClearShown() => ShownGeometry.Clear();
 
-        // Colours for Show(..., colour).
+        /// <summary>Оранжевый для Show(..., Orange).</summary>
         public Color Orange => ShownGeometry.Palette[0].Item2;
+
+        /// <summary>Зелёный для Show(..., Green).</summary>
         public Color Green => ShownGeometry.Palette[1].Item2;
+
+        /// <summary>Синий для Show(..., Blue).</summary>
         public Color Blue => ShownGeometry.Palette[2].Item2;
+
+        /// <summary>Красный для Show(..., Red).</summary>
         public Color Red => ShownGeometry.Palette[3].Item2;
+
+        /// <summary>Фиолетовый для Show(..., Purple).</summary>
         public Color Purple => ShownGeometry.Palette[4].Item2;
+
+        /// <summary>Бирюзовый для Show(..., Teal).</summary>
         public Color Teal => ShownGeometry.Palette[5].Item2;
 
+        /// <summary>Выводит в консоль класс, категорию и все параметры элемента со значениями, по алфавиту.</summary>
+        /// <param name="element">Элемент, например S0.</param>
+        /// <param name="useType">true — добавить параметры его типа.</param>
         public void Dump(Element element, bool useType=false)
         {
             if (element == null)
@@ -179,16 +290,26 @@ namespace RevitDevKit.ScriptApi
                 ConsoleOutput.WriteLine("  " + p.Definition.Name.PadRight(NameWidth) + " = " + ReadValue(p));
         }
 
-        // Prints only the parameters whose values differ; "—" means the element has no such parameter.
-        // Only parameters shown in the Properties palette (GetOrderedParameters).
+        /// <summary>
+        /// Выводит в консоль таблицу параметров, которые у двух элементов различаются. «-нет-» — у элемента
+        /// такого параметра нет. Сравниваются параметры из палитры свойств.
+        /// </summary>
+        /// <param name="first">Первый элемент, например S0.</param>
+        /// <param name="second">Второй элемент, например S1.</param>
+        /// <param name="useType">true — сравнить и параметры их типов.</param>
         public void Compare(Element first, Element second, bool useType = false) =>
             Compare(new[] { first, second }, useType);
 
+        /// <summary>Выводит в консоль параметры, которые у элементов различаются: Compare(S0, S1, S2). До пяти элементов.</summary>
+        /// <param name="elements">Элементы для сравнения.</param>
         public void Compare(params Element[] elements) => Compare(elements, false);
 
-        // Up to MaxCompared elements: wider tables no longer fit a docked console pane.
+        /// <summary>Выводит в консоль параметры, которые у элементов различаются: Compare(Selection). До пяти элементов.</summary>
+        /// <param name="elements">Элементы для сравнения.</param>
+        /// <param name="useType">true — сравнить и параметры их типов.</param>
         public void Compare(IEnumerable<Element> elements, bool useType = false)
         {
+            // Up to MaxCompared elements: wider tables no longer fit a docked console pane.
             var items = (elements ?? Enumerable.Empty<Element>()).ToList();
 
             if (items.Count < 2 || items.Any(e => e == null))
