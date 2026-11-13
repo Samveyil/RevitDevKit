@@ -308,7 +308,8 @@ namespace RevitDevKit.Core.Compiler
             }
         }
 
-        // DevKit's own docs (ScriptBase) come from the DLL itself, other assemblies' from their XML files.
+        // DevKit's own docs (ScriptBase) come from the DLL itself, other assemblies' from their XML files,
+        // or from the copy DevKit carries for a package it inherits docs from (BIMPlugins.ExtStorage).
         private static DocumentationProvider DocumentationFor(string path)
         {
             if (string.Equals(Path.GetFullPath(path), Path.GetFullPath(typeof(ScriptCompiler).Assembly.Location), StringComparison.OrdinalIgnoreCase)
@@ -316,7 +317,9 @@ namespace RevitDevKit.Core.Compiler
                 return new EmbeddedDocumentation(() => BuildReferences(new List<string>(), new List<CompileMessage>()));
 
             var file = FindDocumentation(path);
-            return file == null ? null : new XmlDocumentation(file);
+            return file != null
+                ? new XmlDocumentation(file)
+                : XmlDocumentation.Embedded(Path.GetFileNameWithoutExtension(path) + ".xml");
         }
 
         // XML documentation for the editor's tooltips: next to the assembly (Revit API, NuGet packages),

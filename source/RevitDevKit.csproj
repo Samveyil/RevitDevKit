@@ -15,6 +15,15 @@
 		<EmbeddedResource Include="ScriptApi\ScriptBase.cs" LogicalName="RevitDevKit.ScriptBase.cs" />
 	</ItemGroup>
 
+	<!-- ScriptBase inherits docs from BIMPlugins.ExtStorage (<inheritdoc cref="RevitAPI..."/>). The package's XML
+	     is not copied next to the DLL, so DevKit carries it inside, found by the resolved reference's folder. -->
+	<Target Name="EmbedPackageDocs" AfterTargets="ResolveAssemblyReferences" BeforeTargets="PrepareResources">
+		<ItemGroup>
+			<_PackageDocs Include="@(ReferencePath->'%(RootDir)%(Directory)%(Filename).xml')" Condition="'%(Filename)' == 'BIMPlugins.ExtStorage'" />
+			<EmbeddedResource Include="@(_PackageDocs)" Condition="Exists('%(FullPath)')" LogicalName="RevitDevKit.Docs.%(Filename)%(Extension)" />
+		</ItemGroup>
+	</Target>
+
 	<PropertyGroup Condition="$(Configuration.Contains('2019'))">
 		<TargetFramework>net48</TargetFramework>
 		<RevitVersion>2019</RevitVersion>
