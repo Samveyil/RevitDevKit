@@ -244,7 +244,7 @@
 
             <Border Style="{StaticResource ToolbarSeparator}"/>
 
-            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Только конфликты" IsChecked="{Binding Dependencies.OnlyProblems}"
+            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Только конфликты" IsChecked="{Binding Dependencies.OnlyProblems}"
                       ToolTip="Снимите, чтобы видеть и подписанные DLL, которые загрузятся рядом, и одинаковые у нескольких надстроек"/>
         </StackPanel>
 
@@ -272,7 +272,7 @@
 
             <Border Style="{StaticResource ToolbarSeparator}"/>
 
-            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Скрыть системные" IsChecked="{Binding LoadedAssemblies.HideSystem}"
+            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Скрыть системные" IsChecked="{Binding LoadedAssemblies.HideSystem}"
                       ToolTip="Скрыть сборки .NET, GAC, Revit и созданные в памяти: останутся надстройки и их DLL"/>
         </StackPanel>
 

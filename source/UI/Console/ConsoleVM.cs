@@ -17,6 +17,7 @@ namespace RevitDevKit.UI.Console
 
         // What runs from Script Editor and Add-in Explorer do with the console.
         public bool IsClearOnRun { get => ConsoleOptions.ClearOnRun; set => ConsoleOptions.ClearOnRun = value; }
+        public bool IsClearShownOnRun { get => ConsoleOptions.ClearShownOnRun; set => ConsoleOptions.ClearShownOnRun = value; }
         public bool IsHideWarnings { get => ConsoleOptions.HideWarnings; set => ConsoleOptions.HideWarnings = value; }
 
         // How the console shows its output.

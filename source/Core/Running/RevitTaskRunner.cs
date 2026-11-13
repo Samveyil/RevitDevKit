@@ -116,8 +116,10 @@ namespace RevitDevKit.Core.Running
             ConsoleOutput.EnsureTraceListener();
             ConsoleOutput.Banner("Запуск: " + (request.Title ?? "скрипт"));
 
-            // The views show what this run shows, with Show(...) in a script or Debug.WriteLine(geometry) in a DLL.
-            ShownGeometry.Clear();
+            // The views show what this run shows, with Show(...) in a script or Debug.WriteLine(geometry) in a DLL;
+            // with the option off, what earlier runs showed stays to compare with.
+            if (ConsoleOptions.ClearShownOnRun)
+                ShownGeometry.Clear();
 
             // Only transactions committed while this request runs: not the user's, nor other add-ins' between runs.
             var failures = FailureLog.Watch(request.HideWarnings);

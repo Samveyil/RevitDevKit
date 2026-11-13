@@ -36,16 +36,6 @@ namespace RevitDevKit.UI.Console
             set => SetValue(IsPersistentProperty, value);
         }
 
-        // The button that takes away shown geometry. Script Editor has it on its own toolbar, so its console goes without.
-        public static readonly DependencyProperty IsClearShownVisibleProperty = DependencyProperty.Register(
-            nameof(IsClearShownVisible), typeof(bool), typeof(ConsoleView), new PropertyMetadata(true));
-
-        public bool IsClearShownVisible
-        {
-            get => (bool)GetValue(IsClearShownVisibleProperty);
-            set => SetValue(IsClearShownVisibleProperty, value);
-        }
-
         // Characters a line of wrappable output may take before it wraps; -1: as many as the console shows now;
         // 0: never wrapped.
         public static readonly DependencyProperty WrapWidthProperty = DependencyProperty.Register(

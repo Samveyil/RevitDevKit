@@ -247,7 +247,7 @@ namespace RevitDevKit.ScriptApi
         /// a LocationPoint or LocationCurve, or a collection of these.
         /// </param>
         /// <remarks>
-        /// Each call gets a color of its own. What is drawn stays until the next run or ClearShown().
+        /// Each call gets a color of its own. What is drawn stays until ClearShown(), and until the next run when the console option to clear views is on.
         /// </remarks>
         public void Show(object geometry) => Show(geometry, null, null);
 
@@ -258,7 +258,7 @@ namespace RevitDevKit.ScriptApi
         /// </param>
         /// <param name="label">The label written to the console next to the color.</param>
         /// <remarks>
-        /// Each call gets a color of its own. What is drawn stays until the next run or ClearShown().
+        /// Each call gets a color of its own. What is drawn stays until ClearShown(), and until the next run when the console option to clear views is on.
         /// </remarks>
         public void Show(object geometry, string label) => Show(geometry, null, label);
 
@@ -269,11 +269,11 @@ namespace RevitDevKit.ScriptApi
         /// </param>
         /// <param name="color">The color: Orange, Green, Blue, Red, Purple, Teal, or new Color(r, g, b).</param>
         /// <param name="label">The label written to the console next to the color.</param>
-        /// <remarks>What is drawn stays until the next run or ClearShown().</remarks>
+        /// <remarks>What is drawn stays until ClearShown(), and until the next run when the console option to clear views is on.</remarks>
         public void Show(object geometry, Color color, string label = null) => ShownGeometry.Show(Doc, geometry, color, label);
 
         /// <summary>Clears all geometry drawn by Show.</summary>
-        /// <remarks>It is also cleared before each run.</remarks>
+        /// <remarks>It is also cleared before each run when the console option to clear views is on.</remarks>
         public void ClearShown() => ShownGeometry.Clear();
 
         /// <summary>Orange, for Show(geometry, Orange).</summary>

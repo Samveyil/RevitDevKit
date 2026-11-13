@@ -44,11 +44,6 @@
                 <materialDesign:PackIcon Kind="BugPlayOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
-            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding ClearShownCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Убрать с видов то, что нарисовано через Show(...) в скриптах и Debug.WriteLine(геометрия) в надстройках">
-                <materialDesign:PackIcon Kind="VectorSquareRemove" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
-            </Button>
-
             <Border Style="{StaticResource ToolbarSeparator}"/>
 
             <Button Width="25" Height="25" Padding="0" Command="{Binding NewTabCommand}"
@@ -92,7 +87,7 @@
 
             <Border Style="{StaticResource ToolbarSeparator}"/>
 
-            <CheckBox VerticalAlignment="Bottom" Padding="2 0" Content="Автотранзакция" IsChecked="{Binding IsAutoTransaction}"
+            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Автотранзакция" IsChecked="{Binding IsAutoTransaction}"
                       ToolTip="Обернуть выполнение в транзакцию. Выключите, если скрипт открывает транзакции сам."/>
         </StackPanel>
 
@@ -176,7 +171,7 @@
 
             <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
 
-            <console:ConsoleView Grid.Row="2" Margin="5" DataContext="{Binding Output}" WrapWidth="-1" IsClearShownVisible="False"/>
+            <console:ConsoleView Grid.Row="2" Margin="5" DataContext="{Binding Output}" WrapWidth="-1"/>
         </Grid>
     </DockPanel>
 </Window>

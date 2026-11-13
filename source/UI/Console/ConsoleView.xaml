@@ -8,10 +8,6 @@
              d:DataContext="{d:DesignInstance local:ConsoleVM}"
              mc:Ignorable="d">
 
-    <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="ClearShownVisibility"/>
-    </UserControl.Resources>
-
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
             <TextBlock Text="Консоль" VerticalAlignment="Center"/>
@@ -27,25 +23,41 @@
             </Button>
 
             <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding ClearShownCommand}"
-                    Visibility="{Binding IsClearShownVisible, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource ClearShownVisibility}}"
                     Style="{DynamicResource MaterialDesignFlatButton}"
-                    ToolTip="Убрать с видов то, что нарисовано через Show(...) в скриптах и Debug.WriteLine(геометрия) в надстройках">
+                    ToolTip="Очистить виды: убрать то, что нарисовано через Show(...) в скриптах и Debug.WriteLine(геометрия) в надстройках">
                 <materialDesign:PackIcon Kind="VectorSquareRemove" Width="25" Height="25" Foreground="{DynamicResource IconBrush}"/>
             </Button>
 
             <Border Style="{DynamicResource ToolbarSeparator}"/>
 
             <!-- What a run from DevKit does with the console: one setting for Script Editor and Add-in Explorer. -->
-            <CheckBox Content="Чистить консоль" VerticalAlignment="Bottom" Padding="2 0" IsChecked="{Binding IsClearOnRun}"
+            <CheckBox Content="Чистить консоль" VerticalAlignment="Center" Padding="2 0" IsChecked="{Binding IsClearOnRun}"
                       ToolTip="Очищать консоль перед каждым запуском из Script Editor и Add-in Explorer"/>
-            <CheckBox Content="Тихий режим" VerticalAlignment="Bottom" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsHideWarnings}"
+            <CheckBox Content="Чистить виды" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsClearShownOnRun}"
+                      ToolTip="Убирать с видов нарисованное через Show(...) и Debug.WriteLine(геометрия) перед каждым запуском. Без галочки оно остаётся для сравнения, а следующий запуск рисует следующими цветами"/>
+            <CheckBox Content="Тихий режим" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsHideWarnings}"
                       ToolTip="Тихий режим: предупреждения Revit при запуске из DevKit пишутся только в консоль, без окна Revit. Ошибки Revit показывает как обычно"/>
 
             <Border Style="{DynamicResource ToolbarSeparator}"/>
 
-            <CheckBox Content="Автопрокрутка" VerticalAlignment="Bottom" Padding="2 0" IsChecked="{Binding IsAutoScroll}"/>
-            <CheckBox Content="Время" VerticalAlignment="Bottom" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsTimestamps}"/>
-            <CheckBox Content="Стек вызовов" VerticalAlignment="Bottom" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsShowDebug}"/>
+            <!-- How the console shows its output: set once and left, so kept in a menu and the header stays one short row. -->
+            <!-- Framed as Примеры in Script Editor; stays open, so several options can be switched in a row. -->
+            <Border Height="23" BorderThickness="1" BorderBrush="{DynamicResource AccentBrush}" CornerRadius="3" VerticalAlignment="Center">
+                <materialDesign:PopupBox x:Name="ViewOptions" StaysOpen="True" VerticalAlignment="Stretch" ToolTip="Как консоль показывает вывод">
+                    <materialDesign:PopupBox.ToggleContent>
+                        <TextBlock Text="Вид ▾" Margin="10 0 8 0" VerticalAlignment="Center"/>
+                    </materialDesign:PopupBox.ToggleContent>
+
+                    <StackPanel Margin="12 8">
+                        <CheckBox Content="Автопрокрутка" Padding="4 0" IsChecked="{Binding IsAutoScroll}"
+                                  ToolTip="Прокручивать консоль к новому выводу"/>
+                        <CheckBox Content="Время" Margin="0 8 0 0" Padding="4 0" IsChecked="{Binding IsTimestamps}"
+                                  ToolTip="Начинать строки со времени"/>
+                        <CheckBox Content="Стек вызовов" Margin="0 8 0 0" Padding="4 0" IsChecked="{Binding IsShowDebug}"
+                                  ToolTip="Показывать стеки вызовов и другие отладочные строки"/>
+                    </StackPanel>
+                </materialDesign:PopupBox>
+            </Border>
         </StackPanel>
 
         <RichTextBox x:Name="Output" IsReadOnly="True" IsDocumentEnabled="True" FontFamily="Consolas" Margin="0 2 0 0"

@@ -8,6 +8,7 @@ namespace RevitDevKit.Core.Output
     public static class ConsoleOptions
     {
         private static bool _clearOnRun = true;
+        private static bool _clearShownOnRun = true;
         private static bool _hideWarnings;
         private static bool _autoScroll = true;
         private static bool _timestamps;
@@ -18,6 +19,10 @@ namespace RevitDevKit.Core.Output
 
         // The console is cleared before each run.
         public static bool ClearOnRun { get => _clearOnRun; set => Set(ref _clearOnRun, value, nameof(ClearOnRun)); }
+
+        // What Show(...) and Debug.WriteLine(geometry) drew is cleared before each run. Off, it stays to compare with
+        // the next run, which draws in the next colours of the palette.
+        public static bool ClearShownOnRun { get => _clearShownOnRun; set => Set(ref _clearShownOnRun, value, nameof(ClearShownOnRun)); }
 
         // Revit's warnings during a run only go to the console, without Revit's dialog.
         public static bool HideWarnings { get => _hideWarnings; set => Set(ref _hideWarnings, value, nameof(HideWarnings)); }

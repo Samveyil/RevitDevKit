@@ -6,7 +6,6 @@ using ICSharpCode.AvalonEdit.Document;
 using RevitDevKit.Core.Compiler;
 using RevitDevKit.Core.Output;
 using RevitDevKit.Core.Running;
-using RevitDevKit.Core.Show;
 using RevitDevKit.ScriptApi;
 using RevitDevKit.UI.Console;
 using System;
@@ -151,15 +150,6 @@ namespace RevitDevKit.UI.ScriptEditor
             }
         }
 
-        // Takes away what scripts drew with Show(...) and add-ins with Debug.WriteLine(geometry), and redraws the views.
-        [RelayCommand]
-        private void ClearShown()
-        {
-            ShownGeometry.Clear();
-            ShownGeometry.RequestRefresh();
-            TxtStatus = "Показанное убрано";
-        }
-
         [RelayCommand]
         private void SampleSelected(string value)
         {
@@ -261,9 +251,6 @@ namespace RevitDevKit.UI.ScriptEditor
             }
 
             if (ConsoleOptions.ClearOnRun) ConsoleOutput.Clear();
-
-            // The views show what the last run showed: what an earlier one did goes away when this one ends.
-            ShownGeometry.Clear();
 
             // Without a debugger nothing runs: the user has been told to open Visual Studio.
             string debugFile = null;
