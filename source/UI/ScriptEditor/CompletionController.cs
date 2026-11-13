@@ -220,7 +220,7 @@ namespace RevitDevKit.UI.ScriptEditor
         // Suggested names go first and are preferred when typed letters match several items equally.
         private void ShowWindow(IList<CompletionEntry> entries, int wordStart, string typed, IList<string> suggested = null)
         {
-            var window = new CompletionWindow(_editor.TextArea) { Width = 320 };
+            var window = new CompletionListWindow(_editor.TextArea, () => _insight?.IsActive == true) { Width = 320 };
             window.StartOffset = wordStart;
 
             var data = window.CompletionList.CompletionData;
@@ -343,6 +343,7 @@ namespace RevitDevKit.UI.ScriptEditor
 
                 _insight = insight;
                 insight.Show();
+                ReturnFocusAfterClick(insight);
                 KeepAboveLine(insight);
             }
 
@@ -353,6 +354,18 @@ namespace RevitDevKit.UI.ScriptEditor
 
         // The overloads sit above the caret line, as in Visual Studio, so they do not cover the completion list below it.
         // AvalonEdit places them below and moves them back on scrolling, hence the handlers.
+        // A click on the overload arrows activates the overloads window. The completion list stays meanwhile
+        // (CompletionList.CloseOnFocusLost), and once the click is done activation and the keyboard go back to the editor.
+        private void ReturnFocusAfterClick(Window window)
+        {
+            window.AddHandler(Mouse.MouseUpEvent, new MouseButtonEventHandler((s, e) =>
+                _editor.Dispatcher.BeginInvoke(new Action(() => EditorGuard.Run(() =>
+                {
+                    Window.GetWindow(_editor)?.Activate();
+                    _editor.TextArea.Focus();
+                })), System.Windows.Threading.DispatcherPriority.Input)), handledEventsToo: true);
+        }
+
         private void KeepAboveLine(Window window)
         {
             void Place()
@@ -387,6 +400,20 @@ namespace RevitDevKit.UI.ScriptEditor
         }
 
         private static bool IsIdentifierChar(char c) => char.IsLetterOrDigit(c) || c == '_';
+    }
+
+    // AvalonEdit closes the list once neither it nor the editor is active. A click on the arrows of the overloads window
+    // activates that window for a moment, and the list stays meanwhile.
+    internal sealed class CompletionListWindow : CompletionWindow
+    {
+        private readonly Func<bool> _overloadsActive;
+
+        public CompletionListWindow(TextArea textArea, Func<bool> overloadsActive) : base(textArea)
+        {
+            _overloadsActive = overloadsActive;
+        }
+
+        protected override bool CloseOnFocusLost => base.CloseOnFocusLost && !_overloadsActive();
     }
 
     internal sealed class CompletionItem : ICompletionData
