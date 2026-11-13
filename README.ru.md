@@ -21,7 +21,7 @@
 
 ![Script Editor](assets/script-editor.png)
 
-Пишете код, нажимаете F5, и он выполняется в текущем документе. Можно написать просто несколько строк, как на скриншоте. Плагин сам обернёт их в класс и подключит основные `using` для System, LINQ и Revit API. Если в файле объявлен класс, он компилируется как есть: так можно проверить обычный `IExternalCommand` или класс с методом `Main(Document doc, UIApplication uiapp)`.
+Пишете код, нажимаете F5, и он выполняется в текущем документе. Можно написать просто несколько строк, как на скриншоте. Плагин сам обернёт их в класс и подключит основные `using` для System, LINQ, Revit API и [BIMPlugins.ExtStorage](https://github.com/Samveyil/BIMPlugins.ExtStorage) (расширения вроде `ToElement`, `ToPoint(LocationType.StartPoint)`). Если в файле объявлен класс, он компилируется как есть: так можно проверить обычный `IExternalCommand` или класс с методом `Main(Document doc, UIApplication uiapp)`.
 
 Сборку, которой нет в Revit, можно подключить через `#r`:
 

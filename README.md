@@ -23,7 +23,7 @@ The Add-Ins tab gets a DevKit panel with a pulldown button:
 
 ![Script Editor](assets/script-editor.png)
 
-Write code, press F5, and it runs in the current document. A few lines are enough, as in the screenshot: the add-in wraps them in a class and adds the main `using` directives for System, LINQ and the Revit API. If the file declares a class, it is compiled as it is, so you can try a regular `IExternalCommand` or a class with a `Main(Document doc, UIApplication uiapp)` method.
+Write code, press F5, and it runs in the current document. A few lines are enough, as in the screenshot: the add-in wraps them in a class and adds the main `using` directives for System, LINQ, the Revit API and [BIMPlugins.ExtStorage](https://github.com/Samveyil/BIMPlugins.ExtStorage) (extensions such as `ToElement` and `ToPoint(LocationType.StartPoint)`). If the file declares a class, it is compiled as it is, so you can try a regular `IExternalCommand` or a class with a `Main(Document doc, UIApplication uiapp)` method.
 
 An assembly that Revit does not load can be referenced with `#r`:
 

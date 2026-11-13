@@ -122,6 +122,22 @@ namespace RevitDevKit.UI.ScriptEditor
                 _window.Close();
         }
 
+        // A suggestion that is no name in scope: a qualified enum (ElementExtensions.LocationType) or an enum value
+        // (LocationType.StartPoint). The description of a type comes from its own entry when there is one.
+        private static CompletionEntry Qualified(string name, IList<CompletionEntry> entries)
+        {
+            var last = name.Substring(name.LastIndexOf('.') + 1);
+            var type = entries.FirstOrDefault(e => e.Name == last && e.Kind == CompletionKind.Enum);
+            if (type != null)
+                return new CompletionEntry { Name = name, Kind = CompletionKind.Enum, Description = type.Description };
+
+            return new CompletionEntry
+            {
+                Name = name,
+                Kind = name.Contains('.') ? CompletionKind.EnumMember : CompletionKind.Local
+            };
+        }
+
         // The caret is after ',' or '(' and spaces only.
         private bool AfterArgumentStart()
         {
@@ -228,8 +244,7 @@ namespace RevitDevKit.UI.ScriptEditor
             {
                 foreach (var name in suggested)
                 {
-                    var entry = entries.FirstOrDefault(e => e.Name == name)
-                                ?? new CompletionEntry { Name = name, Kind = CompletionKind.Local };
+                    var entry = entries.FirstOrDefault(e => e.Name == name) ?? Qualified(name, entries);
                     data.Add(new CompletionItem(entry, 1));
                 }
             }
@@ -427,7 +442,13 @@ namespace RevitDevKit.UI.ScriptEditor
         }
 
         public ImageSource Image => CompletionIcons.For(_entry.Kind);
-        public string Text => _entry.Name;
+
+        // What the typed letters are matched against. An enum value shown as LocationType.StartPoint is matched by
+        // StartPoint, so "Sta" finds it as Visual Studio does; the whole name is still what goes into the code.
+        public string Text => _entry.Kind == CompletionKind.EnumMember
+            ? _entry.Name.Substring(_entry.Name.LastIndexOf('.') + 1)
+            : _entry.Name;
+
         public object Content => _entry.Name;
         public object Description => _entry.Description;
         public double Priority { get; }

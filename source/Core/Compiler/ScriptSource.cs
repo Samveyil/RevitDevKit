@@ -26,7 +26,10 @@ namespace RevitDevKit.Core.Compiler
             "using Autodesk.Revit.DB; using Autodesk.Revit.DB.Structure; " +
             "using Autodesk.Revit.UI; using Autodesk.Revit.UI.Selection; " +
             "using RevitDevKit.Core.Output; using RevitDevKit.ScriptApi; " +
-            "using BIMPlugins.ExtStorage.Extensions; using BIMPlugins.ExtStorage.Extensions.UtilsExtensions;";
+            "using BIMPlugins.ExtStorage; using BIMPlugins.ExtStorage.Comparers; " +
+            "using BIMPlugins.ExtStorage.Extensions; using BIMPlugins.ExtStorage.Extensions.UtilsExtensions; " +
+            "using BIMPlugins.ExtStorage.FailuresProcessing; using BIMPlugins.ExtStorage.Interfaces; " +
+            "using BIMPlugins.ExtStorage.Methods;";
 
         private static readonly Regex UsingLine = new Regex(
             @"^\s*using\s+(static\s+)?[A-Za-z_@][\w.]*(\s*=\s*[\w.<>,\[\]\s]+)?\s*;\s*$",

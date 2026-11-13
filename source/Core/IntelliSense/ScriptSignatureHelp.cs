@@ -48,6 +48,8 @@ namespace RevitDevKit.Core.IntelliSense
     // Overloads of the method or constructor being called at the caret, as Visual Studio shows after '(' and ','.
     public static class ScriptSignatureHelp
     {
+        private const int MaxEnumValues = 30;
+
         public static ScriptSignatures Get(string userCode, int line, int column, CancellationToken token)
         {
             var lineText = ScriptCompletion.LineAt(userCode, line);
@@ -206,10 +208,25 @@ namespace RevitDevKit.Core.IntelliSense
                 }
             }
 
-            foreach (var enumType in expected.Where(t => t.TypeKind == TypeKind.Enum))
+            // The enum and its values, as Visual Studio lists them: LocationType, LocationType.Origin, ...
+            // Named as the script can write them at the caret: an enum nested in a class or out of the usings comes qualified.
+            // A large enum (BuiltInCategory) gets its name only: a thousand values would bury the rest of the list.
+            foreach (var enumType in expected.Where(t => t.TypeKind == TypeKind.Enum).Distinct())
             {
-                if (!names.Contains(enumType.Name))
-                    names.Add(enumType.Name);
+                var typeName = enumType.ToMinimalDisplayString(script.Model, position);
+                if (!names.Contains(typeName))
+                    names.Add(typeName);
+
+                var values = enumType.GetMembers().OfType<IFieldSymbol>().Where(f => f.HasConstantValue).ToList();
+                if (values.Count > MaxEnumValues)
+                    continue;
+
+                foreach (var value in values)
+                {
+                    var valueName = typeName + "." + value.Name;
+                    if (!names.Contains(valueName))
+                        names.Add(valueName);
+                }
             }
 
             return names;
