@@ -24,6 +24,16 @@ namespace RevitDevKit.UI.ScriptEditor
 
         public int Count => _signatures.Overloads.Count;
 
+        // The overload picked with the arrows rather than the one the call resolves to.
+        public bool PickedByUser => _selectedIndex != _signatures.SelectedOverload;
+
+        // Whether an overload takes the argument the caret is at.
+        public bool Takes(int index, int argumentIndex)
+        {
+            var overload = _signatures.Overloads[index];
+            return argumentIndex < overload.Parameters.Count || overload.HasParamsArray;
+        }
+
         public int SelectedIndex
         {
             get => _selectedIndex;

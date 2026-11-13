@@ -76,9 +76,14 @@ namespace RevitDevKit.UI.ScriptEditor
                 return;
 
             var c = e.Text[0];
-            // A space after ',' or '(' closes the list that opened there, so it opens again after the space,
-            // as Visual Studio keeps it for "Show(wall, ".
-            if (c == '(' || c == ',' || c == ' ' && AfterArgumentStart())
+            // ',' shows the overloads only, the list waits for the space after it: "Show(wall, ".
+            if (c == ',')
+            {
+                RequestSignatures(withList: false);
+                return;
+            }
+
+            if (c == '(' || c == ' ' && AfterArgumentStart())
             {
                 RequestSignatures();
                 return;
@@ -250,7 +255,7 @@ namespace RevitDevKit.UI.ScriptEditor
                 window.CompletionList.SelectedItem = data[0];
         }
 
-        private async void RequestSignatures()
+        private async void RequestSignatures(bool withList = true)
         {
             _pendingSignatures?.Cancel();
             var pending = _pendingSignatures = new CancellationTokenSource();
@@ -269,7 +274,7 @@ namespace RevitDevKit.UI.ScriptEditor
                 (signatures, list) = await Task.Run(() =>
                 {
                     var found = ScriptSignatureHelp.Get(code, lineNumber, column, pending.Token);
-                    var scope = found != null && found.Suggestions.Count > 0
+                    var scope = withList && found != null && found.Suggestions.Count > 0
                         ? ScriptCompletion.Get(code, lineNumber, column, true, pending.Token)
                         : null;
                     return (found, scope);
@@ -318,6 +323,11 @@ namespace RevitDevKit.UI.ScriptEditor
             var provider = new SignatureProvider(signatures);
             if (_insight != null)
             {
+                // Still the same call: the overload picked with the arrows stays while it takes this argument.
+                if (_insight.StartOffset == start && _insight.Provider is SignatureProvider old && old.PickedByUser &&
+                    old.Count == provider.Count && provider.Takes(old.SelectedIndex, signatures.ArgumentIndex))
+                    provider.SelectedIndex = old.SelectedIndex;
+
                 _insight.Provider = provider;
                 _insight.StartOffset = start;
                 _insight.EndOffset = end;
