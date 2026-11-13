@@ -24,7 +24,7 @@
 
             <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding ClearShownCommand}"
                     Style="{DynamicResource MaterialDesignFlatButton}"
-                    ToolTip="Очистить виды: убрать то, что нарисовано через Show(...) в скриптах и Debug.WriteLine(геометрия) в надстройках">
+                    ToolTip="Очистить виды от нарисованного">
                 <materialDesign:PackIcon Kind="VectorSquareRemove" Width="25" Height="25" Foreground="{DynamicResource IconBrush}"/>
             </Button>
 
@@ -32,17 +32,23 @@
 
             <!-- What a run from DevKit does with the console: one setting for Script Editor and Add-in Explorer. -->
             <CheckBox Content="Чистить консоль" VerticalAlignment="Center" Padding="2 0" IsChecked="{Binding IsClearOnRun}"
-                      ToolTip="Очищать консоль перед каждым запуском из Script Editor и Add-in Explorer"/>
+                      ToolTip="Очищать консоль перед каждым запуском"/>
             <CheckBox Content="Чистить виды" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsClearShownOnRun}"
-                      ToolTip="Убирать с видов нарисованное через Show(...) и Debug.WriteLine(геометрия) перед каждым запуском. Без галочки оно остаётся для сравнения, а следующий запуск рисует следующими цветами"/>
+                      ToolTip="Стирать с видов нарисованное перед каждым запуском"/>
             <CheckBox Content="Тихий режим" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsHideWarnings}"
-                      ToolTip="Тихий режим: предупреждения Revit при запуске из DevKit пишутся только в консоль, без окна Revit. Ошибки Revit показывает как обычно"/>
+                      ToolTip="Предупреждения Revit — только в консоль, без окон"/>
 
             <Border Style="{DynamicResource ToolbarSeparator}"/>
 
-            <!-- How the console shows its output: set once and left, so kept in a menu and the header stays one short row. -->
-            <!-- Framed as Примеры in Script Editor; stays open, so several options can be switched in a row. -->
-            <Border Height="23" BorderThickness="1" BorderBrush="{DynamicResource AccentBrush}" CornerRadius="3" VerticalAlignment="Center">
+            <!-- How the console shows its output. The console pane has room for the checkboxes; Script Editor puts them
+                 in a menu (IsViewMenu), framed as Примеры there, so its header stays one short row. -->
+            <StackPanel x:Name="ViewInline" Orientation="Horizontal">
+                <CheckBox Content="Автопрокрутка" VerticalAlignment="Center" Padding="2 0" IsChecked="{Binding IsAutoScroll}" ToolTip="Прокручивать консоль к новому выводу"/>
+                <CheckBox Content="Время" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsTimestamps}" ToolTip="Начинать строки со времени"/>
+                <CheckBox Content="Стек вызовов" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsShowDebug}" ToolTip="Показывать стеки вызовов"/>
+            </StackPanel>
+
+            <Border x:Name="ViewMenu" Visibility="Collapsed" Height="23" BorderThickness="1" BorderBrush="{DynamicResource AccentBrush}" CornerRadius="3" VerticalAlignment="Center">
                 <materialDesign:PopupBox x:Name="ViewOptions" StaysOpen="True" VerticalAlignment="Stretch" ToolTip="Как консоль показывает вывод">
                     <materialDesign:PopupBox.ToggleContent>
                         <TextBlock Text="Вид ▾" Margin="10 0 8 0" VerticalAlignment="Center"/>
@@ -54,7 +60,7 @@
                         <CheckBox Content="Время" Margin="0 8 0 0" Padding="4 0" IsChecked="{Binding IsTimestamps}"
                                   ToolTip="Начинать строки со времени"/>
                         <CheckBox Content="Стек вызовов" Margin="0 8 0 0" Padding="4 0" IsChecked="{Binding IsShowDebug}"
-                                  ToolTip="Показывать стеки вызовов и другие отладочные строки"/>
+                                  ToolTip="Показывать стеки вызовов"/>
                     </StackPanel>
                 </materialDesign:PopupBox>
             </Border>

@@ -40,7 +40,7 @@
 
             <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding RunWithDebuggerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}"
-                    ToolTip="Запустить под отладчиком (Ctrl+F5): подключить открытую Visual Studio и остановиться на первой строке скрипта. Без открытой Visual Studio скрипт не запускается">
+                    ToolTip="Запустить под отладчиком Visual Studio (Ctrl+F5)">
                 <materialDesign:PackIcon Kind="BugPlayOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
@@ -88,7 +88,7 @@
             <Border Style="{StaticResource ToolbarSeparator}"/>
 
             <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Автотранзакция" IsChecked="{Binding IsAutoTransaction}"
-                      ToolTip="Обернуть выполнение в транзакцию. Выключите, если скрипт открывает транзакции сам."/>
+                      ToolTip="Обернуть скрипт в транзакцию"/>
         </StackPanel>
 
         <StatusBar DockPanel.Dock="Bottom">
@@ -171,7 +171,7 @@
 
             <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
 
-            <console:ConsoleView Grid.Row="2" Margin="5" DataContext="{Binding Output}" WrapWidth="-1"/>
+            <console:ConsoleView Grid.Row="2" Margin="5" DataContext="{Binding Output}" WrapWidth="-1" IsViewMenu="True"/>
         </Grid>
     </DockPanel>
 </Window>

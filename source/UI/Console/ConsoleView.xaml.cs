@@ -36,6 +36,23 @@ namespace RevitDevKit.UI.Console
             set => SetValue(IsPersistentProperty, value);
         }
 
+        // The console options of how output is shown go into the Вид menu instead of checkboxes: Script Editor's
+        // console is narrower than the pane, and its header has to stay one row.
+        public static readonly DependencyProperty IsViewMenuProperty = DependencyProperty.Register(
+            nameof(IsViewMenu), typeof(bool), typeof(ConsoleView), new PropertyMetadata(false, (d, e) =>
+            {
+                var view = (ConsoleView)d;
+                var menu = (bool)e.NewValue;
+                view.ViewMenu.Visibility = menu ? Visibility.Visible : Visibility.Collapsed;
+                view.ViewInline.Visibility = menu ? Visibility.Collapsed : Visibility.Visible;
+            }));
+
+        public bool IsViewMenu
+        {
+            get => (bool)GetValue(IsViewMenuProperty);
+            set => SetValue(IsViewMenuProperty, value);
+        }
+
         // Characters a line of wrappable output may take before it wraps; -1: as many as the console shows now;
         // 0: never wrapped.
         public static readonly DependencyProperty WrapWidthProperty = DependencyProperty.Register(

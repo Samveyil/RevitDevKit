@@ -137,7 +137,7 @@
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource CommandsToolbar}">
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding RunCommand}"
-                    ToolTip="Выполнить выбранную команду (F5 или двойной щелчок)">
+                    ToolTip="Выполнить команду (F5)">
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="Play" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
                                              VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
@@ -147,7 +147,7 @@
 
             <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding RunWithDebuggerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}"
-                    ToolTip="Выполнить под отладчиком (Ctrl+F5): подключить открытую Visual Studio с решением надстройки, точки останова в проекте сработают. Без открытой Visual Studio команда не запускается">
+                    ToolTip="Выполнить под отладчиком Visual Studio (Ctrl+F5)">
                 <materialDesign:PackIcon Kind="BugPlayOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
@@ -166,7 +166,7 @@
 
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource AppsToolbar}">
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding Apps.ApplyCommand}"
-                    ToolTip="Обновить кнопки на ленте по свежей сборке DLL (F5 или двойной щелчок)">
+                    ToolTip="Обновить ленту по свежей DLL (F5)">
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
                                              VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
@@ -177,12 +177,12 @@
             <Border Style="{StaticResource ToolbarSeparator}"/>
 
             <Button Width="25" Height="25" Padding="0" Command="{Binding Apps.AddAssemblyCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Добавить собранную DLL и сразу обновить по ней ленту (Ctrl+O)">
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Добавить DLL и обновить ленту (Ctrl+O)">
                 <materialDesign:PackIcon Kind="FolderOpenOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
             <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding Apps.RevertCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Вернуть как было: лента снова такая, как её создал .addin">
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Вернуть ленту, как её создал .addin">
                 <materialDesign:PackIcon Kind="Restore" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
@@ -222,7 +222,7 @@
 
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource DependenciesToolbar}">
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding Dependencies.RefreshCommand}"
-                    ToolTip="Проверить DLL надстроек этой версии Revit (F5)">
+                    ToolTip="Проверить DLL надстроек (F5)">
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
                                              VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
@@ -233,7 +233,7 @@
             <Border Style="{StaticResource ToolbarSeparator}"/>
 
             <Button Width="25" Height="25" Padding="0" Command="{Binding Dependencies.SaveReportCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить отчёт в текстовый файл (markdown) и показать его в проводнике">
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить отчёт в файл .md">
                 <materialDesign:PackIcon Kind="FileDocumentArrowRightOutline" Width="24" Height="24" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
@@ -245,12 +245,12 @@
             <Border Style="{StaticResource ToolbarSeparator}"/>
 
             <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Только конфликты" IsChecked="{Binding Dependencies.OnlyProblems}"
-                      ToolTip="Снимите, чтобы видеть и подписанные DLL, которые загрузятся рядом, и одинаковые у нескольких надстроек"/>
+                      ToolTip="Снимите, чтобы видеть все общие DLL"/>
         </StackPanel>
 
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource AssembliesToolbar}">
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding LoadedAssemblies.RefreshCommand}"
-                    ToolTip="Перечитать список загруженных сборок (F5)">
+                    ToolTip="Обновить список сборок (F5)">
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
                                              VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
@@ -261,7 +261,7 @@
             <Border Style="{StaticResource ToolbarSeparator}"/>
 
             <Button Width="25" Height="25" Padding="0" Command="{Binding LoadedAssemblies.SaveListCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить показанный список в текстовый файл (markdown) и показать его в проводнике">
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить список в файл .md">
                 <materialDesign:PackIcon Kind="FileDocumentArrowRightOutline" Width="24" Height="24" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
@@ -273,7 +273,7 @@
             <Border Style="{StaticResource ToolbarSeparator}"/>
 
             <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Скрыть системные" IsChecked="{Binding LoadedAssemblies.HideSystem}"
-                      ToolTip="Скрыть сборки .NET, GAC, Revit и созданные в памяти: останутся надстройки и их DLL"/>
+                      ToolTip="Скрыть .NET, GAC, Revit и сборки в памяти"/>
         </StackPanel>
 
         <StackPanel DockPanel.Dock="Bottom" Style="{StaticResource AssembliesToolbar}">

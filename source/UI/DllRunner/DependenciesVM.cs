@@ -104,9 +104,7 @@ namespace RevitDevKit.UI.DllRunner
                 var signed = Group.Copies.All(c => c.Dll.IsSigned);
                 var versionsDiffer = Group.Copies.All(c => c.Dll.IsManaged) && Group.Copies.Select(c => c.Dll.AssemblyVersion).Distinct().Count() > 1;
                 if (!signed && versionsDiffer)
-                    return "Не подписана: Revit загружает одну копию, ту, что понадобилась первой, и её получают все надстройки.\n"
-                           + "Более новая обычно подходит, если в библиотеке только добавляли (оранжевым), более старая может не подойти (красным).\n"
-                           + "Какая копия будет первой, зависит от порядка загрузки надстроек: в другой раз старую версию может получить другая.";
+                    return "Не подписана: все надстройки получат одну копию — ту, что загрузилась первой. Старая версия (красным) может не подойти.";
 
                 switch (Group.Level)
                 {
