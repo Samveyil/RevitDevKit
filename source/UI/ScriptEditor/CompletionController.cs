@@ -9,10 +9,12 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 
 namespace RevitDevKit.UI.ScriptEditor
@@ -236,7 +238,7 @@ namespace RevitDevKit.UI.ScriptEditor
         // Suggested names go first and are preferred when typed letters match several items equally.
         private void ShowWindow(IList<CompletionEntry> entries, int wordStart, string typed, IList<string> suggested = null)
         {
-            var window = new CompletionListWindow(_editor.TextArea, () => _insight?.IsActive == true) { Width = 320 };
+            var window = new CompletionListWindow(_editor.TextArea, OwnWindowInFront) { Width = 320 };
             window.StartOffset = wordStart;
 
             var data = window.CompletionList.CompletionData;
@@ -349,7 +351,12 @@ namespace RevitDevKit.UI.ScriptEditor
             }
             else
             {
-                var insight = new OverloadInsightWindow(_editor.TextArea) { Provider = provider, StartOffset = start, EndOffset = end };
+                var insight = new OverloadsWindow(_editor.TextArea, OwnWindowInFront)
+                {
+                    Provider = provider,
+                    StartOffset = start,
+                    EndOffset = end
+                };
                 insight.Closed += (s, e) =>
                 {
                     if (_insight == insight)
@@ -414,21 +421,46 @@ namespace RevitDevKit.UI.ScriptEditor
             }
         }
 
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
+
+        // A click moves activation between the editor, the list and the overloads window, and for a moment none of them
+        // may be active. What tells whether the focus left for another window is the window in front: one of these three or not.
+        private bool OwnWindowInFront()
+        {
+            var front = GetForegroundWindow();
+            return new Window[] { Window.GetWindow(_editor), _window, _insight }
+                .Any(w => w != null && new WindowInteropHelper(w).Handle == front);
+        }
+
         private static bool IsIdentifierChar(char c) => char.IsLetterOrDigit(c) || c == '_';
     }
 
-    // AvalonEdit closes the list once neither it nor the editor is active. A click on the arrows of the overloads window
-    // activates that window for a moment, and the list stays meanwhile.
+    // AvalonEdit closes the list and the overloads window once neither the window itself nor the editor is active.
+    // A click on the other one of the two activates it for a moment: on the arrows of the overloads window, or on an item
+    // of the list for a double click. Then they stay open while one of the three windows is still in front (keepOpen).
     internal sealed class CompletionListWindow : CompletionWindow
     {
-        private readonly Func<bool> _overloadsActive;
+        private readonly Func<bool> _keepOpen;
 
-        public CompletionListWindow(TextArea textArea, Func<bool> overloadsActive) : base(textArea)
+        public CompletionListWindow(TextArea textArea, Func<bool> keepOpen) : base(textArea)
         {
-            _overloadsActive = overloadsActive;
+            _keepOpen = keepOpen;
         }
 
-        protected override bool CloseOnFocusLost => base.CloseOnFocusLost && !_overloadsActive();
+        protected override bool CloseOnFocusLost => base.CloseOnFocusLost && !_keepOpen();
+    }
+
+    internal sealed class OverloadsWindow : OverloadInsightWindow
+    {
+        private readonly Func<bool> _keepOpen;
+
+        public OverloadsWindow(TextArea textArea, Func<bool> keepOpen) : base(textArea)
+        {
+            _keepOpen = keepOpen;
+        }
+
+        protected override bool CloseOnFocusLost => base.CloseOnFocusLost && !_keepOpen();
     }
 
     internal sealed class CompletionItem : ICompletionData
