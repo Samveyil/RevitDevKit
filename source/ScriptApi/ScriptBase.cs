@@ -1,6 +1,7 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BIMPlugins.ExtStorage;
+using BIMPlugins.ExtStorage.Comparers;
 using BIMPlugins.ExtStorage.Extensions;
 using RevitDevKit.Core.Output;
 using RevitDevKit.Core.Running;
@@ -314,7 +315,7 @@ namespace RevitDevKit.ScriptApi
             ConsoleOutput.WriteLine("Класс:     " + element.GetType().FullName);
             ConsoleOutput.WriteLine("Категория: " + (element.Category != null ? element.Category.Name : "—"));
 
-            foreach (var p in ReadParameters(element, useType).OrderBy(p => p.Definition.Name))
+            foreach (var p in ReadParameters(element, useType).OrderBy(p => p.Definition.Name, NaturalComparer.CurrentCultureIgnoreCase))
                 ConsoleOutput.WriteLine("  " + p.Definition.Name.PadRight(NameWidth) + " = " + ReadValue(p));
         }
 
@@ -366,7 +367,7 @@ namespace RevitDevKit.ScriptApi
                     Name = ps.First(p => p != null).Definition.Name,
                     Values = ps.Select(p => p == null ? null : ReadValue(p)).ToList()
                 })
-                .OrderBy(r => r.Name)
+                .OrderBy(r => r.Name, NaturalComparer.CurrentCultureIgnoreCase)
                 .ToList();
 
             var titles = items.Select(e => e.Id + " " + (e.Name ?? "<без имени>")).ToList();
