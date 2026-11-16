@@ -139,7 +139,7 @@
 
                     <Border Width="1" Background="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=Border}}"/>
 
-                    <materialDesign:PopupBox x:Name="AiPopup" ToolTip="Инструкция для ИИ: выбрать, что скопировать" VerticalAlignment="Center" Padding="0">
+                    <materialDesign:PopupBox x:Name="AiPopup" StaysOpen="True" ToolTip="Инструкция для ИИ: выбрать, что скопировать" VerticalAlignment="Center" Padding="0">
                         <materialDesign:PopupBox.ToggleContent>
                             <materialDesign:PackIcon Kind="MenuDown" Width="16" Height="16" Margin="1 0" Foreground="{StaticResource IconBrush}"/>
                         </materialDesign:PopupBox.ToggleContent>
@@ -173,22 +173,22 @@
                                 </Style>
                             </StackPanel.Resources>
 
-                            <Button Style="{StaticResource AiMenuItem}" Command="{Binding CopyAiInstructionsCommand}" ToolTip="Вставьте в начало чата с ИИ, затем опишите задачу">
+                            <Button Style="{StaticResource AiMenuItem}" Click="AiMenuItem_Click" Command="{Binding CopyAiInstructionsCommand}" ToolTip="Вставьте в начало чата с ИИ, затем опишите задачу">
                                 <StackPanel Orientation="Horizontal">
                                     <materialDesign:PackIcon Kind="CreationOutline" Width="16" Height="16" VerticalAlignment="Center" Foreground="{StaticResource IconBrush}"/>
                                     <TextBlock Text="Инструкция" Margin="8 0 0 0" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
-                            <Button Style="{StaticResource AiMenuItem}" Command="{Binding CopyAiInstructionsWithScriptCommand}" ToolTip="Инструкция, текущий скрипт и ошибки его запуска: чтобы ИИ поправил или доработал скрипт">
+                            <Button Style="{StaticResource AiMenuItem}" Click="AiMenuItem_Click" Command="{Binding CopyAiInstructionsWithScriptCommand}" ToolTip="Инструкция, текущий скрипт и ошибки его запуска: чтобы ИИ поправил или доработал скрипт">
                                 <StackPanel Orientation="Horizontal">
                                     <materialDesign:PackIcon Kind="AutoFix" Width="16" Height="16" VerticalAlignment="Center" Foreground="{StaticResource IconBrush}"/>
                                     <TextBlock Text="Скрипт и ошибки" Margin="8 0 0 0" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                             <Separator Height="1" Margin="0 4 0 2"/>
-                            <!-- Applies to both items and to the icon; the click is handled here so the list stays open. -->
-                            <CheckBox x:Name="AiDetailedCheckBox" IsChecked="{Binding IsAiDetailed}" Height="26" Margin="6 0 10 0" Padding="4 0 0 0" VerticalContentAlignment="Center" FontSize="12"
-                                      Content="Подробная" Click="AiDetailedCheckBox_Click"
+                            <!-- Applies to both items and to the icon. The list stays open on it (StaysOpen); the items close it themselves. -->
+                            <CheckBox IsChecked="{Binding IsAiDetailed}" Height="26" Margin="6 0 10 0" Padding="4 0 0 0" VerticalContentAlignment="Center" FontSize="12"
+                                      Content="Подробная"
                                       ToolTip="Вся BIMPlugins.ExtStorage с сигнатурами: примерно в 3 раза больше токенов"/>
                         </StackPanel>
                     </materialDesign:PopupBox>

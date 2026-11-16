@@ -22,7 +22,7 @@ namespace RevitDevKit.UI.ScriptEditor
 
         public static void CloseIfOpen() => Single.Close();
 
-        // A click inside a PopupBox closes it; the detailed-instructions checkbox is a setting, so the list stays open.
-        private void AiDetailedCheckBox_Click(object sender, RoutedEventArgs e) => e.Handled = true;
+        // The AI list stays open on a click inside it, so that its Подробная checkbox can be ticked; its items close it.
+        private void AiMenuItem_Click(object sender, RoutedEventArgs e) => AiPopup.IsPopupOpen = false;
     }
 }
