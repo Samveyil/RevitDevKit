@@ -94,6 +94,38 @@
 
             <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Автотранзакция" IsChecked="{Binding IsAutoTransaction}"
                       ToolTip="Обернуть скрипт в транзакцию"/>
+
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <!-- On its own, apart from the run and file groups: instructions for an AI chat on how to write scripts for Script Editor (AiInstructions), as a split button:
+                 the icon repeats the copy chosen last, the arrow opens both, and the one chosen there becomes the icon's. -->
+            <StackPanel Orientation="Horizontal">
+                <Button Width="25" Height="25" Padding="0" Command="{Binding RepeatAiCopyCommand}"
+                        Style="{StaticResource MaterialDesignFlatButton}" ToolTip="{Binding AiButtonToolTip}">
+                    <materialDesign:PackIcon Kind="{Binding AiButtonIcon}" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+                </Button>
+
+                <materialDesign:PopupBox ToolTip="Инструкция для ИИ: выбрать, что скопировать" VerticalAlignment="Center">
+                    <materialDesign:PopupBox.ToggleContent>
+                        <materialDesign:PackIcon Kind="MenuDown" Width="16" Height="16" Foreground="{StaticResource IconBrush}"/>
+                    </materialDesign:PopupBox.ToggleContent>
+
+                    <StackPanel>
+                        <Button Command="{Binding CopyAiInstructionsCommand}" ToolTip="Вставьте в начало чата с ИИ, затем опишите задачу">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="CreationOutline" Width="18" Height="18" VerticalAlignment="Center" Foreground="{StaticResource IconBrush}"/>
+                                <TextBlock Text="Скопировать инструкцию для ИИ" Margin="10 0 0 0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding CopyAiInstructionsWithScriptCommand}" ToolTip="Чтобы ИИ поправил или доработал текущий скрипт">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="AutoFix" Width="18" Height="18" VerticalAlignment="Center" Foreground="{StaticResource IconBrush}"/>
+                                <TextBlock Text="Скопировать инструкцию, скрипт и ошибки" Margin="10 0 0 0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </materialDesign:PopupBox>
+            </StackPanel>
         </StackPanel>
 
         <StatusBar DockPanel.Dock="Bottom">

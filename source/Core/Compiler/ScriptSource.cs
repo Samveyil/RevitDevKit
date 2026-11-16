@@ -20,7 +20,7 @@ namespace RevitDevKit.Core.Compiler
     {
         public const string EntryTypeName = "RevitDevKit.UserScripts.__ScriptEntry";
 
-        private const string DefaultUsings =
+        internal const string DefaultUsings =
             "using System; using System.Collections; using System.Collections.Generic; using System.Linq; " +
             "using System.Text; using System.IO; " +
             "using Autodesk.Revit.DB; using Autodesk.Revit.DB.Structure; " +
