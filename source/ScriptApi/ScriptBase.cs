@@ -47,23 +47,39 @@ namespace RevitDevKit.ScriptApi
         /// <summary>Writes a formatted line to the console, as string.Format does.</summary>
         /// <param name="format">A composite format string, such as "Walls: {0}".</param>
         /// <param name="args">The objects to format.</param>
-        public void Print(string format, params object[] args)
-        {
-            ConsoleOutput.WriteLine(args == null || args.Length == 0 ? format : string.Format(format, args));
-        }
+        public void Print(string format, params object[] args) => ConsoleOutput.WriteLine(Format(format, args));
 
         /// <summary>Writes a success message to the console, in green.</summary>
         /// <param name="text">The message.</param>
         public void Ok(string text) => ConsoleOutput.Success(text);
 
+        /// <summary>Writes a formatted success message to the console, in green, as string.Format does.</summary>
+        /// <param name="format">A composite format string, such as "Walls: {0}".</param>
+        /// <param name="args">The objects to format.</param>
+        public void Ok(string format, params object[] args) => Ok(Format(format, args));
+
         /// <summary>Writes a warning to the console, in yellow.</summary>
         /// <param name="text">The warning.</param>
         public void Warn(string text) => ConsoleOutput.Warning(text);
+
+        /// <summary>Writes a formatted warning to the console, in yellow, as string.Format does.</summary>
+        /// <param name="format">A composite format string, such as "Walls: {0}".</param>
+        /// <param name="args">The objects to format.</param>
+        public void Warn(string format, params object[] args) => Warn(Format(format, args));
 
         /// <summary>Writes an error message to the console, in red.</summary>
         /// <param name="text">The error message.</param>
         /// <remarks>The script is not stopped.</remarks>
         public void Fail(string text) => ConsoleOutput.Error(text);
+
+        /// <summary>Writes a formatted error message to the console, in red, as string.Format does.</summary>
+        /// <param name="format">A composite format string, such as "Walls: {0}".</param>
+        /// <param name="args">The objects to format.</param>
+        /// <remarks>The script is not stopped.</remarks>
+        public void Fail(string format, params object[] args) => Fail(Format(format, args));
+
+        private static string Format(string format, object[] args) =>
+            args == null || args.Length == 0 ? format : string.Format(format, args);
 
         /// <summary>Clears the console.</summary>
         public void Clear() => ConsoleOutput.Clear();
