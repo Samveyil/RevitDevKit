@@ -383,11 +383,27 @@ namespace RevitDevKit.UI.ScriptEditor
             }
         }
 
+        // The detailed instructions: all of BIMPlugins.ExtStorage with signatures, about three times the tokens. Kept like the last choice.
+        private static bool _aiDetailed;
+
+        public bool IsAiDetailed
+        {
+            get => _aiDetailed;
+            set
+            {
+                if (_aiDetailed == value) return;
+                _aiDetailed = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(AiButtonToolTip));
+            }
+        }
+
         public MaterialDesignThemes.Wpf.PackIconKind AiButtonIcon =>
             IsLastAiWithScript ? MaterialDesignThemes.Wpf.PackIconKind.AutoFix : MaterialDesignThemes.Wpf.PackIconKind.CreationOutline;
 
         public string AiButtonToolTip =>
-            IsLastAiWithScript ? "Скопировать для ИИ инструкцию, скрипт и ошибки" : "Скопировать инструкцию для ИИ";
+            (IsLastAiWithScript ? "Скопировать для ИИ инструкцию, скрипт и ошибки" : "Скопировать инструкцию для ИИ") +
+            (IsAiDetailed ? " (подробная)" : "");
 
         [RelayCommand]
         private void RepeatAiCopy()
@@ -401,7 +417,7 @@ namespace RevitDevKit.UI.ScriptEditor
         private void CopyAiInstructions()
         {
             IsLastAiWithScript = false;
-            CopyToClipboard(AiInstructions.Build(IsAutoTransaction), "Инструкция для ИИ скопирована: вставьте её в начало чата");
+            CopyToClipboard(AiInstructions.Build(IsAutoTransaction, IsAiDetailed), "Инструкция для ИИ скопирована: вставьте её в начало чата");
         }
 
         // The same with the current script and what went wrong in its last run, to ask the AI to fix or change it.
@@ -412,7 +428,7 @@ namespace RevitDevKit.UI.ScriptEditor
             var tab = SelectedTab;
             if (tab == null) return;
 
-            CopyToClipboard(AiInstructions.BuildWithScript(IsAutoTransaction, tab.Title, tab.Document.Text, tab.LastProblems),
+            CopyToClipboard(AiInstructions.BuildWithScript(IsAutoTransaction, tab.Title, tab.Document.Text, tab.LastProblems, IsAiDetailed),
                 "Инструкция, скрипт и ошибки скопированы: вставьте в чат и напишите, что сделать");
         }
 

@@ -7,108 +7,116 @@ using RevitDevKit.Core.IntelliSense;
 using RevitDevKit.Core.Output;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace RevitDevKit.Core.Ai
 {
     // Instructions for an AI chat (ChatGPT, Claude, Copilot...) on how to write scripts for Script Editor: pasted at the
     // start of a chat, they keep the AI from writing an IExternalCommand and make it use what Script Editor offers.
-    // Built from the add-in itself, so they follow it: the members of ScriptBase and of the loaded BIMPlugins.ExtStorage
-    // with their signatures and docs, the usings scripts get, the Revit version and whether Автотранзакция is on.
+    // Built from the add-in itself, so they follow it: the members of ScriptBase with their docs, the loaded
+    // BIMPlugins.ExtStorage, the usings scripts get, the Revit version and whether Автотранзакция is on.
+    // In English, which costs fewer tokens than Russian; the AI is asked to answer in the user's language.
+    // The standard text names the ExtStorage methods and gives the signatures of the common ones; the detailed one
+    // gives every ExtStorage member with its signature and description, about three times the tokens.
     public static class AiInstructions
     {
         private const string ExtStorageRepository = "https://github.com/Samveyil/BIMPlugins.ExtStorage";
         private const string ExtStoragePackage = "https://www.nuget.org/packages/BIMPlugins.ExtStorage";
 
-        public static string Build(bool autoTransaction)
+        // The ExtStorage methods the standard text gives with signatures: those scripts need most, whose parameters an AI guesses wrong.
+        private static readonly HashSet<string> KeyMethods = new HashSet<string>
+        {
+            "ToPoint", "ToLine", "ToParameter", "GetValue", "SetValue", "ToElement", "ToElementType",
+            "ToMillimeters", "FromMillimeters", "ToDegrees", "FromDegrees"
+        };
+
+        public static string Build(bool autoTransaction, bool detailed = false)
         {
             var text = new StringBuilder();
             var revit = RevitVersion();
+            var revitName = "Revit" + (revit == null ? "" : " " + revit);
             var compilation = Compilation();
 
-            text.AppendLine("# Script Editor (RevitDevKit): как писать скрипты");
+            text.AppendLine("# Script Editor (RevitDevKit): writing scripts");
             text.AppendLine();
-            text.AppendLine("Ты помогаешь писать C#-скрипты для Script Editor — редактора кода внутри Revit" + (revit == null ? "" : " " + revit) +
-                            " (надстройка RevitDevKit). Скрипт выполняется сразу по F5: без сборки DLL, без .addin и без перезапуска Revit. " +
-                            "Отвечай на языке пользователя.");
-            text.AppendLine();
-
-            text.AppendLine("## Формат кода");
-            text.AppendLine("- Пиши фрагмент: просто строки кода, как тело метода. **Не пиши** `IExternalCommand`, класс, метод `Execute` или `Main` и `namespace` — " +
-                            "Script Editor сам обернёт фрагмент в метод `void Main()` класса-наследника `ScriptBase` и выполнит его.");
-            text.AppendLine("- Во фрагменте можно `return;` (без значения), локальные функции, лямбды, анонимные типы и кортежи. " +
-                            "Объявлять во фрагменте классы, `struct`, `enum` и `record` нельзя.");
-            text.AppendLine("- `using` в начале фрагмента можно, но основные уже подключены (список ниже).");
-            text.AppendLine("- Внешняя DLL подключается строкой `#r \"C:\\путь\\к\\библиотеке.dll\"` в начале фрагмента.");
-            text.AppendLine("- Отдай один блок ```csharp, который вставляется в редактор целиком, и коротко поясни, что он делает. " +
-                            "Исправляя скрипт, возвращай его целиком, а не кусок.");
+            text.AppendLine("You help write C# scripts for Script Editor, a code editor inside " + revitName + " (the RevitDevKit add-in). " +
+                            "A script runs at once on F5: no DLL build, no .addin, no Revit restart. " +
+                            "**Always answer in the user's language**, even though these instructions are in English.");
             text.AppendLine();
 
-            text.AppendLine("## Транзакции");
+            text.AppendLine("## Code format");
+            text.AppendLine("- Write a fragment: plain statements, like a method body. **Do not write** `IExternalCommand`, a class, `Execute`, `Main` " +
+                            "or a `namespace`: Script Editor wraps the fragment in `void Main()` of a class derived from `ScriptBase`.");
+            text.AppendLine("- Allowed: `return;` (no value), local functions, lambdas, anonymous types, tuples. Not allowed: declaring classes, structs, enums, records.");
+            text.AppendLine("- `using` lines may go at the top, but the main namespaces are already imported (see Environment).");
+            text.AppendLine("- An external DLL is referenced by `#r \"C:\\path\\to\\library.dll\"` at the top.");
+            text.AppendLine("- Reply with one ```csharp block that is pasted into the editor as is, plus a short explanation. When fixing a script, return all of it.");
+            text.AppendLine();
+
+            text.AppendLine("## Transactions");
             text.AppendLine(autoTransaction
-                ? "- Галочка «Автотранзакция» включена: весь скрипт уже выполняется в транзакции. Не создавай `Transaction` и не вызывай `Tx`."
-                : "- Галочка «Автотранзакция» выключена. Читать модель можно без транзакции. Любое изменение модели (`SetValue`, `Doc.Delete`, " +
-                  "`Create`, перемещение) оборачивай в `Tx(\"Название\", () => { ... })` или `var x = Tx(\"Название\", () => ...)`; " +
-                  "`Transaction` вручную не создавай. Без транзакции Revit бросит «Modification of the document is forbidden».");
+                ? "- The Автотранзакция (auto transaction) option is on: the whole script already runs in a transaction. Do not create a `Transaction` or call `Tx`."
+                : "- The Автотранзакция (auto transaction) option is off. Reading the model needs no transaction. Wrap every change " +
+                  "(`SetValue`, `Doc.Delete`, `Create`, moving) in `Tx(\"Name\", () => { ... })` or `var x = Tx(\"Name\", () => ...)`; " +
+                  "never create a `Transaction` yourself. Without one Revit throws \"Modification of the document is forbidden\".");
             text.AppendLine();
 
-            text.AppendLine("## Вывод и отладка");
-            text.AppendLine("- Результат пиши в консоль Script Editor: `Print`, `Table`, `Ok`, `Warn`, `Fail`, `Dump`, `Compare`. Не используй `TaskDialog` и `MessageBox`.");
-            text.AppendLine("- Текст собирай интерполяцией: `Ok($\"Выделено стен: {ids.Count}\")`.");
-            text.AppendLine("- Коллекцию выводи через `Table(items, x => x.Id, x => x.Name)` или `Print(items)`, а не циклом с `Print` на каждый элемент.");
-            text.AppendLine("- `Console.WriteLine` и `Debug.WriteLine` тоже попадают в консоль.");
-            text.AppendLine("- Геометрию показывай через `Show(...)`: она рисуется поверх модели на видах, в модели ничего не создаётся.");
-            text.AppendLine("- Исключение не нужно ловить ради вывода: Script Editor сам покажет его в консоли со строкой скрипта.");
+            text.AppendLine("## Output");
+            text.AppendLine("- Write results to the Script Editor console: `Print`, `Table`, `Ok`, `Warn`, `Fail`, `Dump`, `Compare`. No `TaskDialog`, no `MessageBox`.");
+            text.AppendLine("- Build messages with interpolation: `Ok($\"Selected walls: {ids.Count}\")`.");
+            text.AppendLine("- Show a collection with `Table(items, x => x.Id, x => x.Name)` or `Print(items)`, not a `Print` per item.");
+            text.AppendLine("- `Console.WriteLine` and `Debug.WriteLine` also go to the console.");
+            text.AppendLine("- Show geometry with `Show(...)`: it is drawn over the model in the views, nothing is created in the model.");
+            text.AppendLine("- No need to catch exceptions just to report them: Script Editor shows them with the script line.");
             text.AppendLine();
 
-            text.AppendLine("## Окружение");
-            text.AppendLine("- Revit" + (revit == null ? "" : " " + revit) + ", .NET Framework 4.8, C# до версии 9.");
-            text.AppendLine("- Код выполняется в потоке Revit API: без `async`/`await` и без `Task.Run` для работы с моделью.");
-            text.AppendLine("- Подключённые `using`: " + string.Join(", ", Usings().Select(u => "`" + u + "`")) + ".");
+            text.AppendLine("## Environment");
+            text.AppendLine("- " + revitName + ", .NET Framework 4.8, C# 9.");
+            text.AppendLine("- The code runs on the Revit API thread: no `async`/`await`, no `Task.Run` for model work.");
+            text.AppendLine("- Imported: " + Usings() + ".");
             text.AppendLine();
 
-            text.AppendLine("## Частые ошибки — проверь код перед ответом");
-            text.AppendLine("- Документ, вид и выделение уже есть: `Doc`, `UIDoc`, `ActiveView`, `Selection`, `S0`. " +
-                            "Не получай их из `commandData` или `uiapp`; короткое имя — `var doc = Doc;`.");
-            text.AppendLine("- Элементы бери через `All<Wall>()`, `All<FamilyInstance>(BuiltInCategory.OST_Doors)`, `Instances(...)`, `Types(...)`, " +
-                            "элемент по id — `id.ToElement<Wall>()`. `FilteredElementCollector` нужен только для особых фильтров.");
-            text.AppendLine("- Проверяй, что нужное есть: `S0` и `Selection` пусты, если ничего не выделено, — тогда `Warn(...)` и `return;`.");
-            text.AppendLine("- Длины в Revit API — во внутренних единицах (футы), углы — в радианах. Переводи через `ToMillimeters()` / `FromMillimeters()`, " +
-                            "`ToDegrees()` / `FromDegrees()` из BIMPlugins.ExtStorage, а не делением на 304.8.");
-            text.AppendLine("- Параметры: `element.ToParameter(...)` (см. список ниже), значение — `GetValue()`, запись — `SetValue(value)`. " +
-                            "Имена параметров зависят от языка Revit, поэтому встроенные бери по `BuiltInParameter`: " +
-                            "`element.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)`.");
-            text.AppendLine("- Значение `ElementId` — `id.GetValue()`: `int` до Revit 2024 и `long` с 2024. `ElementId.IntegerValue` с 2024 устарел.");
-            text.AppendLine("- Не меняй модель внутри перебора `FilteredElementCollector`: сначала `.ToList()`, потом изменения.");
-            text.AppendLine("- C# 9 и .NET Framework 4.8: нет `record`, `init`, `required`, `global using`, file-scoped `namespace`, сырых строк `\"\"\"`, " +
-                            "выражений коллекций `[1, 2]`, индексов и диапазонов `^1` и `..`. Нет методов .NET Core: `DistinctBy`, `MaxBy`, `MinBy`, `Chunk`, " +
-                            "`TakeLast`, `string.Join(',', ...)`, `Split(\", \")` со строкой (пиши `Split(new[] { \", \" }, StringSplitOptions.None)`), " +
-                            "`Contains(char)`.");
-            text.AppendLine("- Не выдумывай методы: используй Revit API" + (revit == null ? "" : " " + revit) +
-                            ", члены `ScriptBase` и BIMPlugins.ExtStorage из списков ниже. Не уверен, что метод есть, — так и скажи.");
+            text.AppendLine("## Common mistakes: check the code before answering");
+            text.AppendLine("- The document, view and selection are there: `Doc`, `UIDoc`, `ActiveView`, `Selection`, `S0`. " +
+                            "Do not get them from `commandData` or `uiapp`; for a short name, `var doc = Doc;`.");
+            text.AppendLine("- Get elements with `All<Wall>()`, `All<FamilyInstance>(BuiltInCategory.OST_Doors)`, `Instances(...)`, `Types(...)`; " +
+                            "by id, `id.ToElement<Wall>()`. Use `FilteredElementCollector` only for special filters.");
+            text.AppendLine("- Check that things exist: `S0` is null and `Selection` is empty when nothing is selected; then `Warn(...)` and `return;`.");
+            text.AppendLine("- Revit API lengths are in internal units (feet), angles in radians. Convert with `ToMillimeters()` / `FromMillimeters()`, " +
+                            "`ToDegrees()` / `FromDegrees()` (BIMPlugins.ExtStorage), not by dividing by 304.8.");
+            text.AppendLine("- Parameter names depend on the Revit language, so get built-in ones by `BuiltInParameter`: " +
+                            "`element.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)`. Read with `GetValue()`, write with `SetValue(value)`.");
+            text.AppendLine("- An `ElementId` value is `id.GetValue()`: `int` before Revit 2024, `long` from 2024. `IntegerValue` is obsolete from 2024.");
+            text.AppendLine("- Do not change the model while iterating a `FilteredElementCollector`: call `.ToList()` first.");
+            text.AppendLine("- C# 9 on .NET Framework 4.8 has no `record`, `init`, `required`, `global using`, file-scoped `namespace`, raw strings `\"\"\"`, " +
+                            "collection expressions `[1, 2]`, indices and ranges `^1`, `..`, and no .NET Core methods: `DistinctBy`, `MaxBy`, `MinBy`, " +
+                            "`Chunk`, `TakeLast`, `string.Join(',', ...)`, `Split(\", \")` with a string (use `Split(new[] { \", \" }, StringSplitOptions.None)`), `Contains(char)`.");
+            text.AppendLine("- Do not invent methods: use the " + revitName + " API and the members listed below. " +
+                            (detailed ? "" : "If you do not know the signature of a BIMPlugins.ExtStorage method, use the plain Revit API instead. ") +
+                            "If unsure that a method exists, say so.");
             text.AppendLine();
 
-            text.AppendLine("## Члены ScriptBase — доступны во фрагменте без префикса");
+            text.AppendLine("## ScriptBase members: available in the fragment without a prefix");
             foreach (var line in ScriptBaseMembers(compilation))
                 text.AppendLine(line);
             text.AppendLine();
 
-            text.AppendLine("## BIMPlugins.ExtStorage" + ExtStorageVersion() + " — библиотека расширений Revit API, уже подключена");
-            text.AppendLine("Методы-расширения и помощники для элементов, параметров, единиц, геометрии, видов и файлов. Все её пространства имён " +
-                            "уже подключены, расширения вызываются на объекте: `wall.ToPoint(LocationType.Start)`, `width.ToMillimeters()`. " +
-                            "Прежде чем писать свой помощник, найди готовый здесь. Ниже — всё, что есть в загруженной версии, " +
-                            "с описаниями из её документации.");
-            text.AppendLine("Исходники: " + ExtStorageRepository + ", пакет NuGet: " + ExtStoragePackage + ".");
+            text.AppendLine("## BIMPlugins.ExtStorage" + ExtStorageVersion() + ": Revit API extensions, already referenced");
+            text.AppendLine("Extension methods and helpers for elements, parameters, units, geometry, views and files; all its namespaces are imported. " +
+                            "Extensions are called on the object: `wall.ToPoint(LocationType.StartPoint)`, `width.ToMillimeters()`. " +
+                            "Source: " + ExtStorageRepository + ", NuGet: " + ExtStoragePackage + ".");
             text.AppendLine();
-            foreach (var line in ExtStorageApi(compilation))
+            foreach (var line in detailed ? ExtStorageDetailed(compilation) : ExtStorageStandard(compilation))
                 text.AppendLine(line);
             text.AppendLine();
 
-            text.AppendLine("## Пример");
+            text.AppendLine("## Example");
             text.AppendLine("```csharp");
             text.AppendLine("var walls = All<Wall>(ActiveView.Id);");
             text.AppendLine("if (walls.Count == 0)");
@@ -128,13 +136,13 @@ namespace RevitDevKit.Core.Ai
         }
 
         // The instructions, then the script of the tab and what went wrong in its last run, to ask the AI to fix or change it.
-        public static string BuildWithScript(bool autoTransaction, string title, string code, IEnumerable<string> problems)
+        public static string BuildWithScript(bool autoTransaction, string title, string code, IEnumerable<string> problems, bool detailed = false)
         {
-            var text = new StringBuilder(Build(autoTransaction));
+            var text = new StringBuilder(Build(autoTransaction, detailed));
             text.AppendLine();
             text.AppendLine("---");
             text.AppendLine();
-            text.AppendLine("## Мой текущий скрипт" + (title.IsNullOrWhiteSpace() ? "" : " «" + title + "»"));
+            text.AppendLine("## My current script" + (title.IsNullOrWhiteSpace() ? "" : " \"" + title + "\""));
             text.AppendLine("```csharp");
             text.AppendLine((code ?? string.Empty).TrimEnd());
             text.AppendLine("```");
@@ -143,15 +151,15 @@ namespace RevitDevKit.Core.Ai
             text.AppendLine();
             if (list.Count == 0)
             {
-                text.AppendLine("Последний запуск прошёл без ошибок (или скрипт ещё не запускался).");
+                text.AppendLine("The last run had no errors (or the script has not been run yet).");
             }
             else
             {
-                text.AppendLine("## Ошибки последнего запуска (номера строк — строки скрипта)");
+                text.AppendLine("## Errors of the last run (line numbers are script lines)");
                 foreach (var problem in list)
                     text.AppendLine("- " + problem);
                 text.AppendLine();
-                text.AppendLine("Найди причину каждой ошибки, исправь и верни скрипт целиком.");
+                text.AppendLine("Find the cause of each error, fix it and return the whole script.");
             }
 
             return text.ToString();
@@ -196,11 +204,21 @@ namespace RevitDevKit.Core.Ai
             }
         }
 
-        private static IEnumerable<string> Usings() =>
-            ScriptSource.DefaultUsings.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+        // "`System`, `System.Linq`, ..., all `BIMPlugins.ExtStorage` namespaces": DevKit's own are left out, as scripts use them through ScriptBase.
+        private static string Usings()
+        {
+            var all = ScriptSource.DefaultUsings.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(u => u.Trim())
                 .Where(u => u.StartsWith("using ", StringComparison.Ordinal))
-                .Select(u => u.Substring("using ".Length).Trim());
+                .Select(u => u.Substring("using ".Length).Trim())
+                .ToList();
+
+            var listed = all.Where(u => !u.StartsWith("BIMPlugins.", StringComparison.Ordinal) && !u.StartsWith("RevitDevKit.", StringComparison.Ordinal))
+                .Select(u => "`" + u + "`");
+            return string.Join(", ", listed) + (all.Any(u => u.StartsWith("BIMPlugins.ExtStorage", StringComparison.Ordinal))
+                ? ", all `BIMPlugins.ExtStorage` namespaces"
+                : "");
+        }
 
         // The references scripts compile against, with the docs the editor's tooltips use; null if they cannot be built.
         private static CSharpCompilation Compilation()
@@ -236,8 +254,10 @@ namespace RevitDevKit.Core.Ai
             genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
             miscellaneousOptions: SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
 
-        // "- `void Show(object geometry, Color color, string label = null)` — Draws geometry over the model ...",
-        // from the same docs as the editor's tooltips.
+        private static readonly Regex SelectedByIndex = new Regex(@"^S\d$", RegexOptions.Compiled);
+
+        // "- `void Show(object geometry, Color color, string label = null)` — Draws geometry over the model ...", from the same docs
+        // as the editor's tooltips. Overloads share a line, as do the colors and S0, S1, S2.
         private static IEnumerable<string> ScriptBaseMembers(CSharpCompilation compilation)
         {
             var lines = new List<string>();
@@ -247,14 +267,24 @@ namespace RevitDevKit.Core.Ai
                 if (scriptBase == null)
                     return lines;
 
-                // Properties first (Doc, UIDoc, S0...), then methods, each in the order they are declared.
-                foreach (var member in scriptBase.GetMembers().Where(IsListed).OrderBy(m => m is IPropertySymbol ? 0 : 1))
-                {
-                    if (member is IMethodSymbol method && method.MethodKind != MethodKind.Ordinary)
-                        continue;
+                var members = scriptBase.GetMembers().Where(IsListed).ToList();
+                var properties = members.OfType<IPropertySymbol>().ToList();
 
-                    lines.Add(Line(member, Signature));
+                var colors = properties.Where(p => p.Type.Name == "Color").ToList();
+                var selected = properties.Where(p => SelectedByIndex.IsMatch(p.Name)).ToList();
+                foreach (var property in properties)
+                {
+                    if (SymbolEqualityComparer.Default.Equals(property, colors.FirstOrDefault()))
+                        lines.Add("- `Color " + string.Join(", ", colors.Select(c => c.Name)) + "`: colors for `Show(geometry, Red)`.");
+                    else if (SymbolEqualityComparer.Default.Equals(property, selected.FirstOrDefault()))
+                        lines.Add("- `Element " + string.Join(", ", selected.Select(s => s.Name)) + "`: the first, second, third selected element; null if not selected.");
+                    else if (!colors.Contains(property, SymbolEqualityComparer.Default) && !selected.Contains(property, SymbolEqualityComparer.Default))
+                        lines.Add(Line(property, Signature));
                 }
+
+                var methods = members.OfType<IMethodSymbol>().Where(m => m.MethodKind == MethodKind.Ordinary);
+                foreach (var overloads in methods.GroupBy(m => m.Name))
+                    lines.Add(Overloads(overloads.ToList()));
             }
             catch (Exception ex)
             {
@@ -264,53 +294,102 @@ namespace RevitDevKit.Core.Ai
             return lines;
         }
 
-        // The loaded BIMPlugins.ExtStorage: its extension methods by the type they extend, then its static helpers,
-        // its classes and interfaces with their members, and its enums. Its docs come as for the editor's tooltips.
-        private static IEnumerable<string> ExtStorageApi(CSharpCompilation compilation)
+        // "- `IList<T> All<T>` where T : Element: `()`, `(ElementId viewId)` — Returns ...": overloads that differ only in parameters share
+        // the return type; others (Tx and Tx<TResult>) are given in full.
+        private static string Overloads(IList<IMethodSymbol> overloads)
+        {
+            if (overloads.Count == 1)
+                return Line(overloads[0], Signature);
+
+            var summary = overloads.Select(m => SymbolDocumentation.Summary(m, CancellationToken.None)).FirstOrDefault(s => !s.IsNullOrEmpty());
+            var heads = overloads.Select(m => Head(m, Signature) + Constraints(m)).Distinct().ToList();
+
+            var text = heads.Count == 1
+                ? "- `" + heads[0] + "`: " + string.Join(", ", overloads.Select(m => "`(" + Parameters(m) + ")`"))
+                : "- " + string.Join(", ", overloads.Select(m => "`" + Display(m, Signature) + "`"));
+            return text + (summary.IsNullOrEmpty() ? "" : " — " + summary);
+        }
+
+        // The loaded BIMPlugins.ExtStorage in short: the names of its extensions by the type they extend, the signatures
+        // of the common ones, its helpers, classes and enums.
+        private static IEnumerable<string> ExtStorageStandard(CSharpCompilation compilation)
         {
             var lines = new List<string>();
             try
             {
-                var anchor = compilation?.GetTypeByMetadataName(typeof(RevitAPI).FullName);
-                if (anchor == null)
+                var api = ExtStorage(compilation);
+                if (api == null)
                     return lines;
 
-                var types = Types(anchor.ContainingAssembly.GlobalNamespace)
-                    .Where(t => t.DeclaredAccessibility == Accessibility.Public)
-                    .OrderBy(t => t.Name, StringComparer.OrdinalIgnoreCase)
-                    .ToList();
+                lines.Add("### Extensions, by the type they extend");
+                foreach (var group in api.Extensions)
+                    lines.Add("- `" + group.Key + "`: " + string.Join(", ", group.Select(m => m.Name).Distinct()));
 
-                var staticMembers = types.Where(t => t.IsStatic)
-                    .SelectMany(t => t.GetMembers().Where(IsListed))
-                    .Where(m => !(m is IMethodSymbol method) || method.MethodKind == MethodKind.Ordinary)
-                    .ToList();
+                lines.Add("");
+                lines.Add("### Signatures of the common ones");
+                foreach (var method in api.Extensions.SelectMany(g => g).Where(m => KeyMethods.Contains(m.Name)))
+                    lines.Add("- `" + Display(method, Signature) + "`");
 
-                var extensions = staticMembers.OfType<IMethodSymbol>()
-                    .Where(m => m.IsExtensionMethod)
-                    .GroupBy(m => Extended(m.Parameters[0].Type))
-                    .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase);
+                if (api.Helpers.Count > 0)
+                {
+                    lines.Add("");
+                    lines.Add("### Static helpers, called by class name");
+                    foreach (var type in api.Helpers.GroupBy(m => m.ContainingType.Name))
+                        lines.Add("- `" + type.Key + "`: " + string.Join(", ", type.Select(m => m.Name).Distinct()));
+                }
 
-                lines.Add("### Расширения — по типу, который они расширяют");
-                foreach (var group in extensions)
+                if (api.Classes.Count > 0)
+                {
+                    lines.Add("");
+                    lines.Add("### Classes");
+                    foreach (var type in api.Classes)
+                    {
+                        var summary = SymbolDocumentation.Summary(type, CancellationToken.None);
+                        var statics = type.GetMembers().Where(m => IsListed(m) && m.IsStatic && !(m is IMethodSymbol)).Select(m => type.Name + "." + m.Name).ToList();
+                        lines.Add("- `" + type.ToDisplayString(TypeName) + "`" + (summary.IsNullOrEmpty() ? "" : " — " + summary) +
+                                  (statics.Count == 0 ? "" : " Instances: " + string.Join(", ", statics.Select(s => "`" + s + "`")) + "."));
+                    }
+                }
+
+                lines.AddRange(Enums(api.Enums));
+            }
+            catch (Exception ex)
+            {
+                ConsoleOutput.Debug("Инструкция для ИИ: не удалось перечислить BIMPlugins.ExtStorage: " + ex.Message);
+            }
+
+            return lines;
+        }
+
+        // The loaded BIMPlugins.ExtStorage in full: every member with its signature and description.
+        private static IEnumerable<string> ExtStorageDetailed(CSharpCompilation compilation)
+        {
+            var lines = new List<string>();
+            try
+            {
+                var api = ExtStorage(compilation);
+                if (api == null)
+                    return lines;
+
+                lines.Add("### Extensions, by the type they extend");
+                foreach (var group in api.Extensions)
                 {
                     lines.Add("**`" + group.Key + "`**");
                     lines.AddRange(group.Select(m => Line(m, Signature)));
                 }
 
-                var helpers = staticMembers.Where(m => !(m is IMethodSymbol method && method.IsExtensionMethod)).ToList();
-                if (helpers.Count > 0)
+                if (api.Helpers.Count > 0)
                 {
                     lines.Add("");
-                    lines.Add("### Статические помощники — вызываются через имя класса");
-                    lines.AddRange(helpers.Select(m => Line(m, StaticSignature)));
+                    lines.Add("### Static helpers, called by class name");
+                    lines.AddRange(api.Helpers.Select(m => Line(m, StaticSignature)));
                 }
 
-                var objects = types.Where(t => !t.IsStatic && (t.TypeKind == TypeKind.Class || t.TypeKind == TypeKind.Interface)).ToList();
-                if (objects.Count > 0)
+                if (api.Classes.Count > 0)
                 {
                     lines.Add("");
-                    lines.Add("### Классы и интерфейсы");
-                    foreach (var type in objects)
+                    lines.Add("### Classes and interfaces");
+                    foreach (var type in api.Classes)
                     {
                         var summary = SymbolDocumentation.Summary(type, CancellationToken.None);
                         lines.Add("**`" + (type.TypeKind == TypeKind.Interface ? "interface " : "class ") + type.ToDisplayString(TypeName) + "`**" +
@@ -333,18 +412,7 @@ namespace RevitDevKit.Core.Ai
                     }
                 }
 
-                var enums = types.Where(t => t.TypeKind == TypeKind.Enum).ToList();
-                if (enums.Count > 0)
-                {
-                    lines.Add("");
-                    lines.Add("### Перечисления");
-                    foreach (var e in enums)
-                    {
-                        var summary = SymbolDocumentation.Summary(e, CancellationToken.None);
-                        var values = e.GetMembers().OfType<IFieldSymbol>().Where(f => f.IsConst).Select(f => "`" + e.Name + "." + f.Name + "`");
-                        lines.Add("- `enum " + e.Name + "`: " + string.Join(", ", values) + (summary.IsNullOrEmpty() ? "" : " — " + summary));
-                    }
-                }
+                lines.AddRange(Enums(api.Enums));
             }
             catch (Exception ex)
             {
@@ -352,6 +420,60 @@ namespace RevitDevKit.Core.Ai
             }
 
             return lines;
+        }
+
+        private static IEnumerable<string> Enums(IList<INamedTypeSymbol> enums)
+        {
+            if (enums.Count == 0)
+                yield break;
+
+            yield return "";
+            yield return "### Enums";
+            foreach (var e in enums)
+            {
+                var summary = SymbolDocumentation.Summary(e, CancellationToken.None);
+                var values = e.GetMembers().OfType<IFieldSymbol>().Where(f => f.IsConst).Select(f => "`" + e.Name + "." + f.Name + "`");
+                yield return "- `enum " + e.Name + "`: " + string.Join(", ", values) + (summary.IsNullOrEmpty() ? "" : " — " + summary);
+            }
+        }
+
+        private sealed class ExtStorageApi
+        {
+            public List<IGrouping<string, IMethodSymbol>> Extensions;
+            public List<ISymbol> Helpers;
+            public List<INamedTypeSymbol> Classes;
+            public List<INamedTypeSymbol> Enums;
+        }
+
+        // The public API of the loaded BIMPlugins.ExtStorage, as scripts compile against it: its extension methods
+        // by the type they extend, the other static members, its classes and interfaces, its enums.
+        private static ExtStorageApi ExtStorage(CSharpCompilation compilation)
+        {
+            var anchor = compilation?.GetTypeByMetadataName(typeof(RevitAPI).FullName);
+            if (anchor == null)
+                return null;
+
+            var types = Types(anchor.ContainingAssembly.GlobalNamespace)
+                .Where(t => t.DeclaredAccessibility == Accessibility.Public)
+                .OrderBy(t => t.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var staticMembers = types.Where(t => t.IsStatic)
+                .SelectMany(t => t.GetMembers().Where(IsListed))
+                .Where(m => !(m is IMethodSymbol method) || method.MethodKind == MethodKind.Ordinary)
+                .ToList();
+
+            return new ExtStorageApi
+            {
+                Extensions = staticMembers.OfType<IMethodSymbol>()
+                    .Where(m => m.IsExtensionMethod)
+                    .GroupBy(m => Extended(m.Parameters[0].Type))
+                    .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
+                    .ToList(),
+                Helpers = staticMembers.Where(m => !(m is IMethodSymbol method && method.IsExtensionMethod)).ToList(),
+                Classes = types.Where(t => !t.IsStatic && (t.TypeKind == TypeKind.Class || t.TypeKind == TypeKind.Interface)).ToList(),
+                Enums = types.Where(t => t.TypeKind == TypeKind.Enum).ToList()
+            };
         }
 
         // "- `XYZ ToPoint(this Element element, LocationType type = LocationType.Origin)` — Returns ..."
@@ -367,16 +489,23 @@ namespace RevitDevKit.Core.Ai
             if (!(member is IMethodSymbol method))
                 return member.ToDisplayString(format);
 
-            var withoutParameters = format.WithMemberOptions(format.MemberOptions & ~SymbolDisplayMemberOptions.IncludeParameters);
-            var head = method.MethodKind == MethodKind.Constructor
+            return Head(method, format) + "(" + Parameters(method) + ")" + Constraints(method);
+        }
+
+        // "IList<T> All<T>", "NaturalComparer" for a constructor.
+        private static string Head(IMethodSymbol method, SymbolDisplayFormat format) =>
+            method.MethodKind == MethodKind.Constructor
                 ? method.ContainingType.Name
-                : method.ToDisplayString(withoutParameters.WithGenericsOptions(SymbolDisplayGenericsOptions.IncludeTypeParameters));
-            var constraints = string.Concat(method.TypeParameters
+                : method.ToDisplayString(format
+                    .WithMemberOptions(format.MemberOptions & ~SymbolDisplayMemberOptions.IncludeParameters)
+                    .WithGenericsOptions(SymbolDisplayGenericsOptions.IncludeTypeParameters));
+
+        private static string Constraints(IMethodSymbol method) =>
+            string.Concat(method.TypeParameters
                 .Where(t => t.ConstraintTypes.Any())
                 .Select(t => " where " + t.Name + " : " + string.Join(", ", t.ConstraintTypes.Select(c => c.ToDisplayString(TypeName)))));
 
-            return head + "(" + string.Join(", ", method.Parameters.Select(Parameter)) + ")" + constraints;
-        }
+        private static string Parameters(IMethodSymbol method) => string.Join(", ", method.Parameters.Select(Parameter));
 
         private static string Parameter(IParameterSymbol parameter)
         {
@@ -394,7 +523,7 @@ namespace RevitDevKit.Core.Ai
             }
 
             return text + " = " + (value == null ? "null" : value is string s ? "\"" + s + "\"" : value is bool b ? (b ? "true" : "false") :
-                Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture));
+                Convert.ToString(value, CultureInfo.InvariantCulture));
         }
 
         private static bool IsListed(ISymbol member) =>
@@ -407,7 +536,7 @@ namespace RevitDevKit.Core.Ai
             if (type is ITypeParameterSymbol parameter)
             {
                 var constraint = parameter.ConstraintTypes.FirstOrDefault();
-                return constraint != null ? constraint.ToDisplayString(TypeName) : "любой тип";
+                return constraint != null ? constraint.ToDisplayString(TypeName) : "any type";
             }
 
             return type.ToDisplayString(TypeName);
