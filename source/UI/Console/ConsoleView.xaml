@@ -8,66 +8,76 @@
              d:DataContext="{d:DesignInstance local:ConsoleVM}"
              mc:Ignorable="d">
 
-    <DockPanel>
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-            <TextBlock Text="Консоль" VerticalAlignment="Center"/>
+    <UserControl.Resources>
+        <ResourceDictionary Source="pack://application:,,,/RevitDevKit;component/UI/Shared/EditorScrollBars.xaml" />
+    </UserControl.Resources>
 
-            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding ClearCommand}"
-                    Style="{DynamicResource MaterialDesignFlatButton}" ToolTip="Очистить консоль (Ctrl+L)">
-                <materialDesign:PackIcon Kind="Broom" Width="25" Height="25" Foreground="{DynamicResource IconBrush}"/>
-            </Button>
+    <!-- Framed as the editor's tab above it: an orange frame, the toolbar on a gray strip like the tab header, then the output. -->
+    <Border BorderThickness="1" BorderBrush="{DynamicResource AccentBrush}" CornerRadius="4" SnapsToDevicePixels="True">
+        <DockPanel>
+            <Border DockPanel.Dock="Top" Background="{DynamicResource SelectedTabBrush}" CornerRadius="3 3 0 0" Padding="6 3">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Консоль" VerticalAlignment="Center"/>
 
-            <Button Width="22" Height="22" Margin="8 0 0 0" Padding="0" VerticalAlignment="Center" Click="OnCopy"
-                    Style="{DynamicResource MaterialDesignFlatButton}" ToolTip="Скопировать весь вывод в буфер обмена">
-                <materialDesign:PackIcon Kind="ContentCopy" Width="22" Height="22" Foreground="{DynamicResource IconBrush}"/>
-            </Button>
+                    <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding ClearCommand}"
+                            Style="{DynamicResource MaterialDesignFlatButton}" ToolTip="Очистить консоль (Ctrl+L)">
+                        <materialDesign:PackIcon Kind="Broom" Width="25" Height="25" Foreground="{DynamicResource IconBrush}"/>
+                    </Button>
 
-            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding ClearShownCommand}"
-                    Style="{DynamicResource MaterialDesignFlatButton}"
-                    ToolTip="Очистить виды от нарисованного">
-                <materialDesign:PackIcon Kind="VectorSquareRemove" Width="25" Height="25" Foreground="{DynamicResource IconBrush}"/>
-            </Button>
+                    <Button Width="22" Height="22" Margin="8 0 0 0" Padding="0" VerticalAlignment="Center" Click="OnCopy"
+                            Style="{DynamicResource MaterialDesignFlatButton}" ToolTip="Скопировать весь вывод в буфер обмена">
+                        <materialDesign:PackIcon Kind="ContentCopy" Width="22" Height="22" Foreground="{DynamicResource IconBrush}"/>
+                    </Button>
 
-            <Border Style="{DynamicResource ToolbarSeparator}"/>
+                    <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding ClearShownCommand}"
+                            Style="{DynamicResource MaterialDesignFlatButton}"
+                            ToolTip="Очистить виды от нарисованного">
+                        <materialDesign:PackIcon Kind="VectorSquareRemove" Width="25" Height="25" Foreground="{DynamicResource IconBrush}"/>
+                    </Button>
 
-            <!-- What a run from DevKit does with the console: one setting for Script Editor and Add-in Explorer. -->
-            <CheckBox Content="Чистить консоль" VerticalAlignment="Center" Padding="2 0" IsChecked="{Binding IsClearOnRun}"
-                      ToolTip="Очищать консоль перед каждым запуском"/>
-            <CheckBox Content="Чистить виды" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsClearShownOnRun}"
-                      ToolTip="Стирать с видов нарисованное перед каждым запуском"/>
-            <CheckBox Content="Тихий режим" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsHideWarnings}"
-                      ToolTip="Предупреждения Revit — только в консоль, без окон"/>
+                    <Border Style="{DynamicResource ToolbarSeparator}"/>
 
-            <Border Style="{DynamicResource ToolbarSeparator}"/>
+                    <!-- What a run from DevKit does with the console: one setting for Script Editor and Add-in Explorer. -->
+                    <CheckBox Content="Чистить консоль" VerticalAlignment="Center" Padding="2 0" IsChecked="{Binding IsClearOnRun}"
+                              ToolTip="Очищать консоль перед каждым запуском"/>
+                    <CheckBox Content="Чистить виды" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsClearShownOnRun}"
+                              ToolTip="Стирать с видов нарисованное перед каждым запуском"/>
+                    <CheckBox Content="Тихий режим" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsHideWarnings}"
+                              ToolTip="Предупреждения Revit — только в консоль, без окон"/>
 
-            <!-- How the console shows its output. The console pane has room for the checkboxes; Script Editor puts them
-                 in a menu (IsViewMenu), framed as Примеры there, so its header stays one short row. -->
-            <StackPanel x:Name="ViewInline" Orientation="Horizontal">
-                <CheckBox Content="Автопрокрутка" VerticalAlignment="Center" Padding="2 0" IsChecked="{Binding IsAutoScroll}" ToolTip="Прокручивать консоль к новому выводу"/>
-                <CheckBox Content="Время" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsTimestamps}" ToolTip="Начинать строки со времени"/>
-                <CheckBox Content="Стек вызовов" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsShowDebug}" ToolTip="Показывать стеки вызовов"/>
-            </StackPanel>
+                    <Border Style="{DynamicResource ToolbarSeparator}"/>
 
-            <Border x:Name="ViewMenu" Visibility="Collapsed" Height="23" BorderThickness="1" BorderBrush="{DynamicResource AccentBrush}" CornerRadius="3" VerticalAlignment="Center">
-                <materialDesign:PopupBox x:Name="ViewOptions" StaysOpen="True" VerticalAlignment="Stretch" ToolTip="Как консоль показывает вывод">
-                    <materialDesign:PopupBox.ToggleContent>
-                        <TextBlock Text="Вид ▾" Margin="10 0 8 0" VerticalAlignment="Center"/>
-                    </materialDesign:PopupBox.ToggleContent>
-
-                    <StackPanel Margin="12 8">
-                        <CheckBox Content="Автопрокрутка" Padding="4 0" IsChecked="{Binding IsAutoScroll}"
-                                  ToolTip="Прокручивать консоль к новому выводу"/>
-                        <CheckBox Content="Время" Margin="0 8 0 0" Padding="4 0" IsChecked="{Binding IsTimestamps}"
-                                  ToolTip="Начинать строки со времени"/>
-                        <CheckBox Content="Стек вызовов" Margin="0 8 0 0" Padding="4 0" IsChecked="{Binding IsShowDebug}"
-                                  ToolTip="Показывать стеки вызовов"/>
+                    <!-- How the console shows its output. The console pane has room for the checkboxes; Script Editor puts them
+                         in a menu (IsViewMenu), framed as Примеры there, so its header stays one short row. -->
+                    <StackPanel x:Name="ViewInline" Orientation="Horizontal">
+                        <CheckBox Content="Автопрокрутка" VerticalAlignment="Center" Padding="2 0" IsChecked="{Binding IsAutoScroll}" ToolTip="Прокручивать консоль к новому выводу"/>
+                        <CheckBox Content="Время" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsTimestamps}" ToolTip="Начинать строки со времени"/>
+                        <CheckBox Content="Стек вызовов" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsShowDebug}" ToolTip="Показывать стеки вызовов"/>
                     </StackPanel>
-                </materialDesign:PopupBox>
-            </Border>
-        </StackPanel>
 
-        <RichTextBox x:Name="Output" IsReadOnly="True" IsDocumentEnabled="True" FontFamily="Consolas" Margin="0 2 0 0"
-                     Style="{DynamicResource MaterialDesignOutlinedRichTextBox}" VerticalContentAlignment="Stretch" Padding="6 4" BorderBrush="{DynamicResource AccentBrush}"
-                     VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
-    </DockPanel>
+                    <Border x:Name="ViewMenu" Visibility="Collapsed" Height="23" BorderThickness="1" BorderBrush="{DynamicResource AccentBrush}" CornerRadius="3" VerticalAlignment="Center">
+                        <materialDesign:PopupBox x:Name="ViewOptions" StaysOpen="True" VerticalAlignment="Stretch" ToolTip="Как консоль показывает вывод">
+                            <materialDesign:PopupBox.ToggleContent>
+                                <TextBlock Text="Вид ▾" Margin="10 0 8 0" VerticalAlignment="Center"/>
+                            </materialDesign:PopupBox.ToggleContent>
+
+                            <StackPanel Margin="12 8">
+                                <CheckBox Content="Автопрокрутка" Padding="4 0" IsChecked="{Binding IsAutoScroll}"
+                                          ToolTip="Прокручивать консоль к новому выводу"/>
+                                <CheckBox Content="Время" Margin="0 8 0 0" Padding="4 0" IsChecked="{Binding IsTimestamps}"
+                                          ToolTip="Начинать строки со времени"/>
+                                <CheckBox Content="Стек вызовов" Margin="0 8 0 0" Padding="4 0" IsChecked="{Binding IsShowDebug}"
+                                          ToolTip="Показывать стеки вызовов"/>
+                            </StackPanel>
+                        </materialDesign:PopupBox>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- The frame is the console's, so the output has none of its own. -->
+            <RichTextBox x:Name="Output" IsReadOnly="True" IsDocumentEnabled="True" FontFamily="Consolas"
+                         Style="{x:Null}" BorderThickness="0" Background="Transparent" Padding="6 4"
+                         VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
+        </DockPanel>
+    </Border>
 </UserControl>

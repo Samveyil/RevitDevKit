@@ -6,6 +6,8 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Shapes;
 using System.Windows.Threading;
 
 namespace RevitDevKit.UI.ScriptEditor
@@ -89,6 +91,7 @@ namespace RevitDevKit.UI.ScriptEditor
             editor.Options.ConvertTabsToSpaces = true;
             editor.Options.IndentationSize = 4;
             editor.TextArea.TextView.BackgroundRenderers.Add(new IndentRainbowRenderer(editor));
+            editor.Loaded += (s, e) => PaintScrollCorner(editor);
 
             editor.TextArea.PreviewKeyDown += (s, e) =>
             {
@@ -99,6 +102,23 @@ namespace RevitDevKit.UI.ScriptEditor
             };
 
             return editor;
+        }
+
+        // The square where the editor's two scroll bars meet is a gray rectangle of its ScrollViewer's template, darker
+        // than the scroll bar tracks (EditorScrollBars.xaml); it takes the tracks' colour. Missing parts are left alone.
+        private static void PaintScrollCorner(TextEditor editor)
+        {
+            try
+            {
+                if (!(editor.Template?.FindName("PART_ScrollViewer", editor) is ScrollViewer viewer)) return;
+                viewer.ApplyTemplate();
+                if (viewer.Template?.FindName("PART_Corner", viewer) is Shape corner && editor.TryFindResource("ScrollTrackBrush") is Brush track)
+                    corner.Fill = track;
+            }
+            catch (Exception ex)
+            {
+                ConsoleOutput.Debug("Угол полос прокрутки не перекрашен: " + ex.Message);
+            }
         }
 
         // Ctrl+D as in Visual Studio: duplicates the current line, or the selection,

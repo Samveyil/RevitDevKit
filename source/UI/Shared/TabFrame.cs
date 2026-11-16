@@ -6,7 +6,7 @@ using System.Windows.Media;
 namespace RevitDevKit.UI.Shared
 {
     // Draws the selected tab and the editor frame as a single outline, so the rounded
-    // corners and the concave joints match exactly.
+    // corners and the concave joints match exactly. With Fill it also paints the selected tab along that outline.
     public sealed class TabFrame : FrameworkElement
     {
         public static readonly DependencyProperty StrokeProperty = DependencyProperty.Register(
@@ -21,6 +21,17 @@ namespace RevitDevKit.UI.Shared
         {
             get => (Brush)GetValue(StrokeProperty);
             set => SetValue(StrokeProperty, value);
+        }
+
+        // The selected tab's background. A frame with a Fill and no Stroke goes under the tabs, one with a Stroke over them.
+        public static readonly DependencyProperty FillProperty = DependencyProperty.Register(
+            nameof(Fill), typeof(Brush), typeof(TabFrame),
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+
+        public Brush Fill
+        {
+            get => (Brush)GetValue(FillProperty);
+            set => SetValue(FillProperty, value);
         }
 
         public double Radius
@@ -64,10 +75,7 @@ namespace RevitDevKit.UI.Shared
 
         protected override void OnRender(DrawingContext dc)
         {
-            if (ActualWidth < 1 || ActualHeight < 1 || Stroke == null) return;
-
-            var pen = new Pen(Stroke, 1);
-            pen.Freeze();
+            if (ActualWidth < 1 || ActualHeight < 1 || (Stroke == null && Fill == null)) return;
 
             var r = Radius;
 
@@ -75,7 +83,8 @@ namespace RevitDevKit.UI.Shared
 
             if (_tab.IsEmpty || _tab.Height < 2 * r)
             {
-                dc.DrawRoundedRectangle(null, pen, new Rect(left, left, right - left, bottom - left), r, r);
+                if (Stroke != null)
+                    dc.DrawRoundedRectangle(null, NewPen(), new Rect(left, left, right - left, bottom - left), r, r);
                 return;
             }
 
@@ -88,6 +97,28 @@ namespace RevitDevKit.UI.Shared
             var rightFlare = right - tabRight >= 2 * r;
             if (!leftFlare) tabLeft = left;
             if (!rightFlare) tabRight = right;
+
+            // The selected tab's background: the same corners as its outline, down through the frame's line, so no light
+            // pixels are left between the fill and the stroke.
+            if (Fill != null)
+            {
+                var tabShape = new StreamGeometry();
+                using (var c = tabShape.Open())
+                {
+                    c.BeginFigure(new Point(tabLeft, top + 0.5), true, true);
+                    c.LineTo(new Point(tabLeft, tabTop + r), false, false);
+                    ArcTo(c, tabLeft + r, tabTop, r, SweepDirection.Clockwise);
+                    c.LineTo(new Point(tabRight - r, tabTop), false, false);
+                    ArcTo(c, tabRight, tabTop + r, r, SweepDirection.Clockwise);
+                    c.LineTo(new Point(tabRight, top + 0.5), false, false);
+                }
+                tabShape.Freeze();
+                dc.DrawGeometry(Fill, null, tabShape);
+            }
+
+            if (Stroke == null) return;
+
+            var pen = NewPen();
 
             var geometry = new StreamGeometry();
             using (var c = geometry.Open())
@@ -123,6 +154,13 @@ namespace RevitDevKit.UI.Shared
             geometry.Freeze();
 
             dc.DrawGeometry(null, pen, geometry);
+        }
+
+        private Pen NewPen()
+        {
+            var pen = new Pen(Stroke, 1);
+            pen.Freeze();
+            return pen;
         }
 
         private static void ArcTo(StreamGeometryContext c, double x, double y, double radius, SweepDirection direction)
