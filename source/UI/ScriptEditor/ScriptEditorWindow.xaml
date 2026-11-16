@@ -122,18 +122,8 @@
                         <Grid>
                             <materialDesign:PackIcon Kind="{Binding AiButtonIcon}" Width="20" Height="20" Foreground="{StaticResource IconBrush}"/>
                             <!-- The detailed instructions are on: the icon copies them. -->
-                            <Ellipse Width="6" Height="6" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0 0 -2 0" Fill="{StaticResource AccentBrush}">
-                                <Ellipse.Style>
-                                    <Style TargetType="Ellipse">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsAiDetailed}" Value="True">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Ellipse.Style>
-                            </Ellipse>
+                            <Ellipse Width="6" Height="6" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0 0 -2 0" Fill="{StaticResource AccentBrush}"
+                                     Visibility="{Binding IsAiDetailed, Converter={StaticResource BoolToVisibility}}"/>
                         </Grid>
                     </Button>
 
@@ -235,18 +225,8 @@
                                                           Command="{Binding PlacementTarget.Tag.SaveFileAsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                                 <!-- Only a tab saved to a file has one to show. -->
                                                 <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
-                                                          Command="{Binding PlacementTarget.Tag.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
-                                                    <MenuItem.Style>
-                                                        <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding HasFile}" Value="True">
-                                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </MenuItem.Style>
-                                                </MenuItem>
+                                                          Command="{Binding PlacementTarget.Tag.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          Visibility="{Binding HasFile, Converter={StaticResource BoolToVisibility}}"/>
                                             </ContextMenu>
                                         </Grid.ContextMenu>
 

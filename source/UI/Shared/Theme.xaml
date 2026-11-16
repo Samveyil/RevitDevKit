@@ -12,6 +12,12 @@
     <SolidColorBrush x:Key="IconBrush" Color="#CC000000" />
     <SolidColorBrush x:Key="SelectedTabBrush" Color="#0F000000" />
 
+    <!-- Showing an element by a flag or a value: Visibility="{Binding IsX, Converter={StaticResource BoolToVisibility}}",
+         or by a value, with ConverterParameter. A DataTrigger stays for what changes more than visibility. -->
+    <shared:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+    <shared:BoolToVisibilityConverter x:Key="InverseBoolToVisibility" Invert="True"/>
+    <shared:EqualsToVisibilityConverter x:Key="EqualsToVisibility"/>
+
     <!-- A thin line between groups of a toolbar, 8 from the controls on each side. Within a group buttons stand
          8 apart and checkboxes 12, counted from the edges of the controls, in every window. -->
     <Style x:Key="ToolbarSeparator" TargetType="Border">

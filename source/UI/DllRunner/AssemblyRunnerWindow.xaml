@@ -16,54 +16,6 @@
                 <ResourceDictionary Source="pack://application:,,,/RevitDevKit;component/UI/Shared/Theme.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Each tab has its own toolbar: 0 - commands, 1 - applications, 2 - startup, 3 - assemblies, 4 - dependencies. -->
-            <Style x:Key="CommandsToolbar" TargetType="StackPanel">
-                <Setter Property="Visibility" Value="Collapsed"/>
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding SelectedTabIndex}" Value="0">
-                        <Setter Property="Visibility" Value="Visible"/>
-                    </DataTrigger>
-                </Style.Triggers>
-            </Style>
-
-            <Style x:Key="AppsToolbar" TargetType="StackPanel">
-                <Setter Property="Visibility" Value="Collapsed"/>
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding SelectedTabIndex}" Value="1">
-                        <Setter Property="Visibility" Value="Visible"/>
-                    </DataTrigger>
-                </Style.Triggers>
-            </Style>
-
-            <Style x:Key="StartupToolbar" TargetType="StackPanel">
-                <Setter Property="Visibility" Value="Collapsed"/>
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding SelectedTabIndex}" Value="2">
-                        <Setter Property="Visibility" Value="Visible"/>
-                    </DataTrigger>
-                </Style.Triggers>
-            </Style>
-
-            <Style x:Key="DependenciesToolbar" TargetType="StackPanel">
-                <Setter Property="Visibility" Value="Collapsed"/>
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding SelectedTabIndex}" Value="4">
-                        <Setter Property="Visibility" Value="Visible"/>
-                    </DataTrigger>
-                </Style.Triggers>
-            </Style>
-
-            <Style x:Key="AssembliesToolbar" TargetType="StackPanel">
-                <Setter Property="Visibility" Value="Collapsed"/>
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding SelectedTabIndex}" Value="3">
-                        <Setter Property="Visibility" Value="Visible"/>
-                    </DataTrigger>
-                </Style.Triggers>
-            </Style>
-
-            <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
-
             <!-- MaterialDesign's tree keeps 8 left of each expander: the rows move 4 left, inside the tree, so the
                  expanders start 4 from the frame as the lists do. Moved inside, they are clipped by the scrolling area,
                  and the tree with its scroll bars stays within the frame. -->
@@ -135,7 +87,9 @@
     </Window.InputBindings>
 
     <DockPanel>
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource CommandsToolbar}">
+        <!-- Each tab has its own toolbar, shown by SelectedTabIndex: 0 - commands, 1 - applications, 2 - startup, 3 - assemblies, 4 - dependencies. -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5"
+                    Visibility="{Binding SelectedTabIndex, Converter={StaticResource EqualsToVisibility}, ConverterParameter=0}">
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding RunCommand}"
                     ToolTip="Выполнить команду (F5)">
                 <StackPanel Orientation="Horizontal">
@@ -164,7 +118,8 @@
             </Button>
         </StackPanel>
 
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource AppsToolbar}">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5"
+                    Visibility="{Binding SelectedTabIndex, Converter={StaticResource EqualsToVisibility}, ConverterParameter=1}">
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding Apps.ApplyCommand}"
                     ToolTip="Обновить ленту по свежей DLL (F5)">
                 <StackPanel Orientation="Horizontal">
@@ -197,7 +152,8 @@
             </Button>
         </StackPanel>
 
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource StartupToolbar}">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5"
+                    Visibility="{Binding SelectedTabIndex, Converter={StaticResource EqualsToVisibility}, ConverterParameter=2}">
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding Startup.RefreshCommand}"
                     ToolTip="Перечитать папки надстроек (F5)">
                 <StackPanel Orientation="Horizontal">
@@ -220,7 +176,8 @@
             </Button>
         </StackPanel>
 
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource DependenciesToolbar}">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5"
+                    Visibility="{Binding SelectedTabIndex, Converter={StaticResource EqualsToVisibility}, ConverterParameter=4}">
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding Dependencies.RefreshCommand}"
                     ToolTip="Проверить DLL надстроек (F5)">
                 <StackPanel Orientation="Horizontal">
@@ -248,7 +205,8 @@
                       ToolTip="Снимите, чтобы видеть все общие DLL"/>
         </StackPanel>
 
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" Style="{StaticResource AssembliesToolbar}">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5"
+                    Visibility="{Binding SelectedTabIndex, Converter={StaticResource EqualsToVisibility}, ConverterParameter=3}">
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding LoadedAssemblies.RefreshCommand}"
                     ToolTip="Обновить список сборок (F5)">
                 <StackPanel Orientation="Horizontal">
@@ -276,7 +234,8 @@
                       ToolTip="Скрыть .NET, GAC, Revit и сборки в памяти"/>
         </StackPanel>
 
-        <StackPanel DockPanel.Dock="Bottom" Style="{StaticResource AssembliesToolbar}">
+        <StackPanel DockPanel.Dock="Bottom"
+                    Visibility="{Binding SelectedTabIndex, Converter={StaticResource EqualsToVisibility}, ConverterParameter=3}">
             <StatusBar>
                 <StatusBarItem DockPanel.Dock="Right">
                     <TextBlock Text="{Binding LoadedAssemblies.Notice}"/>
@@ -288,7 +247,8 @@
         </StackPanel>
 
         <!-- Dependencies' status bar, as the Script Editor has one: the check on the left, the last action on the right. -->
-        <StackPanel DockPanel.Dock="Bottom" Style="{StaticResource DependenciesToolbar}">
+        <StackPanel DockPanel.Dock="Bottom"
+                    Visibility="{Binding SelectedTabIndex, Converter={StaticResource EqualsToVisibility}, ConverterParameter=4}">
             <StatusBar>
                 <StatusBarItem DockPanel.Dock="Right">
                     <TextBlock Text="{Binding Dependencies.Notice}"/>
@@ -320,8 +280,6 @@
                         <Grid>
                             <TreeView ItemsSource="{Binding Assemblies}" ItemsPanel="{StaticResource TreeFromEdge}" TabIndex="0">
                                 <TreeView.Resources>
-                                    <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
-
                                     <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
                                         <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}"/>
                                         <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
@@ -348,18 +306,8 @@
                                             <materialDesign:PackIcon Kind="PackageVariantClosed" Width="18" Height="18" Foreground="{StaticResource AccentBrush}"
                                                                      VerticalAlignment="Center" Margin="0 0 6 0"/>
                                             <TextBlock Text="{Binding DisplayName}" FontWeight="DemiBold" VerticalAlignment="Center"/>
-                                            <TextBlock Text="   — нет IExternalCommand" Foreground="Gray" VerticalAlignment="Center">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding HasTargets}" Value="False">
-                                                                <Setter Property="Visibility" Value="Visible"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
+                                            <TextBlock Text="   — нет IExternalCommand" Foreground="Gray" VerticalAlignment="Center"
+                                                       Visibility="{Binding HasTargets, Converter={StaticResource InverseBoolToVisibility}}"/>
                                         </StackPanel>
                                     </HierarchicalDataTemplate>
 
@@ -387,32 +335,12 @@
                             </TreeView>
 
                             <TextBlock Text="Добавьте DLL кнопкой с папкой или Ctrl+O" Foreground="Gray"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Assemblies.Count}" Value="0">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                                       Visibility="{Binding Assemblies.Count, Converter={StaticResource EqualsToVisibility}, ConverterParameter=0}"/>
 
                             <TextBlock Text="Ничего не найдено" Foreground="Gray"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsNothingFound}" Value="True">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                                       Visibility="{Binding IsNothingFound, Converter={StaticResource BoolToVisibility}}"/>
                         </Grid>
                     </DockPanel>
             </TabItem>
@@ -477,18 +405,8 @@
                     </ListBox>
 
                     <TextBlock Text="Добавьте DLL с IExternalApplication кнопкой с папкой или Ctrl+O" Foreground="Gray"
-                               HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Apps.Items.Count}" Value="0">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                               HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                               Visibility="{Binding Apps.Items.Count, Converter={StaticResource EqualsToVisibility}, ConverterParameter=0}"/>
                 </Grid>
             </TabItem>
 
@@ -629,18 +547,8 @@
                         </ListBox>
 
                         <TextBlock Text="В папках надстроек этой версии Revit нет .addin" Foreground="Gray"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Startup.Items.Count}" Value="0">
-                                            <Setter Property="Visibility" Value="Visible"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                                   Visibility="{Binding Startup.Items.Count, Converter={StaticResource EqualsToVisibility}, ConverterParameter=0}"/>
                     </Grid>
                 </DockPanel>
             </TabItem>
@@ -822,7 +730,8 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Text="{Binding Owner}" Style="{StaticResource SeverityText}" VerticalAlignment="Center"/>
                                         <TextBlock Grid.Column="1" Text="● загружена" FontSize="11" Foreground="{StaticResource AccentBrush}" Margin="8 0 0 0"
-                                                   VerticalAlignment="Center" Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibility}}"/>
+                                                   VerticalAlignment="Center"
+                                                   Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibility}}"/>
                                         <TextBlock Grid.Column="2" Text="{Binding Version}" Style="{StaticResource SeverityText}" FontFamily="Consolas"
                                                    Margin="12 0 0 0" VerticalAlignment="Center"/>
                                     </Grid>
