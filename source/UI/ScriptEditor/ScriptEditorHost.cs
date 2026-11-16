@@ -5,7 +5,10 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Shapes;
 using System.Windows.Threading;
 
 namespace RevitDevKit.UI.ScriptEditor
@@ -89,6 +92,8 @@ namespace RevitDevKit.UI.ScriptEditor
             editor.Options.ConvertTabsToSpaces = true;
             editor.Options.IndentationSize = 4;
             editor.TextArea.TextView.BackgroundRenderers.Add(new IndentRainbowRenderer(editor));
+            editor.Loaded += (s, e) => PaintScrollCorner(editor);
+            SnapScrollToLines(editor);
 
             editor.TextArea.PreviewKeyDown += (s, e) =>
             {
@@ -99,6 +104,59 @@ namespace RevitDevKit.UI.ScriptEditor
             };
 
             return editor;
+        }
+
+        // The vertical scroll stops on a line, whatever moves it (wheel, thumb, arrows, the caret): the top line is shown whole.
+        // An offset between two lines goes on in the direction of the move, to the next line down or the one above, so a step
+        // shorter than half a line (an arrow click with a large font) still moves. At the very end the last line is shown whole
+        // instead, as the document may end between two line tops.
+        internal static void SnapScrollToLines(TextEditor editor)
+        {
+            var view = editor.TextArea.TextView;
+            var last = 0.0;
+
+            view.ScrollOffsetChanged += (s, e) =>
+            {
+                var offset = view.VerticalOffset;
+                var movedDown = offset > last;
+                last = offset;
+
+                // Half a pixel ahead: line tops are sums of fractional heights, and an offset right on one may come out a hair above it.
+                var line = view.GetDocumentLineByVisualTop(offset + 0.5);
+                if (line == null)
+                    return;
+
+                var top = view.GetVisualTopByDocumentLine(line.LineNumber);
+                if (Math.Abs(offset - top) < 0.5)
+                    return;
+
+                var info = (IScrollInfo)view;
+                var bottom = info.ExtentHeight - info.ViewportHeight;
+                if (bottom - offset < 0.5)
+                    return;
+
+                var next = line.NextLine != null ? view.GetVisualTopByDocumentLine(line.LineNumber + 1) : top;
+                var target = movedDown ? Math.Min(next, bottom) : top;
+                if (Math.Abs(target - offset) >= 0.5)
+                    editor.ScrollToVerticalOffset(target);
+            };
+        }
+
+        // The square where the editor's two scroll bars meet is a gray rectangle of its ScrollViewer's template, darker
+        // than the scroll bar tracks (EditorScrollBars.xaml); it takes the tracks' colour. Missing parts are left alone.
+        private static void PaintScrollCorner(TextEditor editor)
+        {
+            try
+            {
+                if (!(editor.Template?.FindName("PART_ScrollViewer", editor) is ScrollViewer viewer)) return;
+                viewer.ApplyTemplate();
+                if (viewer.Template?.FindName("PART_Corner", viewer) is Shape corner && editor.TryFindResource("ScrollTrackBrush") is Brush track)
+                    corner.Fill = track;
+            }
+            catch (Exception ex)
+            {
+                ConsoleOutput.Debug("Угол полос прокрутки не перекрашен: " + ex.Message);
+            }
         }
 
         // Ctrl+D as in Visual Studio: duplicates the current line, or the selection,

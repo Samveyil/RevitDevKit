@@ -3,6 +3,7 @@ using BIMPlugins.ExtStorage.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ICSharpCode.AvalonEdit.Document;
+using RevitDevKit.Core.Ai;
 using RevitDevKit.Core.Compiler;
 using RevitDevKit.Core.Output;
 using RevitDevKit.Core.Running;
@@ -285,10 +286,13 @@ namespace RevitDevKit.UI.ScriptEditor
                 return;
             }
 
+            // What went wrong is kept with the tab for the AI instructions with the script (CopyAiInstructionsWithScript).
+            tab.LastProblems.Clear();
             foreach (var message in result.Messages)
             {
                 var level = message.IsError ? LogLevel.Error : LogLevel.Warning;
                 ConsoleOutput.WriteLine(message.ToString(), level);
+                tab.LastProblems.Add(message.ToString());
             }
 
             if (!result.Success)
@@ -306,6 +310,7 @@ namespace RevitDevKit.UI.ScriptEditor
             if (target == null)
             {
                 ConsoleOutput.Error("В коде не нашлось точки входа: нужен класс с IExternalCommand либо метод Main / Run / Execute.");
+                tab.LastProblems.Add("Нет точки входа: файл с классом, но без IExternalCommand и без метода Main / Run / Execute.");
                 Finish("Нет точки входа");
                 return;
             }
@@ -322,6 +327,7 @@ namespace RevitDevKit.UI.ScriptEditor
                 Body = () => target.Invoke(),
                 Completed = error => _dispatcher.Invoke(() =>
                 {
+                    if (error != null) tab.LastProblems.Add(DescribeFailure(error));
                     Finish(error == null ? "Готово" : "Завершено с ошибкой");
                     RefreshContext();
                 })
@@ -342,6 +348,101 @@ namespace RevitDevKit.UI.ScriptEditor
         {
             IsRunning = false;
             TxtStatus = status;
+        }
+
+        // "InvalidOperationException: ... at the script's lines": the exception the script threw, not its wrappers.
+        private static string DescribeFailure(Exception error)
+        {
+            while ((error is System.Reflection.TargetInvocationException || error is AggregateException) && error.InnerException != null)
+                error = error.InnerException;
+
+            var inScript = (error.StackTrace ?? string.Empty)
+                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Where(l => l.Contains("RevitDevKit.UserScripts"))
+                .Select(l => l.Trim())
+                .Take(3)
+                .ToList();
+
+            return "Исключение при выполнении: " + error.GetType().Name + ": " + error.Message
+                   + (inScript.Count == 0 ? string.Empty : " (" + string.Join("; ", inScript) + ")");
+        }
+
+        // The AI button repeats the copy chosen last from its menu; kept while Revit runs, for every Script Editor window.
+        private static bool _lastAiWithScript;
+
+        public bool IsLastAiWithScript
+        {
+            get => _lastAiWithScript;
+            private set
+            {
+                if (_lastAiWithScript == value) return;
+                _lastAiWithScript = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(AiButtonIcon));
+                OnPropertyChanged(nameof(AiButtonToolTip));
+            }
+        }
+
+        // The detailed instructions: all of BIMPlugins.ExtStorage with signatures, about three times the tokens. Kept like the last choice.
+        private static bool _aiDetailed;
+
+        public bool IsAiDetailed
+        {
+            get => _aiDetailed;
+            set
+            {
+                if (_aiDetailed == value) return;
+                _aiDetailed = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(AiButtonToolTip));
+            }
+        }
+
+        public MaterialDesignThemes.Wpf.PackIconKind AiButtonIcon =>
+            IsLastAiWithScript ? MaterialDesignThemes.Wpf.PackIconKind.AutoFix : MaterialDesignThemes.Wpf.PackIconKind.CreationOutline;
+
+        public string AiButtonToolTip =>
+            (IsLastAiWithScript ? "Скопировать для ИИ инструкцию, скрипт и ошибки" : "Скопировать инструкцию для ИИ") +
+            (IsAiDetailed ? " (подробная)" : "");
+
+        [RelayCommand]
+        private void RepeatAiCopy()
+        {
+            if (IsLastAiWithScript) CopyAiInstructionsWithScript();
+            else CopyAiInstructions();
+        }
+
+        // Instructions for an AI chat on writing scripts for Script Editor, copied to paste at the start of a chat.
+        [RelayCommand]
+        private void CopyAiInstructions()
+        {
+            IsLastAiWithScript = false;
+            CopyToClipboard(AiInstructions.Build(IsAutoTransaction, IsAiDetailed), "Инструкция для ИИ скопирована: вставьте её в начало чата");
+        }
+
+        // The same with the current script and what went wrong in its last run, to ask the AI to fix or change it.
+        [RelayCommand]
+        private void CopyAiInstructionsWithScript()
+        {
+            IsLastAiWithScript = true;
+            var tab = SelectedTab;
+            if (tab == null) return;
+
+            CopyToClipboard(AiInstructions.BuildWithScript(IsAutoTransaction, tab.Title, tab.Document.Text, tab.LastProblems, IsAiDetailed),
+                "Инструкция, скрипт и ошибки скопированы: вставьте в чат и напишите, что сделать");
+        }
+
+        private void CopyToClipboard(string text, string status)
+        {
+            try
+            {
+                Clipboard.SetText(text);
+                TxtStatus = status;
+            }
+            catch (Exception ex)
+            {
+                ConsoleOutput.Warning("Не удалось скопировать в буфер обмена: " + ex.Message);
+            }
         }
     }
 
@@ -364,6 +465,9 @@ namespace RevitDevKit.UI.ScriptEditor
         private bool _isDirty;
 
         public TextDocument Document { get; }
+
+        // Compile errors and warnings of the tab's last run, and the exception it threw; for the AI instructions.
+        public List<string> LastProblems { get; } = new List<string>();
 
         public string Header { get => IsDirty ? Title + " *" : Title; }
 

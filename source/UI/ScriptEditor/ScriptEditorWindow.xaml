@@ -12,7 +12,12 @@
         Height="800" Width="820" MinHeight="480" MinWidth="820">
 
     <Window.Resources>
-        <ResourceDictionary Source="pack://application:,,,/RevitDevKit;component/UI/Shared/Theme.xaml" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/RevitDevKit;component/UI/Shared/Theme.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/RevitDevKit;component/UI/Shared/EditorScrollBars.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Window.InputBindings>
@@ -89,6 +94,96 @@
 
             <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Автотранзакция" IsChecked="{Binding IsAutoTransaction}"
                       ToolTip="Обернуть скрипт в транзакцию"/>
+
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <!-- On its own, apart from the run and file groups: instructions for an AI chat on how to write scripts for Script Editor (AiInstructions), as a split button:
+                 the icon repeats the copy chosen last, the arrow opens both, and the one chosen there becomes the icon's. -->
+            <!-- One frame round the icon and the arrow, with a line between them, like Revit's split buttons: shown while the mouse is
+                 over either part or the list is open, so at rest the button is a plain icon like its neighbours. -->
+            <Border BorderThickness="1" CornerRadius="3" Height="25" Background="Transparent">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="BorderBrush" Value="Transparent"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsPopupOpen, ElementName=AiPopup}" Value="True">
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel Orientation="Horizontal">
+                    <Button Width="27" Height="23" Padding="0" Command="{Binding RepeatAiCopyCommand}"
+                            Style="{StaticResource MaterialDesignFlatButton}" ToolTip="{Binding AiButtonToolTip}"
+                            materialDesign:ButtonAssist.CornerRadius="2 0 0 2">
+                        <Grid>
+                            <materialDesign:PackIcon Kind="{Binding AiButtonIcon}" Width="20" Height="20" Foreground="{StaticResource IconBrush}"/>
+                            <!-- The detailed instructions are on: the icon copies them. -->
+                            <Ellipse Width="6" Height="6" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0 0 -2 0" Fill="{StaticResource AccentBrush}"
+                                     Visibility="{Binding IsAiDetailed, Converter={StaticResource BoolToVisibility}}"/>
+                        </Grid>
+                    </Button>
+
+                    <Border Width="1" Background="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=Border}}"/>
+
+                    <materialDesign:PopupBox x:Name="AiPopup" StaysOpen="True" ToolTip="Инструкция для ИИ: выбрать, что скопировать" VerticalAlignment="Center" Padding="0">
+                        <materialDesign:PopupBox.ToggleContent>
+                            <materialDesign:PackIcon Kind="MenuDown" Width="16" Height="16" Margin="1 0" Foreground="{StaticResource IconBrush}"/>
+                        </materialDesign:PopupBox.ToggleContent>
+
+                        <!-- Compact, as a toolbar menu: one line per item. -->
+                        <StackPanel Margin="0 2">
+                            <StackPanel.Resources>
+                                <!-- A plain menu row: MaterialDesign's popup items are at least 48 high. -->
+                                <Style x:Key="AiMenuItem" TargetType="Button">
+                                    <Setter Property="Height" Value="26"/>
+                                    <Setter Property="Padding" Value="6 0 10 0"/>
+                                    <Setter Property="FontSize" Value="12"/>
+                                    <Setter Property="Cursor" Value="Hand"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="Row" Background="Transparent" Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Row" Property="Background" Value="#14000000"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsPressed" Value="True">
+                                                        <Setter TargetName="Row" Property="Background" Value="#26000000"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </StackPanel.Resources>
+
+                            <Button Style="{StaticResource AiMenuItem}" Click="AiMenuItem_Click" Command="{Binding CopyAiInstructionsCommand}" ToolTip="Вставьте в начало чата с ИИ, затем опишите задачу">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="CreationOutline" Width="16" Height="16" VerticalAlignment="Center" Foreground="{StaticResource IconBrush}"/>
+                                    <TextBlock Text="Инструкция" Margin="8 0 0 0" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource AiMenuItem}" Click="AiMenuItem_Click" Command="{Binding CopyAiInstructionsWithScriptCommand}" ToolTip="Инструкция, текущий скрипт и ошибки его запуска: чтобы ИИ поправил или доработал скрипт">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="AutoFix" Width="16" Height="16" VerticalAlignment="Center" Foreground="{StaticResource IconBrush}"/>
+                                    <TextBlock Text="Скрипт и ошибки" Margin="8 0 0 0" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Separator Height="1" Margin="0 4 0 2"/>
+                            <!-- Applies to both items and to the icon. The list stays open on it (StaysOpen); the items close it themselves. -->
+                            <CheckBox IsChecked="{Binding IsAiDetailed}" Height="26" Margin="6 0 10 0" Padding="4 0 0 0" VerticalContentAlignment="Center" FontSize="12"
+                                      Content="Подробная"
+                                      ToolTip="Вся BIMPlugins.ExtStorage с сигнатурами: примерно в 3 раза больше токенов"/>
+                        </StackPanel>
+                    </materialDesign:PopupBox>
+                </StackPanel>
+            </Border>
         </StackPanel>
 
         <StatusBar DockPanel.Dock="Bottom">
@@ -130,18 +225,8 @@
                                                           Command="{Binding PlacementTarget.Tag.SaveFileAsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                                 <!-- Only a tab saved to a file has one to show. -->
                                                 <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
-                                                          Command="{Binding PlacementTarget.Tag.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
-                                                    <MenuItem.Style>
-                                                        <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding HasFile}" Value="True">
-                                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </MenuItem.Style>
-                                                </MenuItem>
+                                                          Command="{Binding PlacementTarget.Tag.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          Visibility="{Binding HasFile, Converter={StaticResource BoolToVisibility}}"/>
                                             </ContextMenu>
                                         </Grid.ContextMenu>
 

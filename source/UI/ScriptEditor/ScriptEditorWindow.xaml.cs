@@ -21,5 +21,8 @@ namespace RevitDevKit.UI.ScriptEditor
             Single.Show(() => new ScriptEditorWindow(new ScriptEditorVM()), w => w._vm.RefreshContext());
 
         public static void CloseIfOpen() => Single.Close();
+
+        // The AI list stays open on a click inside it, so that its Подробная checkbox can be ticked; its items close it.
+        private void AiMenuItem_Click(object sender, RoutedEventArgs e) => AiPopup.IsPopupOpen = false;
     }
 }
