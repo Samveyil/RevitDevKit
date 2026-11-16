@@ -1,10 +1,11 @@
 # <img src="source/Resources/DevKit_32.png" width="32" height="32" alt="" /> Revit DevKit
 
 [![Revit 2019-2024](https://img.shields.io/badge/Revit-2019--2024-blue.svg)](https://github.com/Samveyil/RevitDevKit)
-[![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.txt)
-[![Release](https://img.shields.io/github/v/release/Samveyil/RevitDevKit?label=Release&color=blue)](https://github.com/Samveyil/RevitDevKit/releases/latest)
-[![Wiki](https://img.shields.io/badge/%D0%94%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D0%B8%D1%8F-Wiki-blue)](https://github.com/Samveyil/RevitDevKit/wiki/Home-RU)
+[![Visual Studio 2022](https://img.shields.io/badge/Visual%20Studio-2022-blue)](https://github.com/Samveyil/RevitDevKit)
+[![Nuke](https://img.shields.io/badge/Nuke-Build-blue)](https://nuke.build/)
+[![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/Samveyil/RevitDevKit/blob/master/LICENSE.txt)
 [![README in English](https://img.shields.io/badge/README-in%20English-blue)](README.md)
+[![Release](https://img.shields.io/github/v/release/Samveyil/RevitDevKit?label=Release&color=blue)](https://github.com/Samveyil/RevitDevKit/releases/latest)
 
 Набор инструментов для тех, кто пишет надстройки для Revit. Проверить идею C#-скриптом без сборки, запускать команды из своей DLL без перезапуска Revit и понять, почему надстройка подхватила не ту версию библиотеки.
 

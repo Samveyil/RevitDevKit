@@ -1,10 +1,11 @@
 # <img src="source/Resources/DevKit_32.png" width="32" height="32" alt="" /> Revit DevKit
 
 [![Revit 2019-2024](https://img.shields.io/badge/Revit-2019--2024-blue.svg)](https://github.com/Samveyil/RevitDevKit)
-[![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.txt)
-[![Release](https://img.shields.io/github/v/release/Samveyil/RevitDevKit?label=Release&color=blue)](https://github.com/Samveyil/RevitDevKit/releases/latest)
-[![Wiki](https://img.shields.io/badge/Docs-Wiki-blue)](https://github.com/Samveyil/RevitDevKit/wiki)
+[![Visual Studio 2022](https://img.shields.io/badge/Visual%20Studio-2022-blue)](https://github.com/Samveyil/RevitDevKit)
+[![Nuke](https://img.shields.io/badge/Nuke-Build-blue)](https://nuke.build/)
+[![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/Samveyil/RevitDevKit/blob/master/LICENSE.txt)
 [![README на русском](https://img.shields.io/badge/README-%D0%BD%D0%B0%20%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%BE%D0%BC-blue)](README.ru.md)
+[![Release](https://img.shields.io/github/v/release/Samveyil/RevitDevKit?label=Release&color=blue)](https://github.com/Samveyil/RevitDevKit/releases/latest)
 
 A toolbox for people who write Revit add-ins. Try an idea as a C# script without building anything, run commands from your DLL without restarting Revit, and see why an add-in pulls in the wrong version of a library.
 
