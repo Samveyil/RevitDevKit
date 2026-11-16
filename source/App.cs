@@ -81,7 +81,12 @@ namespace RevitDevKit
             var pullBtn = panel.CreatePulldownButton(PanelName)
                 .SetLargeImage("DevKit_32.png")
                 .SetImage("DevKit_16.png")
-                .SetToolTip("DevKit — инструменты разработчика: скрипты, запуск команд из DLL, консоль.");
+                .SetToolTip("Скрипты, команды из DLL, консоль.")
+                .SetLongDescription(
+                    "Инструменты разработчика надстроек. Script Editor запускает C#-скрипты прямо в Revit, " +
+                    "Add-in Explorer — команды из собранных DLL без перезапуска Revit, а также показывает ленту, " +
+                    "автозагрузку и конфликты версий DLL. Repeat Last повторяет последний запуск, Console показывает вывод."
+                );
 
             pullBtn.CreatePushButton<OpenScriptEditorCmd>("Script Editor")
                 .SetToolTip("Редактор C#-скриптов.")
@@ -92,7 +97,7 @@ namespace RevitDevKit
 
             // The button's internal name comes from its command class, so renaming the text keeps users' shortcuts.
             pullBtn.CreatePushButton<OpenAssemblyRunnerCmd, AlwaysAvailable>("Add-in Explorer")
-                .SetToolTip("Надстройки и их DLL: запуск команд, лента по свежей сборке, автозагрузка, конфликты версий.")
+                .SetToolTip("Надстройки и их DLL: команды, лента, автозагрузка, конфликты.")
                 .SetLongDescription(
                     "Подключите собранную DLL и запустите из неё IExternalCommand: команда берётся из актуальной DLL на диске. " +
                     "Здесь же видно, как изменится лента надстройки, какие надстройки Revit загружает при запуске " +
@@ -101,23 +106,28 @@ namespace RevitDevKit
 
             // Renamed from Run Again: the internal name comes from ExecutePendingCmd, so shortcuts stay.
             pullBtn.CreatePushButton<ExecutePendingCmd, AlwaysAvailable>("Repeat Last")
-                .SetToolTip("Повторить последний запуск: скрипт из Script Editor или команду из Add-in Explorer.")
+                .SetToolTip("Повторить последний скрипт или команду из DLL.")
                 .SetLongDescription(
                     "Команда из DLL берётся из файла на диске, так что после пересборки запустится свежая версия. " +
                     "Скрипт повторяется в том виде, в каком его запустили; правки в редакторе применятся после F5."
                 );
 
             pullBtn.CreatePushButton<DebugLastCmd, AlwaysAvailable>("Repeat Last: Debug")
-                .SetToolTip("Повторить последнюю команду из Add-in Explorer под отладчиком: подключить открытую Visual Studio.")
+                .SetToolTip("Повторить последнюю команду под отладчиком Visual Studio.")
                 .SetLongDescription(
-                    "Точки останова, поставленные в проекте в Visual Studio, сработают. Visual Studio должна быть открыта " +
-                    "с решением надстройки. Скрипты отлаживаются в Script Editor, кнопкой с жуком."
+                    "Повторяет последнюю команду из Add-in Explorer, подключив открытую Visual Studio: точки останова, " +
+                    "поставленные в проекте, сработают. Visual Studio должна быть открыта с решением надстройки. " +
+                    "Скрипты отлаживаются в Script Editor, кнопкой с жуком."
                 );
 
             pullBtn.AddSeparator();
 
             pullBtn.CreatePushButton<ShowConsolePaneCmd>("Console")
-                .SetToolTip("Показать панель с консолью плагина, а если она открыта — скрыть.");
+                .SetToolTip("Показать или скрыть консоль.")
+                .SetLongDescription(
+                    "Сюда попадает вывод скриптов и команд из DLL: Console.WriteLine, Debug, Trace и исключения. " +
+                    "Галочки в шапке задают, что делать с консолью и видами перед каждым запуском."
+                );
         }
 
         // The folders Revit loads .addin files from, for the Startup and Dependencies tabs of Add-in Explorer.

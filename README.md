@@ -23,7 +23,7 @@ The Add-Ins tab gets a DevKit panel with a pulldown button:
 
 ![Script Editor](assets/script-editor.png)
 
-Write code, press F5, and it runs in the current document. A few lines are enough, as in the screenshot: the add-in wraps them in a class and adds the main `using` directives for System, LINQ and the Revit API. If the file declares a class, it is compiled as it is, so you can try a regular `IExternalCommand` or a class with a `Main(Document doc, UIApplication uiapp)` method.
+Write code, press F5, and it runs in the current document. A few lines are enough, as in the screenshot: the add-in wraps them in a class and adds the main `using` directives for System, LINQ, the Revit API and [BIMPlugins.ExtStorage](https://github.com/Samveyil/BIMPlugins.ExtStorage) (extensions such as `ToElement` and `ToPoint(LocationType.StartPoint)`). If the file declares a class, it is compiled as it is, so you can try a regular `IExternalCommand` or a class with a `Main(Document doc, UIApplication uiapp)` method.
 
 An assembly that Revit does not load can be referenced with `#r`:
 
@@ -39,7 +39,7 @@ Scripts are saved to `%AppData%\RevitDevKit\Scripts` unless you pick another fol
 
 The bug button next to **Запустить** (Run) runs the script under a debugger. An open Visual Studio is attached to Revit by itself, as Debug › Attach to Process does; with several open, the one whose solution folder holds the script or the DLL. The run stops on the first line of the script, or at the start of `Execute`, `Main` or `Run` of a class. With no Visual Studio open, nothing runs and DevKit asks to open it first. Another debugger, Rider or VS Code, is attached to Revit by hand (Attach to Process), and then the button runs under it. From there F10 and F11 step through the script and breakpoints can be set in it. The debugger shows the script's own file when the tab is saved as it is, otherwise a copy of the text in `%TEMP%\RevitDevKit\Debug`.
 
-The editor suggests as you type: after a dot it lists the members of the type, after `(` it shows the method's overloads with parameter descriptions from the Revit API documentation. After `<` of a generic method the list keeps only the types that fit: `All<` offers element classes, and `walls.OfType<` puts the subclasses of the collection's element first. Brackets `()`, `[]`, `{}`, `<>` of generics and quotes close by themselves, and Enter between `{}` opens a block.
+The editor suggests as you type: after a dot it lists the members of the type, after `(` it shows the method's overloads with parameter descriptions from the Revit API documentation. After `,` only the overloads show, and Up/Down switch between them; the list opens after the space that follows, as code style has it, with what fits the argument on top: `Show(wall, ` puts the colours `Orange`, `Green` and so on first. After `(` the list opens at once: `new FilteredElementCollector(` puts `Doc` first. After `<` of a generic method the list keeps only the types that fit: `All<` offers element classes, and `walls.OfType<` puts the subclasses of the collection's element first. Brackets `()`, `[]`, `{}`, `<>` of generics and quotes close by themselves, and Enter between `{}` opens a block.
 
 Alt with a mouse selection, or Shift+Alt with the arrow keys, puts a caret on several lines at once, as in Visual Studio. Typed text goes into every line, Tab and Shift+Tab shift them together, and the arrow keys move all the carets. In this mode no suggestions open and no brackets close.
 
@@ -83,7 +83,7 @@ Tx("Mark walls", () =>
 });
 ```
 
-`Show` draws a point, a curve or an edge, a face, a solid, a mesh, a bounding box, an element, its location or a list of these over the model, through Revit's temporary graphics: nothing goes into the model and there is nothing to undo. Faces are see-through with their edges outlined, a point is a small cross, and every call gets a colour of its own unless one is given (`Orange`, `Green`, `Blue`, `Red`, `Purple`, `Teal`). The console says what each call drew. What is shown stays until the next run, `ClearShown()` or the toolbar button next to the bug. The **Примеры** menu has an example.
+`Show` draws a point, a curve or an edge, a face, a solid, a mesh, a bounding box, an element, its location or a list of these over the model, through Revit's temporary graphics: nothing goes into the model and there is nothing to undo. Faces are see-through with their edges outlined, a point is a small cross, and every call gets a colour of its own unless one is given (`Orange`, `Green`, `Blue`, `Red`, `Purple`, `Teal`). The console says what each call drew. What is shown stays until the next run, `ClearShown()` or the button in the console header; with **Чистить виды** (clear views) off it stays across runs to compare with, and the next run draws in the next colours. The **Примеры** menu has an example.
 
 In the output of `Compare`, `-нет-` (none) means the element has no such parameter, `-` means the parameter has no value, and `-пусто-` (empty) means an empty string.
 
@@ -96,6 +96,17 @@ In the output of `Compare`, `-нет-` (none) means the element has no such para
 Add a built DLL, and its `IExternalCommand` classes appear in the list, grouped by namespace. A double click or F5 runs a command. The DLL file is not locked, so the project can be rebuilt without closing Revit. The command is taken from the DLL on disk every time, so after a build just run it again. The list needs refreshing only when new commands appear: Ctrl+R, or a right click on the DLL, which also removes it from the list. The bug button or Ctrl+F5 runs the command under a debugger: the Visual Studio with the add-in's solution open is attached, and breakpoints set in the project are hit.
 
 The window closes when a command runs. To run the same command again after changes, there is no need to open Add-in Explorer: build the project and press Repeat Last on the ribbon, and the command runs from the fresh DLL. Repeat Last can be given a keyboard shortcut in Revit. **Repeat Last: Debug** next to it repeats the command under the open Visual Studio, as the bug button does, so breakpoints set in the project are hit; it has its own shortcut. A script is debugged in Script Editor instead.
+
+An add-in draws geometry over the model as `Show` does in scripts, with `Debug.WriteLine`, without a reference to DevKit:
+
+```csharp
+Debug.WriteLine(wall);                    // the next colour of the palette
+Debug.WriteLine(wall.ToSolid(), "Red");   // in red
+Debug.WriteLine(axis, "Blue: axis");      // in blue, labelled "axis" in the console
+Debug.WriteLine(openings);                // a list of elements, curves or points
+```
+
+DevKit's console takes what `Debug` and `Trace` write. When it is geometry (a point, a curve or an edge, a face, a solid, a mesh, a bounding box, an element, its location or a list of these), it is drawn, and the console says what was drawn; anything else is written as text, as before. The category gives the colour, the label or both: `"Red"`, `"Red: label"`, `"#FF8000"`, `"label"`. An `ElementId` is written as a number, as usual. Without DevKit the call only writes the object's name to Visual Studio's Output window, and a Release build has no `Debug` calls at all; `Trace.WriteLine` draws in Release too. Geometry is drawn only from the Revit API thread. What is drawn is cleared as what scripts show: before each run from DevKit while **Чистить виды** is on, and by the button in the console header.
 
 ### Applications
 
@@ -140,7 +151,7 @@ The copy loaded in this session is marked. A right click on a DLL or an add-in s
 
 ![Console](assets/console.png)
 
-Everything that scripts and DLL commands write goes here: `Console.WriteLine`, `Debug.WriteLine`, `Trace` and exceptions with their call stacks. The console opens as a separate Revit pane and is also shown at the bottom of the script editor. The Console button on the ribbon shows the pane, or hides it when it is open. The output can be cleared (Ctrl+L) and copied. Two checkboxes in its header set how runs from Script Editor and Add-in Explorer alike treat it: **Чистить консоль** (clear console) clears it before each run, and **Тихий режим** (quiet mode) keeps Revit's warning dialogs away, writing the warnings here only. The others are **Автопрокрутка** (auto scroll), **Время** (timestamps) and **Стек вызовов** (call stacks), the last one showing call stacks and other debug lines. All of them are one setting for the console in the editor and the console pane: switched in one, they switch in the other.
+Everything that scripts and DLL commands write goes here: `Console.WriteLine`, `Debug.WriteLine`, `Trace` and exceptions with their call stacks. The console opens as a separate Revit pane and is also shown at the bottom of the script editor. The Console button on the ribbon shows the pane, or hides it when it is open. The output can be cleared (Ctrl+L) and copied. Three checkboxes in its header set what runs from Script Editor and Add-in Explorer alike do: **Чистить консоль** (clear console) clears it before each run, **Чистить виды** (clear views) clears what `Show` and `Debug.WriteLine(geometry)` drew, and **Тихий режим** (quiet mode) keeps Revit's warning dialogs away, writing the warnings here only. How the console shows its output is set in the **Вид** (view) menu next to them: **Автопрокрутка** (auto scroll), **Время** (timestamps) and **Стек вызовов** (call stacks), the last one showing call stacks and other debug lines. All of them are one setting for the console in the editor and the console pane: switched in one, they switch in the other.
 
 ## License
 

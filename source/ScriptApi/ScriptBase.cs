@@ -1,6 +1,7 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BIMPlugins.ExtStorage;
+using BIMPlugins.ExtStorage.Comparers;
 using BIMPlugins.ExtStorage.Extensions;
 using RevitDevKit.Core.Output;
 using RevitDevKit.Core.Running;
@@ -11,30 +12,73 @@ using System.Linq;
 
 namespace RevitDevKit.ScriptApi
 {
+    /// <summary>
+    /// The base class of every script. The script's code runs inside a subclass of it, so its members are
+    /// available without a prefix: Doc, Print(...), All&lt;Wall&gt;() and so on.
+    /// </summary>
     public abstract class ScriptBase
     {
+        /// <inheritdoc cref="RevitAPI.UIApplication"/>
         public UIApplication UIApp { get => RevitAPI.UIApplication; }
+
+        /// <inheritdoc cref="RevitAPI.Application"/>
         public Autodesk.Revit.ApplicationServices.Application App { get => RevitAPI.Application; }
+
+        /// <inheritdoc cref="RevitAPI.UIDocument"/>
         public UIDocument UIDoc { get => RevitAPI.UIDocument; }
+
+        /// <inheritdoc cref="RevitAPI.Document"/>
         public Document Doc { get => RevitAPI.Document; }
+
+        /// <inheritdoc cref="RevitAPI.ActiveView"/>
         public View ActiveView { get => RevitAPI.ActiveView; }
+
+        /// <summary>The data of the external command the script runs in, as passed to IExternalCommand.Execute.</summary>
+        /// <value>
+        /// Available when the run goes through a Revit command, as DLL commands and Repeat Last do;
+        /// <see langword="null"/> otherwise.
+        /// </value>
         public ExternalCommandData CommandData { get => RevitTaskRunner.CurrentCommandData; }
 
+        /// <summary>Writes a value to the console.</summary>
+        /// <param name="value">The value to write. A collection is written as [a, b, c] (the first 200 items).</param>
         public void Print(object value) => ConsoleOutput.WriteObject(value);
+
+        /// <summary>Writes a formatted line to the console, as string.Format does.</summary>
+        /// <param name="format">A composite format string, such as "Walls: {0}".</param>
+        /// <param name="args">The objects to format.</param>
         public void Print(string format, params object[] args)
         {
             ConsoleOutput.WriteLine(args == null || args.Length == 0 ? format : string.Format(format, args));
         }
 
+        /// <summary>Writes a success message to the console, in green.</summary>
+        /// <param name="text">The message.</param>
         public void Ok(string text) => ConsoleOutput.Success(text);
+
+        /// <summary>Writes a warning to the console, in yellow.</summary>
+        /// <param name="text">The warning.</param>
         public void Warn(string text) => ConsoleOutput.Warning(text);
+
+        /// <summary>Writes an error message to the console, in red.</summary>
+        /// <param name="text">The error message.</param>
+        /// <remarks>The script is not stopped.</remarks>
         public void Fail(string text) => ConsoleOutput.Error(text);
+
+        /// <summary>Clears the console.</summary>
         public void Clear() => ConsoleOutput.Clear();
 
-        // Every column is as wide as its longest value, up to MaxTableWidth, so the separators line up
-        // in the console's monospaced font. Line breaks inside a value would split the row, so they become spaces.
+        /// <summary>Writes a table to the console: a row for each item, a column for each selector.</summary>
+        /// <typeparam name="T">The type of the items.</typeparam>
+        /// <param name="items">The items, one per row.</param>
+        /// <param name="columns">
+        /// The values to show for each item, such as w =&gt; w.Id, w =&gt; w.Name.
+        /// Without them each item is written as by Print.
+        /// </param>
         public void Table<T>(IEnumerable<T> items, params Func<T, object>[] columns)
         {
+            // Every column is as wide as its longest value, up to MaxTableWidth, so the separators line up
+            // in the console's monospaced font. Line breaks inside a value would split the row, so they become spaces.
             if (items == null)
             {
                 Print("null");
@@ -69,6 +113,15 @@ namespace RevitDevKit.ScriptApi
             }
         }
 
+        /// <summary>Runs an action that modifies the model in a transaction of the active document.</summary>
+        /// <param name="name">The name of the transaction, as it appears in the Undo list.</param>
+        /// <param name="action">The action that modifies the model.</param>
+        /// <remarks>
+        /// The transaction is committed when the action completes and rolled back if it throws.
+        /// Not needed when Auto transaction is on.
+        /// </remarks>
+        /// <exception cref="ArgumentNullException">action is <see langword="null"/>.</exception>
+        /// <exception cref="InvalidOperationException">There is no active document.</exception>
         public void Tx(string name, Action action)
         {
             if (action == null)
@@ -95,6 +148,12 @@ namespace RevitDevKit.ScriptApi
             }
         }
 
+        /// <summary>Runs a function that modifies the model in a transaction of the active document and returns its result.</summary>
+        /// <typeparam name="TResult">The type of the result.</typeparam>
+        /// <param name="name">The name of the transaction, as it appears in the Undo list.</param>
+        /// <param name="func">The function that modifies the model, such as () =&gt; Wall.Create(...).</param>
+        /// <returns>The result of the function.</returns>
+        /// <remarks>The transaction is committed when the function completes and rolled back if it throws.</remarks>
         public TResult Tx<TResult>(string name, Func<TResult> func)
         {
             var result = default(TResult);
@@ -102,30 +161,70 @@ namespace RevitDevKit.ScriptApi
             return result;
         }
 
+        /// <summary>Returns the element instances of a category in the active document.</summary>
+        /// <param name="category">The category, such as BuiltInCategory.OST_Walls.</param>
+        /// <returns>The instances; element types are not included.</returns>
         public IList<Element> Instances(BuiltInCategory category) => Doc.ToElements(category);
 
+        /// <summary>Returns the element instances of a category visible in a view.</summary>
+        /// <param name="viewId">The id of the view, such as ActiveView.Id.</param>
+        /// <param name="category">The category, such as BuiltInCategory.OST_Walls.</param>
+        /// <returns>The instances; element types are not included.</returns>
         public IList<Element> Instances(ElementId viewId, BuiltInCategory category) => Doc.ToElements(viewId, category);
 
+        /// <summary>Returns the element types of a category in the active document.</summary>
+        /// <param name="category">The category, such as BuiltInCategory.OST_Walls.</param>
+        /// <returns>The element types, such as the wall types for OST_Walls.</returns>
         public IList<Element> Types(BuiltInCategory category) => Doc.ToElements(category, true);
 
+        /// <summary>Returns the element types of a category, collected in a view.</summary>
+        /// <param name="viewId">The id of the view, such as ActiveView.Id.</param>
+        /// <param name="category">The category, such as BuiltInCategory.OST_Walls.</param>
+        /// <returns>The element types.</returns>
         public IList<Element> Types(ElementId viewId, BuiltInCategory category) => Doc.ToElements(viewId, category, true);
 
+        /// <summary>Returns all elements of a class in the active document.</summary>
+        /// <typeparam name="T">The element class, such as Wall or FamilyInstance.</typeparam>
+        /// <returns>The elements of the class.</returns>
         public IList<T> All<T>() where T : Element => Doc.ToElements<T>();
 
+        /// <summary>Returns the elements of a class visible in a view.</summary>
+        /// <typeparam name="T">The element class, such as Wall or FamilyInstance.</typeparam>
+        /// <param name="viewId">The id of the view, such as ActiveView.Id.</param>
+        /// <returns>The elements of the class.</returns>
         public IList<T> All<T>(ElementId viewId) where T : Element => Doc.ToElements<T>(viewId);
 
+        /// <summary>Returns the elements of a class in a category.</summary>
+        /// <typeparam name="T">The element class, such as FamilyInstance.</typeparam>
+        /// <param name="category">The category, such as BuiltInCategory.OST_Doors.</param>
+        /// <returns>The elements of the class in the category.</returns>
         public IList<T> All<T>(BuiltInCategory category) where T : Element => Doc.ToElements<T>(category);
 
+        /// <summary>Returns the elements of a class in a category visible in a view.</summary>
+        /// <typeparam name="T">The element class, such as FamilyInstance.</typeparam>
+        /// <param name="viewId">The id of the view, such as ActiveView.Id.</param>
+        /// <param name="category">The category, such as BuiltInCategory.OST_Doors.</param>
+        /// <returns>The elements of the class in the category.</returns>
         public IList<T> All<T>(ElementId viewId, BuiltInCategory category) where T : Element => Doc.ToElements<T>(viewId, category);
 
+        /// <summary>The elements currently selected in Revit.</summary>
         public ICollection<Element> Selection { get => UIDoc.ToSelectedElements(); }
 
+        /// <summary>The first selected element.</summary>
+        /// <value><see langword="null"/> if nothing is selected.</value>
         public Element S0 { get => S(0); }
 
+        /// <summary>The second selected element.</summary>
+        /// <value><see langword="null"/> if fewer than two elements are selected.</value>
         public Element S1 { get => S(1); }
 
+        /// <summary>The third selected element.</summary>
+        /// <value><see langword="null"/> if fewer than three elements are selected.</value>
         public Element S2 { get => S(2); }
 
+        /// <summary>Returns a selected element by its index in the selection.</summary>
+        /// <param name="index">The zero-based index in the selection.</param>
+        /// <returns>The element, or <see langword="null"/> if fewer elements are selected.</returns>
         public Element S(int index)
         {
             if (index < 0) return null;
@@ -133,36 +232,72 @@ namespace RevitDevKit.ScriptApi
             return Selection.Skip(index).FirstOrDefault();
         }
 
+        /// <summary>Returns a selected element of a class by its index in the selection.</summary>
+        /// <typeparam name="T">The element class, such as Wall.</typeparam>
+        /// <param name="index">The zero-based index in the selection.</param>
+        /// <returns>The element, or <see langword="null"/> if fewer elements are selected or the element is not a T.</returns>
         public T S<T>(int index) where T : Element
         {
             return S(index) as T;
         }
 
-        // Draws geometry over the model on the views, without creating anything: a point, a curve, an edge, a face,
-        // a solid, a mesh, a bounding box or an outline, an element, its location, or a list of these. Every call has
-        // a colour of its own unless one is given. What is shown stays until the next run or ClearShown().
+        /// <summary>Draws geometry over the model in the views, without creating anything in the document.</summary>
+        /// <param name="geometry">
+        /// A point, curve, edge, face, solid, mesh, BoundingBoxXYZ or Outline, an element or its id, a Reference,
+        /// a LocationPoint or LocationCurve, or a collection of these.
+        /// </param>
+        /// <remarks>
+        /// Each call gets a color of its own. What is drawn stays until ClearShown(), and until the next run when the console option to clear views is on.
+        /// </remarks>
         public void Show(object geometry) => Show(geometry, null, null);
 
+        /// <summary>Draws geometry over the model in the views and labels it in the console.</summary>
+        /// <param name="geometry">
+        /// A point, curve, edge, face, solid, mesh, BoundingBoxXYZ or Outline, an element or its id, a Reference,
+        /// a LocationPoint or LocationCurve, or a collection of these.
+        /// </param>
+        /// <param name="label">The label written to the console next to the color.</param>
+        /// <remarks>
+        /// Each call gets a color of its own. What is drawn stays until ClearShown(), and until the next run when the console option to clear views is on.
+        /// </remarks>
         public void Show(object geometry, string label) => Show(geometry, null, label);
 
-        public void Show(object geometry, Color color, string label = null)
-        {
-            var shape = ShownGeometry.Add(Doc, geometry, color, label);
-            var line = "Показано: " + shape.What + ", " + shape.ColorName + (label.IsNullOrEmpty() ? "" : " — " + label);
-            ConsoleOutput.WriteLine(line, shape.Lines.Count + shape.Triangles.Count == 0 ? LogLevel.Warning : LogLevel.Info);
-        }
+        /// <summary>Draws geometry over the model in the views in the given color.</summary>
+        /// <param name="geometry">
+        /// A point, curve, edge, face, solid, mesh, BoundingBoxXYZ or Outline, an element or its id, a Reference,
+        /// a LocationPoint or LocationCurve, or a collection of these.
+        /// </param>
+        /// <param name="color">The color: Orange, Green, Blue, Red, Purple, Teal, or new Color(r, g, b).</param>
+        /// <param name="label">The label written to the console next to the color.</param>
+        /// <remarks>What is drawn stays until ClearShown(), and until the next run when the console option to clear views is on.</remarks>
+        public void Show(object geometry, Color color, string label = null) => ShownGeometry.Show(Doc, geometry, color, label);
 
-        // Clears what Show(...) drew; it is also cleared before each run.
+        /// <summary>Clears all geometry drawn by Show.</summary>
+        /// <remarks>It is also cleared before each run when the console option to clear views is on.</remarks>
         public void ClearShown() => ShownGeometry.Clear();
 
-        // Colours for Show(..., colour).
+        /// <summary>Orange, for Show(geometry, Orange).</summary>
         public Color Orange => ShownGeometry.Palette[0].Item2;
+
+        /// <summary>Green, for Show(geometry, Green).</summary>
         public Color Green => ShownGeometry.Palette[1].Item2;
+
+        /// <summary>Blue, for Show(geometry, Blue).</summary>
         public Color Blue => ShownGeometry.Palette[2].Item2;
+
+        /// <summary>Red, for Show(geometry, Red).</summary>
         public Color Red => ShownGeometry.Palette[3].Item2;
+
+        /// <summary>Purple, for Show(geometry, Purple).</summary>
         public Color Purple => ShownGeometry.Palette[4].Item2;
+
+        /// <summary>Teal, for Show(geometry, Teal).</summary>
         public Color Teal => ShownGeometry.Palette[5].Item2;
 
+        /// <summary>Writes the class, the category and all parameters of an element with their values to the console.</summary>
+        /// <param name="element">The element, such as S0.</param>
+        /// <param name="useType">True to include the parameters of the element's type.</param>
+        /// <remarks>The parameters are sorted by name.</remarks>
         public void Dump(Element element, bool useType=false)
         {
             if (element == null)
@@ -175,20 +310,33 @@ namespace RevitDevKit.ScriptApi
             ConsoleOutput.WriteLine("Класс:     " + element.GetType().FullName);
             ConsoleOutput.WriteLine("Категория: " + (element.Category != null ? element.Category.Name : "—"));
 
-            foreach (var p in ReadParameters(element, useType).OrderBy(p => p.Definition.Name))
+            foreach (var p in ReadParameters(element, useType).OrderBy(p => p.Definition.Name, NaturalComparer.CurrentCultureIgnoreCase))
                 ConsoleOutput.WriteLine("  " + p.Definition.Name.PadRight(NameWidth) + " = " + ReadValue(p));
         }
 
-        // Prints only the parameters whose values differ; "—" means the element has no such parameter.
-        // Only parameters shown in the Properties palette (GetOrderedParameters).
+        /// <summary>Writes a table of the parameters whose values differ between two elements to the console.</summary>
+        /// <param name="first">The first element, such as S0.</param>
+        /// <param name="second">The second element, such as S1.</param>
+        /// <param name="useType">True to compare the parameters of the elements' types as well.</param>
+        /// <remarks>
+        /// Only the parameters shown in the Properties palette are compared.
+        /// "-нет-" marks a parameter the element does not have.
+        /// </remarks>
         public void Compare(Element first, Element second, bool useType = false) =>
             Compare(new[] { first, second }, useType);
 
+        /// <summary>Writes a table of the parameters whose values differ between elements to the console.</summary>
+        /// <param name="elements">The elements to compare, such as S0, S1, S2.</param>
+        /// <remarks>Up to five elements are compared. Only the parameters shown in the Properties palette are compared.</remarks>
         public void Compare(params Element[] elements) => Compare(elements, false);
 
-        // Up to MaxCompared elements: wider tables no longer fit a docked console pane.
+        /// <summary>Writes a table of the parameters whose values differ between elements to the console.</summary>
+        /// <param name="elements">The elements to compare, such as Selection.</param>
+        /// <param name="useType">True to compare the parameters of the elements' types as well.</param>
+        /// <remarks>Up to five elements are compared. Only the parameters shown in the Properties palette are compared.</remarks>
         public void Compare(IEnumerable<Element> elements, bool useType = false)
         {
+            // Up to MaxCompared elements: wider tables no longer fit a docked console pane.
             var items = (elements ?? Enumerable.Empty<Element>()).ToList();
 
             if (items.Count < 2 || items.Any(e => e == null))
@@ -214,7 +362,7 @@ namespace RevitDevKit.ScriptApi
                     Name = ps.First(p => p != null).Definition.Name,
                     Values = ps.Select(p => p == null ? null : ReadValue(p)).ToList()
                 })
-                .OrderBy(r => r.Name)
+                .OrderBy(r => r.Name, NaturalComparer.CurrentCultureIgnoreCase)
                 .ToList();
 
             var titles = items.Select(e => e.Id + " " + (e.Name ?? "<без имени>")).ToList();

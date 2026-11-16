@@ -9,16 +9,18 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 
 namespace RevitDevKit.UI.ScriptEditor
 {
     // IntelliSense of the script editor. The completion list opens after '.', on the first letter of a name, or on Ctrl+Space.
-    // After '(' and ',' (or on Ctrl+Shift+Space) the overloads of the call show above the line, and when variables
+    // After '(' and ',' and a space after them (or on Ctrl+Shift+Space) the overloads of the call show above the line, and when variables
     // of the argument's type are in scope, the completion list opens below with them on top.
     // After '<' of a generic (All<, walls.OfType<) the '<' gets its '>' and the list holds the types that fit.
     // Only members available in AvalonEdit 4.3 are used, as Revit may have that one loaded (see EditorFactory).
@@ -76,7 +78,14 @@ namespace RevitDevKit.UI.ScriptEditor
                 return;
 
             var c = e.Text[0];
-            if (c == '(' || c == ',')
+            // ',' shows the overloads only, the list waits for the space after it: "Show(wall, ".
+            if (c == ',')
+            {
+                RequestSignatures(withList: false);
+                return;
+            }
+
+            if (c == '(' || c == ' ' && AfterArgumentStart())
             {
                 RequestSignatures();
                 return;
@@ -113,6 +122,33 @@ namespace RevitDevKit.UI.ScriptEditor
                 _window.CompletionList.RequestInsertion(e);
             else
                 _window.Close();
+        }
+
+        // A suggestion that is no name in scope: a qualified enum (ElementExtensions.LocationType) or an enum value
+        // (LocationType.StartPoint). The description of a type comes from its own entry when there is one.
+        private static CompletionEntry Qualified(string name, IList<CompletionEntry> entries)
+        {
+            var last = name.Substring(name.LastIndexOf('.') + 1);
+            var type = entries.FirstOrDefault(e => e.Name == last && e.Kind == CompletionKind.Enum);
+            if (type != null)
+                return new CompletionEntry { Name = name, Kind = CompletionKind.Enum, Description = type.Description };
+
+            return new CompletionEntry
+            {
+                Name = name,
+                Kind = name.Contains('.') ? CompletionKind.EnumMember : CompletionKind.Local
+            };
+        }
+
+        // The caret is after ',' or '(' and spaces only.
+        private bool AfterArgumentStart()
+        {
+            var document = _editor.Document;
+            var offset = _editor.TextArea.Caret.Offset - 1;
+            while (offset >= 0 && document.GetCharAt(offset) == ' ')
+                offset--;
+
+            return offset >= 0 && (document.GetCharAt(offset) == ',' || document.GetCharAt(offset) == '(');
         }
 
         private bool SelectionMatchesTypedText()
@@ -202,7 +238,7 @@ namespace RevitDevKit.UI.ScriptEditor
         // Suggested names go first and are preferred when typed letters match several items equally.
         private void ShowWindow(IList<CompletionEntry> entries, int wordStart, string typed, IList<string> suggested = null)
         {
-            var window = new CompletionWindow(_editor.TextArea) { Width = 320 };
+            var window = new CompletionListWindow(_editor.TextArea, OwnWindowInFront) { Width = 320 };
             window.StartOffset = wordStart;
 
             var data = window.CompletionList.CompletionData;
@@ -210,8 +246,7 @@ namespace RevitDevKit.UI.ScriptEditor
             {
                 foreach (var name in suggested)
                 {
-                    var entry = entries.FirstOrDefault(e => e.Name == name)
-                                ?? new CompletionEntry { Name = name, Kind = CompletionKind.Local };
+                    var entry = entries.FirstOrDefault(e => e.Name == name) ?? Qualified(name, entries);
                     data.Add(new CompletionItem(entry, 1));
                 }
             }
@@ -237,7 +272,7 @@ namespace RevitDevKit.UI.ScriptEditor
                 window.CompletionList.SelectedItem = data[0];
         }
 
-        private async void RequestSignatures()
+        private async void RequestSignatures(bool withList = true)
         {
             _pendingSignatures?.Cancel();
             var pending = _pendingSignatures = new CancellationTokenSource();
@@ -256,7 +291,7 @@ namespace RevitDevKit.UI.ScriptEditor
                 (signatures, list) = await Task.Run(() =>
                 {
                     var found = ScriptSignatureHelp.Get(code, lineNumber, column, pending.Token);
-                    var scope = found != null && found.Suggestions.Count > 0
+                    var scope = withList && found != null && found.Suggestions.Count > 0
                         ? ScriptCompletion.Get(code, lineNumber, column, true, pending.Token)
                         : null;
                     return (found, scope);
@@ -305,13 +340,23 @@ namespace RevitDevKit.UI.ScriptEditor
             var provider = new SignatureProvider(signatures);
             if (_insight != null)
             {
+                // Still the same call: the overload picked with the arrows stays while it takes this argument.
+                if (_insight.StartOffset == start && _insight.Provider is SignatureProvider old && old.PickedByUser &&
+                    old.Count == provider.Count && provider.Takes(old.SelectedIndex, signatures.ArgumentIndex))
+                    provider.SelectedIndex = old.SelectedIndex;
+
                 _insight.Provider = provider;
                 _insight.StartOffset = start;
                 _insight.EndOffset = end;
             }
             else
             {
-                var insight = new OverloadInsightWindow(_editor.TextArea) { Provider = provider, StartOffset = start, EndOffset = end };
+                var insight = new OverloadsWindow(_editor.TextArea, OwnWindowInFront)
+                {
+                    Provider = provider,
+                    StartOffset = start,
+                    EndOffset = end
+                };
                 insight.Closed += (s, e) =>
                 {
                     if (_insight == insight)
@@ -320,6 +365,7 @@ namespace RevitDevKit.UI.ScriptEditor
 
                 _insight = insight;
                 insight.Show();
+                ReturnFocusAfterClick(insight);
                 KeepAboveLine(insight);
             }
 
@@ -330,6 +376,18 @@ namespace RevitDevKit.UI.ScriptEditor
 
         // The overloads sit above the caret line, as in Visual Studio, so they do not cover the completion list below it.
         // AvalonEdit places them below and moves them back on scrolling, hence the handlers.
+        // A click on the overload arrows activates the overloads window. The completion list stays meanwhile
+        // (CompletionList.CloseOnFocusLost), and once the click is done activation and the keyboard go back to the editor.
+        private void ReturnFocusAfterClick(Window window)
+        {
+            window.AddHandler(Mouse.MouseUpEvent, new MouseButtonEventHandler((s, e) =>
+                _editor.Dispatcher.BeginInvoke(new Action(() => EditorGuard.Run(() =>
+                {
+                    Window.GetWindow(_editor)?.Activate();
+                    _editor.TextArea.Focus();
+                })), System.Windows.Threading.DispatcherPriority.Input)), handledEventsToo: true);
+        }
+
         private void KeepAboveLine(Window window)
         {
             void Place()
@@ -363,7 +421,46 @@ namespace RevitDevKit.UI.ScriptEditor
             }
         }
 
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
+
+        // A click moves activation between the editor, the list and the overloads window, and for a moment none of them
+        // may be active. What tells whether the focus left for another window is the window in front: one of these three or not.
+        private bool OwnWindowInFront()
+        {
+            var front = GetForegroundWindow();
+            return new Window[] { Window.GetWindow(_editor), _window, _insight }
+                .Any(w => w != null && new WindowInteropHelper(w).Handle == front);
+        }
+
         private static bool IsIdentifierChar(char c) => char.IsLetterOrDigit(c) || c == '_';
+    }
+
+    // AvalonEdit closes the list and the overloads window once neither the window itself nor the editor is active.
+    // A click on the other one of the two activates it for a moment: on the arrows of the overloads window, or on an item
+    // of the list for a double click. Then they stay open while one of the three windows is still in front (keepOpen).
+    internal sealed class CompletionListWindow : CompletionWindow
+    {
+        private readonly Func<bool> _keepOpen;
+
+        public CompletionListWindow(TextArea textArea, Func<bool> keepOpen) : base(textArea)
+        {
+            _keepOpen = keepOpen;
+        }
+
+        protected override bool CloseOnFocusLost => base.CloseOnFocusLost && !_keepOpen();
+    }
+
+    internal sealed class OverloadsWindow : OverloadInsightWindow
+    {
+        private readonly Func<bool> _keepOpen;
+
+        public OverloadsWindow(TextArea textArea, Func<bool> keepOpen) : base(textArea)
+        {
+            _keepOpen = keepOpen;
+        }
+
+        protected override bool CloseOnFocusLost => base.CloseOnFocusLost && !_keepOpen();
     }
 
     internal sealed class CompletionItem : ICompletionData
@@ -377,7 +474,13 @@ namespace RevitDevKit.UI.ScriptEditor
         }
 
         public ImageSource Image => CompletionIcons.For(_entry.Kind);
-        public string Text => _entry.Name;
+
+        // What the typed letters are matched against. An enum value shown as LocationType.StartPoint is matched by
+        // StartPoint, so "Sta" finds it as Visual Studio does; the whole name is still what goes into the code.
+        public string Text => _entry.Kind == CompletionKind.EnumMember
+            ? _entry.Name.Substring(_entry.Name.LastIndexOf('.') + 1)
+            : _entry.Name;
+
         public object Content => _entry.Name;
         public object Description => _entry.Description;
         public double Priority { get; }
