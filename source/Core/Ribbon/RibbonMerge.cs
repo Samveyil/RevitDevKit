@@ -809,6 +809,76 @@ namespace RevitDevKit.Core.Ribbon
             return null;
         }
 
+        // While DevKit loads its styles, pack URIs without a version (pack://application:,,,/MaterialDesignThemes.Wpf;component/...)
+        // go to DevKit's own copies of these assemblies. WPF takes such URIs to the copy loaded last, and MaterialDesign's
+        // own dictionaries link each other that way: with another add-in's older MaterialDesign loaded after DevKit's,
+        // DevKit's windows would get its dictionaries and fail with "Cannot locate resource". Only the wrapper of the
+        // bare name is pointed, and only for the time of the load, so other add-ins resolve as before.
+        public static IDisposable Prefer(params Assembly[] assemblies)
+        {
+            var managers = ResourceManagersField?.GetValue(null) as IDictionary;
+            var restore = new Restore(managers);
+            if (managers == null || WrapperAssembly == null) return restore;
+
+            try
+            {
+                foreach (var assembly in assemblies.Where(a => a != null))
+                {
+                    var key = assembly.GetName().Name.ToLowerInvariant();
+                    if (managers.Contains(key))
+                    {
+                        restore.Previous[key] = (Assembly)WrapperAssembly.GetValue(managers[key]);
+                        WrapperAssembly.SetValue(managers[key], assembly);
+                    }
+                    else
+                    {
+                        restore.Previous[key] = null;
+                        managers[key] = Activator.CreateInstance(WrapperType, BindingFlags.NonPublic | BindingFlags.Instance, null, new object[] { assembly }, null);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ConsoleOutput.Debug("Ресурсы WPF не направлены на копии DevKit: " + ex.Message);
+            }
+
+            return restore;
+        }
+
+        // Points the wrappers back where they were, and removes one Prefer created: the next URI with that short name
+        // gets a wrapper made by WPF's own rule, as it would have without DevKit. Parts already loaded keep theirs.
+        private sealed class Restore : IDisposable
+        {
+            private readonly IDictionary _managers;
+
+            public Restore(IDictionary managers)
+            {
+                _managers = managers;
+            }
+
+            public Dictionary<string, Assembly> Previous { get; } = new Dictionary<string, Assembly>();
+
+            public void Dispose()
+            {
+                if (_managers == null) return;
+
+                try
+                {
+                    foreach (var pair in Previous.Where(p => _managers.Contains(p.Key)))
+                    {
+                        if (pair.Value != null)
+                            WrapperAssembly.SetValue(_managers[pair.Key], pair.Value);
+                        else
+                            _managers.Remove(pair.Key);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ConsoleOutput.Debug("Ресурсы WPF не возвращены: " + ex.Message);
+                }
+            }
+        }
+
         private sealed class Unpin : IDisposable
         {
             private readonly IDictionary _managers;
