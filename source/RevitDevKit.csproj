@@ -87,6 +87,12 @@
 		<PackageReference Include="Revit_All_Main_Versions_API_x64" Version="$(RevitVersion).*" IncludeAssets="build; compile" PrivateAssets="All" />
 	</ItemGroup>
 
+	<!-- ElementHost.EnableModelessKeyboardInterop: keys reach DevKit's modeless windows instead of Revit's shortcuts. -->
+	<ItemGroup>
+		<Reference Include="System.Windows.Forms" />
+		<Reference Include="WindowsFormsIntegration" />
+	</ItemGroup>
+
 	<ItemGroup>
 	  <Resource Include="Resources\DevKit_16.png" />
 	  <Resource Include="Resources\DevKit_32.png" />
