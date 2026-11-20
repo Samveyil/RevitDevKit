@@ -5,9 +5,7 @@
 
     <ResourceDictionary.MergedDictionaries>
         <materialDesign:CustomColorTheme BaseTheme="Light" PrimaryColor="#F88518" SecondaryColor="#FF0052A5" />
-        <!-- MaterialDesign3.Defaults.xaml of DevKit's own MaterialDesign version, not of whichever another add-in loaded first. -->
-        <shared:MaterialDesignDefaults />
-
+        <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <SolidColorBrush x:Key="AccentBrush" Color="#F88518" />
