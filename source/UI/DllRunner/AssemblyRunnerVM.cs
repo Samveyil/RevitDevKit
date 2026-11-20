@@ -294,12 +294,16 @@ namespace RevitDevKit.UI.DllRunner
                 HideWarnings = ConsoleOptions.HideWarnings,
                 Body = () =>
                 {
-                    // The window closes on run; showing the console pane needs an API context, i.e. here.
-                    ConsolePane.TryShow(RevitAPI.UIApplication);
-
                     // Repeat Last repeats this request, and the DLL may have been rebuilt since.
                     var current = Resolve(path, typeName) ?? throw new InvalidOperationException(missing);
                     return current.Invoke();
+                },
+                // The window closes on run, so the console pane opens instead when the run calls for it: an exception
+                // or Revit's warnings by default (ConsoleOptions.OpenPane). Showing the pane needs the API context Reported runs in.
+                Reported = report =>
+                {
+                    if (ConsoleOptions.ShouldOpenPane(report.Failed, report.HasProblems, report.HasOutput))
+                        ConsolePane.TryShow(RevitAPI.UIApplication);
                 },
                 Completed = error => _dispatcher.Invoke(() => IsRunning = false)
             };

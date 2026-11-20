@@ -256,7 +256,7 @@
 
             <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
 
-            <console:ConsoleView Grid.Row="2" Margin="5" DataContext="{Binding Output}" WrapWidth="-1" IsViewMenu="True"/>
+            <console:ConsoleView Grid.Row="2" Margin="5" DataContext="{Binding Output}" WrapWidth="-1" IsViewMenu="True" HasPaneOpening="False"/>
         </Grid>
     </DockPanel>
 </Window>

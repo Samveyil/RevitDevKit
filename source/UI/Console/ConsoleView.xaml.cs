@@ -53,6 +53,18 @@ namespace RevitDevKit.UI.Console
             set => SetValue(IsViewMenuProperty, value);
         }
 
+        // The Открывать menu: when a DLL run opens the console pane. It belongs to the pane; Script Editor's console
+        // shows its own runs anyway, so it leaves the menu out.
+        public static readonly DependencyProperty HasPaneOpeningProperty = DependencyProperty.Register(
+            nameof(HasPaneOpening), typeof(bool), typeof(ConsoleView), new PropertyMetadata(true, (d, e) =>
+                ((ConsoleView)d).PaneOpening.Visibility = (bool)e.NewValue ? Visibility.Visible : Visibility.Collapsed));
+
+        public bool HasPaneOpening
+        {
+            get => (bool)GetValue(HasPaneOpeningProperty);
+            set => SetValue(HasPaneOpeningProperty, value);
+        }
+
         // Characters a line of wrappable output may take before it wraps; -1: as many as the console shows now;
         // 0: never wrapped.
         public static readonly DependencyProperty WrapWidthProperty = DependencyProperty.Register(
