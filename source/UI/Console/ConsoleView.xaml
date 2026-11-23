@@ -12,9 +12,11 @@
         <ResourceDictionary Source="pack://application:,,,/RevitDevKit;component/UI/Shared/EditorScrollBars.xaml" />
     </UserControl.Resources>
 
-    <!-- Framed as the editor's tab above it: an orange frame, the toolbar on a gray strip like the tab header, then the output. -->
-    <Border BorderThickness="1" BorderBrush="{DynamicResource BIMPlugins.PrimaryBrush}" CornerRadius="4" SnapsToDevicePixels="True">
-        <DockPanel>
+    <!-- Framed as the editor's tab above it: an orange frame, the toolbar on a gray strip like the tab header, then the output.
+         As in the editor, the frame is drawn over the content, 1 inside it: the square corners of the scroll bars stay
+         under its rounded ones instead of sticking out over them. -->
+    <Grid SnapsToDevicePixels="True" UseLayoutRounding="True">
+        <DockPanel Margin="1">
             <Border DockPanel.Dock="Top" Background="{DynamicResource SelectedTabBrush}" CornerRadius="3 3 0 0" Padding="6 3">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Консоль" VerticalAlignment="Center"/>
@@ -103,5 +105,7 @@
                          Style="{x:Null}" BorderThickness="0" Background="Transparent" Padding="6 4"
                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
         </DockPanel>
-    </Border>
+
+        <Border BorderThickness="1" BorderBrush="{DynamicResource BIMPlugins.PrimaryBrush}" CornerRadius="4" IsHitTestVisible="False"/>
+    </Grid>
 </UserControl>
