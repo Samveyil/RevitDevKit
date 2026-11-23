@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PanelToolTip" xml:space="preserve">
+    <value>Scripts, commands from DLLs, the console.</value>
+  </data>
+  <data name="PanelDescription" xml:space="preserve">
+    <value>Tools for add-in developers. Script Editor runs C# scripts right in Revit, Add-in Explorer runs commands from built DLLs without restarting Revit and shows the ribbon, the start-up add-ins and DLL version conflicts. Repeat Last repeats the last run, Console shows the output.</value>
+  </data>
+  <data name="ScriptEditorToolTip" xml:space="preserve">
+    <value>C# script editor.</value>
+  </data>
+  <data name="ScriptEditorDescription" xml:space="preserve">
+    <value>Write code right in Revit and run it without rebuilding an add-in. All the output, Console.WriteLine, Debug and exceptions, goes to the add-in's console.</value>
+  </data>
+  <data name="ExplorerToolTip" xml:space="preserve">
+    <value>Add-ins and their DLLs: commands, ribbon, start-up, conflicts.</value>
+  </data>
+  <data name="ExplorerDescription" xml:space="preserve">
+    <value>Add a built DLL and run an IExternalCommand from it: the command comes from the DLL on disk as it is now. It also shows how an add-in's ribbon will change, which add-ins Revit loads at start-up and which DLLs they have in different versions.</value>
+  </data>
+  <data name="RepeatToolTip" xml:space="preserve">
+    <value>Repeat the last script or command from a DLL.</value>
+  </data>
+  <data name="RepeatDescription" xml:space="preserve">
+    <value>A command from a DLL is taken from the file on disk, so after a rebuild the new version runs. A script is repeated as it was run; edits in the editor apply after F5.</value>
+  </data>
+  <data name="DebugToolTip" xml:space="preserve">
+    <value>Repeat the last command under the Visual Studio debugger.</value>
+  </data>
+  <data name="DebugDescription" xml:space="preserve">
+    <value>Repeats the last command from Add-in Explorer with the open Visual Studio attached: breakpoints set in the project are hit. Visual Studio must be open with the add-in's solution. Scripts are debugged in Script Editor, with the bug button.</value>
+  </data>
+  <data name="ConsoleToolTip" xml:space="preserve">
+    <value>Show or hide the console.</value>
+  </data>
+  <data name="ConsoleDescription" xml:space="preserve">
+    <value>The output of scripts and commands from DLLs goes here: Console.WriteLine, Debug, Trace and exceptions. The checkboxes in its header set what happens to the console and the views before each run.</value>
+  </data>
+  <data name="Loaded" xml:space="preserve">
+    <value>DevKit loaded. Revit {0}.</value>
+    <comment>{0}: Revit's version number</comment>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Could not load the add-in:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="AddinFoldersFailed" xml:space="preserve">
+    <value>Revit's add-in folders were not found: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="ConsolePaneRegisterFailed" xml:space="preserve">
+    <value>Could not register the console pane:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="OlderAssembly" xml:space="preserve">
+    <value>The add-in folder has {0} {1}, but {2} is needed. Deploy the same set of DLLs you built against.</value>
+    <comment>{0}: assembly name, {1}: version found, {2}: version required</comment>
+  </data>
+  <data name="NothingToDebug" xml:space="preserve">
+    <value>Nothing to repeat. Run a command in Add-in Explorer at least once.</value>
+  </data>
+  <data name="LastWasScript" xml:space="preserve">
+    <value>The last run was a script. Scripts are debugged in Script Editor, with the bug button.</value>
+  </data>
+  <data name="NothingToRepeat" xml:space="preserve">
+    <value>Nothing to repeat. Run a script in Script Editor or a command in Add-in Explorer at least once.</value>
+  </data>
+  <data name="ExplorerOpenFailed" xml:space="preserve">
+    <value>Could not open Add-in Explorer:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="ScriptEditorOpenFailed" xml:space="preserve">
+    <value>Could not open Script Editor:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="ConsolePaneUnavailable" xml:space="preserve">
+    <value>The console pane is not available: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+</root>

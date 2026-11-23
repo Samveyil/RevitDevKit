@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Xml.Linq;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Addins
 {
@@ -185,7 +186,7 @@ namespace RevitDevKit.Core.Addins
             var folder = Path.GetDirectoryName(manifest.FilePath) ?? string.Empty;
             var target = Path.Combine(folder, manifest.Name + (enabled ? Extension : DisabledExtension));
             if (File.Exists(target))
-                throw new IOException("Рядом уже есть " + Path.GetFileName(target) + ": сначала уберите один из двух файлов.");
+                throw new IOException(string.Format(ExplorerStrings.TwinExists, Path.GetFileName(target)));
 
             File.Move(manifest.FilePath, target);
             return Read(target, manifest.Scope);

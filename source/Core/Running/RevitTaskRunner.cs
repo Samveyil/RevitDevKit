@@ -8,6 +8,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Running
 {
@@ -80,7 +81,7 @@ namespace RevitDevKit.Core.Running
 
             if (_event == null)
             {
-                ConsoleOutput.Error("DevKit не инициализирован — перезапустите Revit.");
+                ConsoleOutput.Error(ConsoleStrings.NotInitialized);
                 return;
             }
 
@@ -88,7 +89,7 @@ namespace RevitDevKit.Core.Running
 
             var state = _event.Raise();
             if (state != ExternalEventRequest.Accepted)
-                ConsoleOutput.Warning("Revit отложил запуск (" + state + "). Закройте активные диалоги и попробуйте ещё раз.");
+                ConsoleOutput.Warning(string.Format(ConsoleStrings.RunDeferred, state));
         }
 
         public static void Run(RunRequest request, bool needsCommandContext)
@@ -100,9 +101,7 @@ namespace RevitDevKit.Core.Running
                 if (RevitCommandBridge.TryPost(request))
                     return;
 
-                ConsoleOutput.Warning(
-                    "Не удалось получить контекст команды Revit. IExternalCommand будет запущен " +
-                    "через ExternalEvent — commandData окажется недоступен.");
+                ConsoleOutput.Warning(ConsoleStrings.NoCommandContext);
             }
 
             Enqueue(request);
@@ -131,7 +130,7 @@ namespace RevitDevKit.Core.Running
             Exception failure = null;
 
             ConsoleOutput.EnsureTraceListener();
-            ConsoleOutput.Banner("Запуск: " + (request.Title ?? "скрипт"));
+            ConsoleOutput.Banner(string.Format(ConsoleStrings.RunBanner, request.Title ?? ConsoleStrings.DefaultRunTitle));
 
             // The views show what this run shows, with Show(...) in a script or Debug.WriteLine(geometry) in a DLL;
             // with the option off, what earlier runs showed stays to compare with.
@@ -162,7 +161,7 @@ namespace RevitDevKit.Core.Running
                 {
                     var doc = RevitAPI.Document;
                     if (doc == null)
-                        throw new InvalidOperationException("Автотранзакция включена, но активного документа нет.");
+                        throw new InvalidOperationException(ConsoleStrings.AutoTransactionNoDocument);
 
                     transaction = new Transaction(doc, request.TransactionName ?? "DevKit");
                     transaction.Start();
@@ -179,7 +178,7 @@ namespace RevitDevKit.Core.Running
                 if (transaction != null)
                 {
                     transaction.Commit();
-                    ConsoleOutput.Debug("Транзакция закоммичена.");
+                    ConsoleOutput.Debug(ConsoleStrings.TransactionCommitted);
                 }
 
                 sw.Stop();
@@ -195,14 +194,14 @@ namespace RevitDevKit.Core.Running
                 if (transaction != null && transaction.GetStatus() == TransactionStatus.Started)
                 {
                     transaction.RollBack();
-                    ConsoleOutput.Warning("Транзакция откачена.");
+                    ConsoleOutput.Warning(ConsoleStrings.TransactionRolledBack);
                 }
 
                 var real = ex is System.Reflection.TargetInvocationException && ex.InnerException != null
                     ? ex.InnerException
                     : ex;
 
-                ConsoleOutput.Exception(real, "Ошибка выполнения (" + sw.ElapsedMilliseconds + " мс):");
+                ConsoleOutput.Exception(real, string.Format(ConsoleStrings.RunFailed, sw.ElapsedMilliseconds));
             }
             finally
             {
@@ -224,7 +223,7 @@ namespace RevitDevKit.Core.Running
                 if (request.Completed != null)
                 {
                     try { request.Completed(failure); }
-                    catch (Exception ex) { ConsoleOutput.Exception(ex, "Ошибка в обработчике завершения:"); }
+                    catch (Exception ex) { ConsoleOutput.Exception(ex, ConsoleStrings.CompletedHandlerFailed); }
                 }
             }
         }
@@ -233,19 +232,19 @@ namespace RevitDevKit.Core.Running
         {
             if (result == null)
             {
-                ConsoleOutput.Success("Готово за " + ms + " мс.");
+                ConsoleOutput.Success(string.Format(ConsoleStrings.Done, ms));
                 return;
             }
 
             if (result is Result revitResult)
             {
                 var level = revitResult == Result.Succeeded ? LogLevel.Success : LogLevel.Warning;
-                ConsoleOutput.WriteLine("Команда вернула " + revitResult + " (" + ms + " мс).", level);
+                ConsoleOutput.WriteLine(string.Format(ConsoleStrings.CommandReturned, revitResult, ms), level);
                 return;
             }
 
-            ConsoleOutput.WriteLine("Результат: " + ConsoleOutput.Format(result), LogLevel.Success);
-            ConsoleOutput.Success("Готово за " + ms + " мс.");
+            ConsoleOutput.WriteLine(string.Format(ConsoleStrings.RunResult, ConsoleOutput.Format(result)), LogLevel.Success);
+            ConsoleOutput.Success(string.Format(ConsoleStrings.Done, ms));
         }
     }
 
@@ -270,7 +269,7 @@ namespace RevitDevKit.Core.Running
                     if (id == null) continue;
 
                     _commandId = id;
-                    ConsoleOutput.Debug("Контекст команды Revit доступен: " + candidate);
+                    ConsoleOutput.Debug(string.Format(ConsoleStrings.CommandContextFound, candidate));
                     return _commandId;
                 }
                 catch
@@ -279,7 +278,7 @@ namespace RevitDevKit.Core.Running
                 }
             }
 
-            ConsoleOutput.Debug("Команда ленты не найдена — IExternalCommand будет запускаться через ExternalEvent.");
+            ConsoleOutput.Debug(ConsoleStrings.RibbonCommandNotFound);
             return null;
         }
 
@@ -313,7 +312,7 @@ namespace RevitDevKit.Core.Running
             catch (Exception ex)
             {
                 ExecutePendingCmd.SetPending(null);
-                ConsoleOutput.Debug("PostCommand не сработал (" + ex.Message + "), используем ExternalEvent.");
+                ConsoleOutput.Debug(string.Format(ConsoleStrings.PostCommandFailed, ex.Message));
                 return false;
             }
         }

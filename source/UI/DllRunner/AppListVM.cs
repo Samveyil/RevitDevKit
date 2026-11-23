@@ -12,12 +12,13 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Threading;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.UI.DllRunner
 {
     public sealed partial class AppNodeVM : ObservableObject
     {
-        public const string NotApplied = "как в .addin";
+        public static string NotApplied => ExplorerStrings.AsInAddin;
 
         [ObservableProperty] private IReadOnlyList<string> _applicationTypes;
         [ObservableProperty] private string _status = NotApplied;
@@ -33,7 +34,7 @@ namespace RevitDevKit.UI.DllRunner
         }
 
         public string ApplicationsText =>
-            ApplicationTypes.Count == 0 ? "нет IExternalApplication" : string.Join(", ", ApplicationTypes.Select(t => t.Substring(t.LastIndexOf('.') + 1)));
+            ApplicationTypes.Count == 0 ? ExplorerStrings.NoApplication : string.Join(", ", ApplicationTypes.Select(t => t.Substring(t.LastIndexOf('.') + 1)));
 
         partial void OnApplicationTypesChanged(IReadOnlyList<string> value) => OnPropertyChanged(nameof(ApplicationsText));
     }
@@ -73,7 +74,7 @@ namespace RevitDevKit.UI.DllRunner
         {
             var dialog = new Microsoft.Win32.OpenFileDialog
             {
-                Filter = "Сборки .NET (*.dll)|*.dll|Все файлы (*.*)|*.*",
+                Filter = ExplorerStrings.DllFilter,
                 Multiselect = true
             };
 
@@ -108,7 +109,7 @@ namespace RevitDevKit.UI.DllRunner
             node = Target(node);
             if (node == null) return;
 
-            Enqueue(node, "Обновление ленты из " + node.DisplayName, () =>
+            Enqueue(node, string.Format(ExplorerStrings.ApplyingRibbon, node.DisplayName), () =>
             {
                 var state = RibbonPreview.Apply(node.FilePath);
                 node.ApplicationTypes = state.ApplicationTypes;
@@ -121,7 +122,7 @@ namespace RevitDevKit.UI.DllRunner
             node = Target(node);
             if (node == null) return;
 
-            Enqueue(node, "Возврат ленты " + node.DisplayName, () => RibbonPreview.Revert(node.FilePath));
+            Enqueue(node, string.Format(ExplorerStrings.RevertingRibbon, node.DisplayName), () => RibbonPreview.Revert(node.FilePath));
         }
 
         [RelayCommand(CanExecute = nameof(CanChange))]
@@ -131,7 +132,7 @@ namespace RevitDevKit.UI.DllRunner
             if (node == null) return;
 
             if (node.IsApplied)
-                Enqueue(node, "Возврат ленты " + node.DisplayName, () => RibbonPreview.Revert(node.FilePath));
+                Enqueue(node, string.Format(ExplorerStrings.RevertingRibbon, node.DisplayName), () => RibbonPreview.Revert(node.FilePath));
 
             Items.Remove(node);
             if (SelectedItem == node) SelectedItem = null;
@@ -173,7 +174,7 @@ namespace RevitDevKit.UI.DllRunner
         {
             var state = RibbonPreview.Find(node.FilePath);
             node.IsApplied = state != null;
-            node.Status = state == null ? AppNodeVM.NotApplied : "обновлено в " + state.AppliedAt.ToString("HH:mm:ss");
+            node.Status = state == null ? AppNodeVM.NotApplied : string.Format(ExplorerStrings.AppliedAt, state.AppliedAt.ToString("HH:mm:ss"));
         }
 
         private static bool SamePath(string a, string b) =>
@@ -198,7 +199,7 @@ namespace RevitDevKit.UI.DllRunner
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Не удалось сохранить список приложений: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(ExplorerStrings.AppListSaveFailed, ex.Message));
             }
         }
 
@@ -228,7 +229,7 @@ namespace RevitDevKit.UI.DllRunner
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Не удалось прочитать список приложений: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(ExplorerStrings.AppListReadFailed, ex.Message));
             }
         }
     }

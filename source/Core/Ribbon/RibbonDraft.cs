@@ -10,6 +10,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
 using Adw = Autodesk.Windows;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Ribbon
 {
@@ -164,7 +165,7 @@ namespace RevitDevKit.Core.Ribbon
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Warning("Не удалось перехватить " + (original?.Name ?? prefix) + ": " + ex.Message);
+                ConsoleOutput.Warning(string.Format(CoreStrings.HookFailed, original?.Name ?? prefix, ex.Message));
             }
         }
 
@@ -208,7 +209,7 @@ namespace RevitDevKit.Core.Ribbon
         {
             if (!IsActive) return true;
 
-            ConsoleOutput.Debug("RegisterDockablePane «" + __1 + "» пропущен: панель уже зарегистрирована при запуске Revit.");
+            ConsoleOutput.Debug(string.Format(CoreStrings.DockablePaneSkipped, __1));
             return false;
         }
     }

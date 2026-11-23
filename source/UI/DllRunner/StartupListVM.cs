@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Data;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.UI.DllRunner
 {
@@ -42,11 +43,11 @@ namespace RevitDevKit.UI.DllRunner
             get
             {
                 var m = Manifest;
-                if (m.Error != null) return "не читается: " + m.Error;
-                if (m.HasTwin) return "есть и " + m.Name + AddinManifests.Extension + ", и " + m.Name + AddinManifests.DisabledExtension;
-                if (m.MissingAssemblies.Count > 0) return "DLL не найдена: " + m.MissingAssemblies[0];
-                if (IsLocked) return "только чтение: нужны права администратора";
-                if (!m.IsEnabled) return "отключён · " + Path.GetFileName(m.FilePath);
+                if (m.Error != null) return string.Format(ExplorerStrings.Unreadable, m.Error);
+                if (m.HasTwin) return string.Format(ExplorerStrings.Twin, m.Name + AddinManifests.Extension, m.Name + AddinManifests.DisabledExtension);
+                if (m.MissingAssemblies.Count > 0) return string.Format(ExplorerStrings.DllNotFound, m.MissingAssemblies[0]);
+                if (IsLocked) return ExplorerStrings.ReadOnly;
+                if (!m.IsEnabled) return string.Format(ExplorerStrings.Disabled, Path.GetFileName(m.FilePath));
                 return Contents(m) + (m.Assemblies.Count == 0 ? string.Empty : " · " + string.Join(", ", m.Assemblies.Select(Path.GetFileName)));
             }
         }
@@ -56,19 +57,9 @@ namespace RevitDevKit.UI.DllRunner
         private static string Contents(AddinManifest m)
         {
             var parts = new List<string>();
-            if (m.Applications > 0) parts.Add(m.Applications + " " + Plural(m.Applications, "приложение", "приложения", "приложений"));
-            if (m.Commands > 0) parts.Add(m.Commands + " " + Plural(m.Commands, "команда", "команды", "команд"));
-            return parts.Count == 0 ? "пусто" : string.Join(", ", parts);
-        }
-
-        private static string Plural(int n, string one, string few, string many)
-        {
-            var tens = n % 100;
-            var units = n % 10;
-            if (tens >= 11 && tens <= 14) return many;
-            if (units == 1) return one;
-            if (units >= 2 && units <= 4) return few;
-            return many;
+            if (m.Applications > 0) parts.Add(Language.Count(m.Applications, ExplorerStrings.ApplicationsOne, ExplorerStrings.ApplicationsFew, ExplorerStrings.ApplicationsMany));
+            if (m.Commands > 0) parts.Add(Language.Count(m.Commands, ExplorerStrings.CommandsOne, ExplorerStrings.CommandsFew, ExplorerStrings.CommandsMany));
+            return parts.Count == 0 ? ExplorerStrings.Empty : string.Join(", ", parts);
         }
 
         // Lets the check box catch up with the file when a rename did not happen.
@@ -104,13 +95,13 @@ namespace RevitDevKit.UI.DllRunner
         }
 
         internal static string GroupTitle(AddinScope scope) => scope == AddinScope.CurrentUser
-            ? "Для текущего пользователя · " + Short(AddinManifests.CurrentUserFolder, Environment.SpecialFolder.ApplicationData, "%AppData%")
-            : "Для всех пользователей · " + Short(AddinManifests.AllUsersFolder, Environment.SpecialFolder.CommonApplicationData, "%ProgramData%");
+            ? string.Format(ExplorerStrings.ForCurrentUser, Short(AddinManifests.CurrentUserFolder, Environment.SpecialFolder.ApplicationData, "%AppData%"))
+            : string.Format(ExplorerStrings.ForAllUsers, Short(AddinManifests.AllUsersFolder, Environment.SpecialFolder.CommonApplicationData, "%ProgramData%"));
 
         // %AppData%\…\Addins\2022: the root as a variable and the last two folders, to fit the narrow window.
         private static string Short(string folder, Environment.SpecialFolder root, string variable)
         {
-            if (folder.IsNullOrEmpty()) return "папка не найдена";
+            if (folder.IsNullOrEmpty()) return ExplorerStrings.FolderNotFound;
 
             var rootPath = Environment.GetFolderPath(root).TrimEnd('\\');
             if (!folder.StartsWith(rootPath + "\\", StringComparison.OrdinalIgnoreCase)) return folder;
@@ -130,7 +121,7 @@ namespace RevitDevKit.UI.DllRunner
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Не удалось прочитать папки надстроек:");
+                ConsoleOutput.Exception(ex, ExplorerStrings.AddinFoldersReadFailed);
                 return;
             }
 
@@ -161,7 +152,7 @@ namespace RevitDevKit.UI.DllRunner
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Error("Не удалось " + (enable ? "включить " : "отключить ") + item.Name + ": " + ex.Message);
+                ConsoleOutput.Error(string.Format(enable ? ExplorerStrings.EnableFailed : ExplorerStrings.DisableFailed, item.Name, ex.Message));
                 item.Resync();
             }
 
@@ -196,9 +187,7 @@ namespace RevitDevKit.UI.DllRunner
 
         private static bool AskDisableDevKit() =>
             MessageBox.Show(
-                "После перезапуска Revit DevKit не загрузится, и этого окна не будет.\n\n" +
-                "Включить его обратно можно, переименовав RevitDevKit.addin.disable в RevitDevKit.addin в папке надстроек.\n\n" +
-                "Отключить DevKit?",
+                ExplorerStrings.DisableDevKit,
                 "DevKit", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes;
     }
 }

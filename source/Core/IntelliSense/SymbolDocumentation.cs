@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.IntelliSense
 {
@@ -87,7 +88,7 @@ namespace RevitDevKit.Core.IntelliSense
                 }
                 catch (Exception ex)
                 {
-                    ConsoleOutput.Debug("Не удалось прочитать документацию " + _path + ": " + ex.Message);
+                    ConsoleOutput.Debug(string.Format(CoreStrings.DocumentationReadFailed, _path, ex.Message));
                 }
 
                 return _members = members;
@@ -155,7 +156,7 @@ namespace RevitDevKit.Core.IntelliSense
                 }
                 catch (Exception ex)
                 {
-                    ConsoleOutput.Debug("Не удалось прочитать встроенную документацию DevKit: " + ex.Message);
+                    ConsoleOutput.Debug(string.Format(CoreStrings.EmbeddedDocumentationReadFailed, ex.Message));
                 }
 
                 return _members = members;

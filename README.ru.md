@@ -9,7 +9,9 @@
 
 Набор инструментов для тех, кто пишет надстройки для Revit. Проверить идею C#-скриптом без сборки, запускать команды из своей DLL без перезапуска Revit и понять, почему надстройка подхватила не ту версию библиотеки.
 
-![Script Editor](assets/script-editor.png)
+![Script Editor](assets/ru/script-editor.png)
+
+> DevKit на русском, если Revit русский, иначе на английском. Чтобы выбрать язык самому, укажите `"language"` в `%AppData%\RevitDevKit\settings.json`: `"ru"` или `"en"`.
 
 ## Что внутри
 

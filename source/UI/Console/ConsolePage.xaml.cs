@@ -2,6 +2,7 @@ using Autodesk.Revit.UI;
 using RevitDevKit.Core.Output;
 using System;
 using System.Windows.Controls;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.UI.Console
 {
@@ -42,7 +43,7 @@ namespace RevitDevKit.UI.Console
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Не удалось показать панель консоли: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(ConsoleStrings.PaneShowFailed, ex.Message));
             }
         }
 

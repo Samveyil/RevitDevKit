@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="SettingsReadFailed" xml:space="preserve">
+    <value>Could not read DevKit settings, the defaults are used: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="SettingsSaveFailed" xml:space="preserve">
+    <value>Could not save DevKit settings: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="Shown" xml:space="preserve">
+    <value>Shown: {0}, {1}</value>
+    <comment>{0}: what, {1}: the colour; a label may follow after ' — '</comment>
+  </data>
+  <data name="ViewsNotRefreshed" xml:space="preserve">
+    <value>Views not refreshed: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="ShowNothing" xml:space="preserve">
+    <value>nothing</value>
+  </data>
+  <data name="ShowList" xml:space="preserve">
+    <value>list</value>
+  </data>
+  <data name="FacesOne" xml:space="preserve">
+    <value>{0} face</value>
+  </data>
+  <data name="FacesFew" xml:space="preserve">
+    <value>{0} faces</value>
+  </data>
+  <data name="FacesMany" xml:space="preserve">
+    <value>{0} faces</value>
+  </data>
+  <data name="CurvesOne" xml:space="preserve">
+    <value>{0} curve</value>
+  </data>
+  <data name="CurvesFew" xml:space="preserve">
+    <value>{0} curves</value>
+  </data>
+  <data name="CurvesMany" xml:space="preserve">
+    <value>{0} curves</value>
+  </data>
+  <data name="PointsOne" xml:space="preserve">
+    <value>{0} point</value>
+  </data>
+  <data name="PointsFew" xml:space="preserve">
+    <value>{0} points</value>
+  </data>
+  <data name="PointsMany" xml:space="preserve">
+    <value>{0} points</value>
+  </data>
+  <data name="BoxesOne" xml:space="preserve">
+    <value>{0} box</value>
+  </data>
+  <data name="BoxesFew" xml:space="preserve">
+    <value>{0} boxes</value>
+  </data>
+  <data name="BoxesMany" xml:space="preserve">
+    <value>{0} boxes</value>
+  </data>
+  <data name="NothingToShow" xml:space="preserve">
+    <value>{0}: nothing to show</value>
+    <comment>{0}: what</comment>
+  </data>
+  <data name="ShowServerNotRegistered" xml:space="preserve">
+    <value>Show(...) will not draw: the DirectContext3D server is not registered: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="ShowServerNotRemoved" xml:space="preserve">
+    <value>DirectContext3D server not removed: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="ShowServerDescription" xml:space="preserve">
+    <value>Geometry shown by DevKit scripts with Show(...)</value>
+  </data>
+  <data name="ShowDrawFailed" xml:space="preserve">
+    <value>Show(...) did not draw: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="TraceShowBackground" xml:space="preserve">
+    <value>Debug.WriteLine({0}) from a background thread: geometry can be shown only from the Revit API thread.</value>
+    <comment>{0}: the type</comment>
+  </data>
+  <data name="TraceShowFailed" xml:space="preserve">
+    <value>Could not show {0}: {1}</value>
+    <comment>{0}: the type, {1}: the error</comment>
+  </data>
+  <data name="NotInitialized" xml:space="preserve">
+    <value>DevKit is not initialized; restart Revit.</value>
+  </data>
+  <data name="DllNotFound" xml:space="preserve">
+    <value>DLL not found</value>
+  </data>
+  <data name="NoApplications" xml:space="preserve">
+    <value>{0} has no IExternalApplication classes.</value>
+    <comment>{0}: the DLL</comment>
+  </data>
+  <data name="NewOnStartupFailed" xml:space="preserve">
+    <value>OnStartup of the new version failed; the ribbon is unchanged:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="RibbonMerged" xml:space="preserve">
+    <value>Ribbon: {0} updated, {1} added, {2} removed.</value>
+    <comment>{0}, {1}, {2}: how many</comment>
+  </data>
+  <data name="OnStartupReturned" xml:space="preserve">
+    <value>{0}.OnStartup returned {1}.</value>
+    <comment>{0}: the class, {1}: the result</comment>
+  </data>
+  <data name="OnShutdownFailed" xml:space="preserve">
+    <value>{0}.OnShutdown failed:</value>
+    <comment>{0}: the class; followed by the exception</comment>
+  </data>
+  <data name="NotCopied" xml:space="preserve">
+    <value>Not copied {0}: {1}</value>
+    <comment>{0}: the file, {1}: the error</comment>
+  </data>
+  <data name="DependencyLoadFailed" xml:space="preserve">
+    <value>Could not load {0}: {1}</value>
+    <comment>{0}: the assembly, {1}: the error</comment>
+  </data>
+  <data name="CompareLoadedFailed" xml:space="preserve">
+    <value>Could not compare {0} with the loaded one: {1}</value>
+    <comment>{0}: the assembly, {1}: the error</comment>
+  </data>
+  <data name="RibbonUnsupported" xml:space="preserve">
+    <value>The ribbon is built differently in this Revit version: {0} not found.</value>
+    <comment>{0}: what is missing</comment>
+  </data>
+  <data name="RibbonNotCreated" xml:space="preserve">
+    <value>Revit's ribbon is not created yet.</value>
+  </data>
+  <data name="RibbonRevert" xml:space="preserve">
+    <value>Ribbon revert: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="RibbonError" xml:space="preserve">
+    <value>Ribbon: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="LoadComponentHookFailed" xml:space="preserve">
+    <value>Could not intercept Application.LoadComponent: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="WpfResourcesForNotRedirected" xml:space="preserve">
+    <value>WPF resources for {0} not redirected: {1}</value>
+    <comment>{0}: the class, {1}: the error</comment>
+  </data>
+  <data name="WpfResourcesNotRedirected" xml:space="preserve">
+    <value>WPF resources not redirected: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="IconNotReread" xml:space="preserve">
+    <value>Could not reload the icon of “{0}”: {1}</value>
+    <comment>{0}: the button, {1}: the error</comment>
+  </data>
+  <data name="WpfResourcesNotRestored" xml:space="preserve">
+    <value>WPF resources not restored: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="ButtonClassNotFound" xml:space="preserve">
+    <value>Button “{0}”: class {1} not found in {2}.</value>
+    <comment>{0}: the button, {1}: the class, {2}: the DLL</comment>
+  </data>
+  <data name="ButtonNotRedirected" xml:space="preserve">
+    <value>Button “{0}” not redirected: {1}</value>
+    <comment>{0}: the button, {1}: the error</comment>
+  </data>
+  <data name="CommandFailed" xml:space="preserve">
+    <value>{0} failed:</value>
+    <comment>{0}: the command's class; followed by the exception</comment>
+  </data>
+  <data name="ProxyBuildFailed" xml:space="preserve">
+    <value>Could not build the proxy commands:</value>
+    <comment>followed by the compiler errors on new lines</comment>
+  </data>
+  <data name="HookFailed" xml:space="preserve">
+    <value>Could not intercept {0}: {1}</value>
+    <comment>{0}: the method, {1}: the error</comment>
+  </data>
+  <data name="DockablePaneSkipped" xml:space="preserve">
+    <value>RegisterDockablePane “{0}” skipped: the pane was already registered when Revit started.</value>
+    <comment>{0}: the pane's id</comment>
+  </data>
+  <data name="NoCommandData" xml:space="preserve">
+    <value>An IExternalCommand needs a real ExternalCommandData, and only Revit can give one. Make sure Repeat Last is on the ribbon: DevKit gets the command context through that button.</value>
+  </data>
+  <data name="CommandMessage" xml:space="preserve">
+    <value>The command returned a message: {0}</value>
+    <comment>{0}: the message</comment>
+  </data>
+  <data name="CommandElements" xml:space="preserve">
+    <value>The command returned {0} problem elements.</value>
+    <comment>{0}: how many</comment>
+  </data>
+  <data name="UnknownParameter" xml:space="preserve">
+    <value>Can't fill parameter '{0}' of type {1}. Supported types: UIApplication, UIDocument, Document, Application, ExternalCommandData.</value>
+    <comment>{0}: the parameter, {1}: its type</comment>
+  </data>
+  <data name="TypeNotLoaded" xml:space="preserve">
+    <value>A type did not load: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="PreviousUnloaded" xml:space="preserve">
+    <value>The previous version of {0} is unloaded.</value>
+    <comment>{0}: the DLL</comment>
+  </data>
+  <data name="NewVersionLoaded" xml:space="preserve">
+    <value>Loaded a new version of {0}. The old one stays in memory until you restart Revit.</value>
+    <comment>{0}: the DLL</comment>
+  </data>
+  <data name="AttachFailed" xml:space="preserve">
+    <value>Could not attach Visual Studio: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="OpenVisualStudio" xml:space="preserve">
+    <value>Open Visual Studio with the add-in's solution and run under the debugger again. Or attach your own debugger (Rider, VS Code) to Revit by hand and press again.</value>
+  </data>
+  <data name="AllStudiosBusy" xml:space="preserve">
+    <value>Every open Visual Studio is already debugging another program. Stop debugging in one of them and run again.</value>
+  </data>
+  <data name="AttachByHand" xml:space="preserve">
+    <value>Visual Studio did not attach to Revit. Attach it by hand: Debug › Attach to Process.</value>
+  </data>
+  <data name="StudioAttached" xml:space="preserve">
+    <value>Visual Studio attached.</value>
+  </data>
+  <data name="StudioAttachedWith" xml:space="preserve">
+    <value>Visual Studio with {0} attached.</value>
+    <comment>{0}: the solution</comment>
+  </data>
+  <data name="DocumentationReadFailed" xml:space="preserve">
+    <value>Could not read the documentation {0}: {1}</value>
+    <comment>{0}: the file, {1}: the error</comment>
+  </data>
+  <data name="EmbeddedDocumentationReadFailed" xml:space="preserve">
+    <value>Could not read DevKit's own documentation: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="KeyboardWithoutElementHost" xml:space="preserve">
+    <value>Could not set up keyboard input for the window: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+</root>

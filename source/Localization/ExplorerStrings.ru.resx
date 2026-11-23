@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="RunToolTip" xml:space="preserve">
+    <value>Выполнить команду (F5)</value>
+  </data>
+  <data name="Run" xml:space="preserve">
+    <value>Выполнить (F5)</value>
+  </data>
+  <data name="DebugToolTip" xml:space="preserve">
+    <value>Выполнить под отладчиком Visual Studio (Ctrl+F5)</value>
+  </data>
+  <data name="AddDllToolTip" xml:space="preserve">
+    <value>Добавить DLL (Ctrl+O)</value>
+  </data>
+  <data name="ShowDllToolTip" xml:space="preserve">
+    <value>Показать в проводнике DLL</value>
+  </data>
+  <data name="ApplyToolTip" xml:space="preserve">
+    <value>Обновить ленту по свежей DLL (F5)</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Обновить (F5)</value>
+  </data>
+  <data name="AddAppToolTip" xml:space="preserve">
+    <value>Добавить DLL и обновить ленту (Ctrl+O)</value>
+  </data>
+  <data name="RevertToolTip" xml:space="preserve">
+    <value>Вернуть ленту, как её создал .addin</value>
+  </data>
+  <data name="RemoveAppToolTip" xml:space="preserve">
+    <value>Вернуть ленту и убрать DLL из списка</value>
+  </data>
+  <data name="RescanToolTip" xml:space="preserve">
+    <value>Перечитать папки надстроек (F5)</value>
+  </data>
+  <data name="ShowAddinToolTip" xml:space="preserve">
+    <value>Показать в проводнике .addin</value>
+  </data>
+  <data name="OpenAddinToolTip" xml:space="preserve">
+    <value>Открыть .addin в Блокноте (Ctrl+O)</value>
+  </data>
+  <data name="CheckToolTip" xml:space="preserve">
+    <value>Проверить DLL надстроек (F5)</value>
+  </data>
+  <data name="Check" xml:space="preserve">
+    <value>Проверить (F5)</value>
+  </data>
+  <data name="SaveReportToolTip" xml:space="preserve">
+    <value>Сохранить отчёт в файл .md</value>
+  </data>
+  <data name="ShowSelectedDllToolTip" xml:space="preserve">
+    <value>Показать в проводнике выбранную DLL</value>
+  </data>
+  <data name="OnlyConflicts" xml:space="preserve">
+    <value>Только конфликты</value>
+  </data>
+  <data name="OnlyConflictsToolTip" xml:space="preserve">
+    <value>Снимите, чтобы видеть все общие DLL</value>
+  </data>
+  <data name="RefreshAssembliesToolTip" xml:space="preserve">
+    <value>Обновить список сборок (F5)</value>
+  </data>
+  <data name="SaveListToolTip" xml:space="preserve">
+    <value>Сохранить список в файл .md</value>
+  </data>
+  <data name="ShowSelectedAssemblyToolTip" xml:space="preserve">
+    <value>Показать в проводнике выбранную сборку</value>
+  </data>
+  <data name="HideSystem" xml:space="preserve">
+    <value>Скрыть системные</value>
+  </data>
+  <data name="HideSystemToolTip" xml:space="preserve">
+    <value>Скрыть .NET, GAC, Revit и сборки в памяти</value>
+  </data>
+  <data name="CollapseAll" xml:space="preserve">
+    <value>Свернуть всё</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Поиск</value>
+  </data>
+  <data name="RefreshCommands" xml:space="preserve">
+    <value>Обновить список команд</value>
+  </data>
+  <data name="ShowInExplorer" xml:space="preserve">
+    <value>Показать в проводнике</value>
+  </data>
+  <data name="RemoveFromList" xml:space="preserve">
+    <value>Убрать из списка</value>
+  </data>
+  <data name="NoCommands" xml:space="preserve">
+    <value>   — нет IExternalCommand</value>
+  </data>
+  <data name="AddDllHint" xml:space="preserve">
+    <value>Добавьте DLL кнопкой с папкой или Ctrl+O</value>
+  </data>
+  <data name="NothingFound" xml:space="preserve">
+    <value>Ничего не найдено</value>
+  </data>
+  <data name="RefreshMenu" xml:space="preserve">
+    <value>Обновить</value>
+  </data>
+  <data name="RevertMenu" xml:space="preserve">
+    <value>Вернуть как было</value>
+  </data>
+  <data name="AddAppHint" xml:space="preserve">
+    <value>Добавьте DLL с IExternalApplication кнопкой с папкой или Ctrl+O</value>
+  </data>
+  <data name="RestartNeeded" xml:space="preserve">
+    <value>Изменения применятся при следующем запуске Revit</value>
+  </data>
+  <data name="OpenAddinMenu" xml:space="preserve">
+    <value>Открыть .addin</value>
+  </data>
+  <data name="LoadAtStartupToolTip" xml:space="preserve">
+    <value>Загружать при запуске Revit</value>
+  </data>
+  <data name="NoAddins" xml:space="preserve">
+    <value>В папках надстроек этой версии Revit нет .addin</value>
+  </data>
+  <data name="CopyPath" xml:space="preserve">
+    <value>Копировать путь</value>
+  </data>
+  <data name="LoadedMark" xml:space="preserve">
+    <value>● загружена</value>
+  </data>
+  <data name="NoConflicts" xml:space="preserve">
+    <value>Конфликтов нет</value>
+  </data>
+  <data name="AsInAddin" xml:space="preserve">
+    <value>как в .addin</value>
+  </data>
+  <data name="NoApplication" xml:space="preserve">
+    <value>нет IExternalApplication</value>
+  </data>
+  <data name="DllFilter" xml:space="preserve">
+    <value>Сборки .NET (*.dll)|*.dll|Все файлы (*.*)|*.*</value>
+  </data>
+  <data name="ApplyingRibbon" xml:space="preserve">
+    <value>Обновление ленты из {0}</value>
+  </data>
+  <data name="RevertingRibbon" xml:space="preserve">
+    <value>Возврат ленты {0}</value>
+  </data>
+  <data name="AppliedAt" xml:space="preserve">
+    <value>обновлено в {0}</value>
+  </data>
+  <data name="AppListSaveFailed" xml:space="preserve">
+    <value>Не удалось сохранить список приложений: {0}</value>
+  </data>
+  <data name="AppListReadFailed" xml:space="preserve">
+    <value>Не удалось прочитать список приложений: {0}</value>
+  </data>
+  <data name="FileVersionLine" xml:space="preserve">
+    <value>
+Версия файла {0}</value>
+  </data>
+  <data name="LoadedTimesOne" xml:space="preserve">
+    <value>
+Загружена {0} раз: </value>
+  </data>
+  <data name="LoadedTimesFew" xml:space="preserve">
+    <value>
+Загружена {0} раза: </value>
+  </data>
+  <data name="LoadedTimesMany" xml:space="preserve">
+    <value>
+Загружена {0} раз: </value>
+  </data>
+  <data name="AssemblyListFailed" xml:space="preserve">
+    <value>Не удалось получить список сборок:</value>
+  </data>
+  <data name="AssembliesStatus" xml:space="preserve">
+    <value>Загружено: {0} · показано: {1}</value>
+  </data>
+  <data name="ListSaved" xml:space="preserve">
+    <value>Список сохранён: {0}</value>
+  </data>
+  <data name="ListSaveFailed" xml:space="preserve">
+    <value>Не удалось сохранить список:</value>
+  </data>
+  <data name="PathCopied" xml:space="preserve">
+    <value>Путь скопирован</value>
+  </data>
+  <data name="PathCopyFailed" xml:space="preserve">
+    <value>Не удалось скопировать путь:</value>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Не удалось загрузить {0}:</value>
+  </data>
+  <data name="BreakpointsWillHit" xml:space="preserve">
+    <value>Точки останова в проекте {0} сработают.</value>
+  </data>
+  <data name="CommandMissing" xml:space="preserve">
+    <value>В текущей {0} больше нет команды {1}.</value>
+  </data>
+  <data name="RefreshCommandList" xml:space="preserve">
+    <value> Обновите список команд.</value>
+  </data>
+  <data name="RunHandOverFailed" xml:space="preserve">
+    <value>Не удалось передать запуск в Revit:</value>
+  </data>
+  <data name="DllListSaveFailed" xml:space="preserve">
+    <value>Не удалось сохранить список DLL: {0}</value>
+  </data>
+  <data name="DllListReadFailed" xml:space="preserve">
+    <value>Не удалось прочитать список DLL: {0}</value>
+  </data>
+  <data name="NotLoadedYet" xml:space="preserve">
+    <value>ещё не загружена</value>
+  </data>
+  <data name="LoadedFrom" xml:space="preserve">
+    <value>загружена {0}</value>
+  </data>
+  <data name="LoadedAnd" xml:space="preserve">
+    <value> и </value>
+  </data>
+  <data name="VersionFrom" xml:space="preserve">
+    <value>{0} из {1}</value>
+  </data>
+  <data name="UnsignedTip" xml:space="preserve">
+    <value>Не подписана: все надстройки получат одну копию — ту, что загрузилась первой. Старая версия (красным) может не подойти.</value>
+  </data>
+  <data name="RedirectOlderTip" xml:space="preserve">
+    <value>Revit.exe.config перенаправляет на более старую версию, чем та, под которую собрана надстройка (красным).</value>
+  </data>
+  <data name="FileOnlyTip" xml:space="preserve">
+    <value>Все надстройки получат один файл этой версии — тот, что загрузится первым. Обычно это не страшно.</value>
+  </data>
+  <data name="SideBySideTip" xml:space="preserve">
+    <value>Подписана: каждая версия сборки загрузится отдельно, каждая надстройка получит свою.</value>
+  </data>
+  <data name="SameVersionTip" xml:space="preserve">
+    <value>У всех одна и та же версия.</value>
+  </data>
+  <data name="CopyNative" xml:space="preserve">
+    <value>, нативная DLL</value>
+  </data>
+  <data name="CopyAssemblyVersion" xml:space="preserve">
+    <value>, версия сборки {0}</value>
+  </data>
+  <data name="CopySigned" xml:space="preserve">
+    <value>, подписана ({0})</value>
+  </data>
+  <data name="CopyUnsigned" xml:space="preserve">
+    <value>, не подписана</value>
+  </data>
+  <data name="CopyGetsVersion" xml:space="preserve">
+    <value>
+Получит версию {0}</value>
+  </data>
+  <data name="PressCheck" xml:space="preserve">
+    <value>Нажмите «Проверить»</value>
+  </data>
+  <data name="Checking" xml:space="preserve">
+    <value>Проверка…</value>
+  </data>
+  <data name="CheckedAt" xml:space="preserve">
+    <value>Проверено в {0} · {1}</value>
+  </data>
+  <data name="NoConflictsShort" xml:space="preserve">
+    <value>конфликтов нет</value>
+  </data>
+  <data name="ConflictsCount" xml:space="preserve">
+    <value>конфликтов: {0}</value>
+  </data>
+  <data name="CheckFailed" xml:space="preserve">
+    <value>Не удалось проверить зависимости надстроек:</value>
+  </data>
+  <data name="CheckFailedStatus" xml:space="preserve">
+    <value>Проверка не удалась, подробности в консоли</value>
+  </data>
+  <data name="SectionConflicts" xml:space="preserve">
+    <value>Конфликты</value>
+  </data>
+  <data name="SectionSideBySide" xml:space="preserve">
+    <value>Загрузятся рядом</value>
+  </data>
+  <data name="SectionSame" xml:space="preserve">
+    <value>Одна версия у нескольких надстроек</value>
+  </data>
+  <data name="SectionAutodesk" xml:space="preserve">
+    <value>Только Revit и Autodesk</value>
+  </data>
+  <data name="ReportSaved" xml:space="preserve">
+    <value>Отчёт сохранён: {0}</value>
+  </data>
+  <data name="ReportSaveFailed" xml:space="preserve">
+    <value>Не удалось сохранить отчёт:</value>
+  </data>
+  <data name="Unreadable" xml:space="preserve">
+    <value>не читается: {0}</value>
+  </data>
+  <data name="Twin" xml:space="preserve">
+    <value>есть и {0}, и {1}</value>
+  </data>
+  <data name="DllNotFound" xml:space="preserve">
+    <value>DLL не найдена: {0}</value>
+  </data>
+  <data name="ReadOnly" xml:space="preserve">
+    <value>только чтение: нужны права администратора</value>
+  </data>
+  <data name="Disabled" xml:space="preserve">
+    <value>отключён · {0}</value>
+  </data>
+  <data name="ApplicationsOne" xml:space="preserve">
+    <value>{0} приложение</value>
+  </data>
+  <data name="ApplicationsFew" xml:space="preserve">
+    <value>{0} приложения</value>
+  </data>
+  <data name="ApplicationsMany" xml:space="preserve">
+    <value>{0} приложений</value>
+  </data>
+  <data name="CommandsOne" xml:space="preserve">
+    <value>{0} команда</value>
+  </data>
+  <data name="CommandsFew" xml:space="preserve">
+    <value>{0} команды</value>
+  </data>
+  <data name="CommandsMany" xml:space="preserve">
+    <value>{0} команд</value>
+  </data>
+  <data name="Empty" xml:space="preserve">
+    <value>пусто</value>
+  </data>
+  <data name="ForCurrentUser" xml:space="preserve">
+    <value>Для текущего пользователя · {0}</value>
+  </data>
+  <data name="ForAllUsers" xml:space="preserve">
+    <value>Для всех пользователей · {0}</value>
+  </data>
+  <data name="FolderNotFound" xml:space="preserve">
+    <value>папка не найдена</value>
+  </data>
+  <data name="AddinFoldersReadFailed" xml:space="preserve">
+    <value>Не удалось прочитать папки надстроек:</value>
+  </data>
+  <data name="EnableFailed" xml:space="preserve">
+    <value>Не удалось включить {0}: {1}</value>
+  </data>
+  <data name="DisableFailed" xml:space="preserve">
+    <value>Не удалось отключить {0}: {1}</value>
+  </data>
+  <data name="DisableDevKit" xml:space="preserve">
+    <value>После перезапуска Revit DevKit не загрузится, и этого окна не будет.
+
+Включить его обратно можно, переименовав RevitDevKit.addin.disable в RevitDevKit.addin в папке надстроек.
+
+Отключить DevKit?</value>
+  </data>
+  <data name="ReasonUnsigned" xml:space="preserve">
+    <value>не подписана, одна копия на всех</value>
+  </data>
+  <data name="ReasonFileVersions" xml:space="preserve">
+    <value>разные версии файла</value>
+  </data>
+  <data name="ReasonSameAssemblyFiles" xml:space="preserve">
+    <value>одна версия сборки, разные файлы</value>
+  </data>
+  <data name="ReasonSame" xml:space="preserve">
+    <value>одинаковые версии</value>
+  </data>
+  <data name="ReasonRedirectOlder" xml:space="preserve">
+    <value>Revit перенаправляет на более старую {0}</value>
+  </data>
+  <data name="ReasonRedirect" xml:space="preserve">
+    <value>Revit перенаправляет на {0}</value>
+  </data>
+  <data name="ReasonVersionFiles" xml:space="preserve">
+    <value>у версии {0} разные файлы</value>
+  </data>
+  <data name="ReasonSigned" xml:space="preserve">
+    <value>подписана, каждая версия загрузится отдельно</value>
+  </data>
+  <data name="ReportDependencies" xml:space="preserve">
+    <value>версии DLL у надстроек</value>
+  </data>
+  <data name="ReportNoDifferences" xml:space="preserve">
+    <value>Расхождений нет.</value>
+  </data>
+  <data name="ReportWhy" xml:space="preserve">
+    <value>Почему</value>
+  </data>
+  <data name="ReportLoaded" xml:space="preserve">
+    <value>Загружена</value>
+  </data>
+  <data name="InMemoryScript" xml:space="preserve">
+    <value>в памяти · скрипт</value>
+  </data>
+  <data name="InMemoryCopy" xml:space="preserve">
+    <value>в памяти · копия {0}</value>
+  </data>
+  <data name="InMemory" xml:space="preserve">
+    <value>в памяти</value>
+  </data>
+  <data name="ReportAssemblies" xml:space="preserve">
+    <value>загруженные сборки</value>
+  </data>
+  <data name="ReportShown" xml:space="preserve">
+    <value>показано {0} из {1}</value>
+  </data>
+  <data name="ColumnAssembly" xml:space="preserve">
+    <value>Сборка</value>
+  </data>
+  <data name="ColumnVersion" xml:space="preserve">
+    <value>Версия</value>
+  </data>
+  <data name="ColumnFileVersion" xml:space="preserve">
+    <value>Версия файла</value>
+  </data>
+  <data name="ColumnOwner" xml:space="preserve">
+    <value>Чья</value>
+  </data>
+  <data name="ColumnPath" xml:space="preserve">
+    <value>Путь</value>
+  </data>
+  <data name="TwinExists" xml:space="preserve">
+    <value>Рядом уже есть {0}: сначала уберите один из двух файлов.</value>
+  </data>
+</root>

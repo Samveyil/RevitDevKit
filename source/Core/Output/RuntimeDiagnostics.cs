@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Output
 {
@@ -24,19 +25,19 @@ namespace RevitDevKit.Core.Output
 
         public static void DumpCompilerEnvironment()
         {
-            ConsoleOutput.Banner("Окружение компилятора");
+            ConsoleOutput.Banner(ConsoleStrings.CompilerEnvironment);
 
             foreach (var name in Watched)
             {
                 ConsoleOutput.WriteLine(name);
 
                 foreach (var line in LoadedVersions(name))
-                    ConsoleOutput.WriteLine("    в процессе: " + line);
+                    ConsoleOutput.WriteLine(string.Format(ConsoleStrings.LoadedInProcess, line));
 
-                ConsoleOutput.WriteLine("    рядом с плагином: " + FileVersion(name));
+                ConsoleOutput.WriteLine(string.Format(ConsoleStrings.NextToAddin, FileVersion(name)));
             }
 
-            ConsoleOutput.WriteLine("Папка плагина: " + (App.PluginDirectory ?? "<неизвестно>"));
+            ConsoleOutput.WriteLine(string.Format(ConsoleStrings.AddinFolder, App.PluginDirectory ?? ConsoleStrings.Unknown));
         }
 
         private static IEnumerable<string> LoadedVersions(string simpleName)
@@ -55,7 +56,7 @@ namespace RevitDevKit.Core.Output
                         continue;
 
                     found.Add(assemblyName.Version + "   " +
-                              (assembly.Location.IsNullOrEmpty() ? "<память>" : assembly.Location));
+                              (assembly.Location.IsNullOrEmpty() ? ConsoleStrings.InMemory : assembly.Location));
                 }
                 catch
                 {
@@ -64,7 +65,7 @@ namespace RevitDevKit.Core.Output
             }
 
             if (found.Count == 0)
-                found.Add("не загружена");
+                found.Add(ConsoleStrings.NotLoaded);
             return found;
         }
 
@@ -74,7 +75,7 @@ namespace RevitDevKit.Core.Output
             {
                 var path = Path.Combine(App.PluginDirectory ?? ".", simpleName + ".dll");
                 if (!File.Exists(path))
-                    return "файла нет";
+                    return ConsoleStrings.NoFile;
 
                 return AssemblyName.GetAssemblyName(path).Version.ToString();
             }

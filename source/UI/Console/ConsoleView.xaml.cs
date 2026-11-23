@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Threading;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.UI.Console
 {
@@ -261,7 +262,7 @@ namespace RevitDevKit.UI.Console
 
             _paragraph.Inlines.InsertBefore(
                 _paragraph.Inlines.FirstInline,
-                new Run("… ранний вывод отброшен …" + Environment.NewLine) { Foreground = Brushes.Gray });
+                new Run(ConsoleStrings.EarlyOutputDropped + Environment.NewLine) { Foreground = Brushes.Gray });
         }
 
         private static Brush BrushFor(LogLevel level)
@@ -283,11 +284,11 @@ namespace RevitDevKit.UI.Console
             try
             {
                 Clipboard.SetText(range.Text);
-                Options?.ReportStatus("Вывод скопирован в буфер обмена");
+                Options?.ReportStatus(ConsoleStrings.Copied);
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Буфер обмена занят:");
+                ConsoleOutput.Exception(ex, ConsoleStrings.ClipboardBusy);
             }
         }
     }

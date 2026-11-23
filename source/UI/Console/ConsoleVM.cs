@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using RevitDevKit.Core.Output;
 using RevitDevKit.Core.Show;
 using System;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.UI.Console
 {
@@ -43,10 +44,10 @@ namespace RevitDevKit.UI.Console
             {
                 switch (ConsoleOptions.OpenPane)
                 {
-                    case ConsolePaneOpening.OnOutput: return "при выводе";
-                    case ConsolePaneOpening.Always: return "всегда";
-                    case ConsolePaneOpening.Never: return "никогда";
-                    default: return "при ошибках";
+                    case ConsolePaneOpening.OnOutput: return ConsoleStrings.OpenPaneOnOutput;
+                    case ConsolePaneOpening.Always: return ConsoleStrings.OpenPaneAlways;
+                    case ConsolePaneOpening.Never: return ConsoleStrings.OpenPaneNever;
+                    default: return ConsoleStrings.OpenPaneOnProblems;
                 }
             }
         }
@@ -66,7 +67,7 @@ namespace RevitDevKit.UI.Console
             }
         }
 
-        public string OpenPaneToolTip => "Открывать консоль после запуска DLL: " + OpenPaneText;
+        public string OpenPaneToolTip => string.Format(ConsoleStrings.OpenPaneToolTip, OpenPaneText);
 
         private static bool Is(ConsolePaneOpening opening) => ConsoleOptions.OpenPane == opening;
 

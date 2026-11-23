@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="RunToolTip" xml:space="preserve">
+    <value>Compile and run (F5 or Ctrl+Enter)</value>
+  </data>
+  <data name="Run" xml:space="preserve">
+    <value>Run (F5)</value>
+  </data>
+  <data name="DebugToolTip" xml:space="preserve">
+    <value>Run under the Visual Studio debugger (Ctrl+F5)</value>
+  </data>
+  <data name="NewTabToolTip" xml:space="preserve">
+    <value>New tab (Ctrl+N)</value>
+  </data>
+  <data name="OpenToolTip" xml:space="preserve">
+    <value>Open a .cs file (Ctrl+O)</value>
+  </data>
+  <data name="SaveToolTip" xml:space="preserve">
+    <value>Save (Ctrl+S)</value>
+  </data>
+  <data name="SaveAsToolTip" xml:space="preserve">
+    <value>Save as (Ctrl+Shift+S)</value>
+  </data>
+  <data name="SamplesToolTip" xml:space="preserve">
+    <value>Insert a ready example into a new tab</value>
+  </data>
+  <data name="Samples" xml:space="preserve">
+    <value>Examples ▾</value>
+  </data>
+  <data name="AutoTransaction" xml:space="preserve">
+    <value>Auto-transaction</value>
+  </data>
+  <data name="AutoTransactionToolTip" xml:space="preserve">
+    <value>Wrap the script in a transaction</value>
+  </data>
+  <data name="AiMenuToolTip" xml:space="preserve">
+    <value>Instructions for an AI: choose what to copy</value>
+  </data>
+  <data name="AiInstructions" xml:space="preserve">
+    <value>Instructions</value>
+  </data>
+  <data name="AiInstructionsToolTip" xml:space="preserve">
+    <value>Paste at the start of a chat with an AI, then describe the task</value>
+  </data>
+  <data name="AiScriptAndErrors" xml:space="preserve">
+    <value>Script and errors</value>
+  </data>
+  <data name="AiScriptAndErrorsToolTip" xml:space="preserve">
+    <value>Instructions plus the current script and its last errors, so the AI can fix or extend it</value>
+  </data>
+  <data name="AiDetailed" xml:space="preserve">
+    <value>Detailed</value>
+  </data>
+  <data name="AiDetailedToolTip" xml:space="preserve">
+    <value>All of BIMPlugins.ExtStorage with signatures: about 3 times the tokens</value>
+  </data>
+  <data name="CloseTab" xml:space="preserve">
+    <value>Close tab</value>
+  </data>
+  <data name="SaveAsMenu" xml:space="preserve">
+    <value>Save as…</value>
+  </data>
+  <data name="ShowInExplorer" xml:space="preserve">
+    <value>Show in File Explorer</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Ready" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="NewScript" xml:space="preserve">
+    <value>New script</value>
+  </data>
+  <data name="ScriptNumber" xml:space="preserve">
+    <value>Script {0}</value>
+    <comment>{0}: the tab's number</comment>
+  </data>
+  <data name="DefaultScriptName" xml:space="preserve">
+    <value>Script</value>
+  </data>
+  <data name="NoDocument" xml:space="preserve">
+    <value>No document open</value>
+  </data>
+  <data name="DocumentContext" xml:space="preserve">
+    <value>Document: {0}</value>
+    <comment>{0}: the document's title</comment>
+  </data>
+  <data name="ContextUnavailable" xml:space="preserve">
+    <value>Context unavailable</value>
+  </data>
+  <data name="ContextReadFailed" xml:space="preserve">
+    <value>Could not read Revit's context: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="OpenFilter" xml:space="preserve">
+    <value>C# files (*.cs;*.csx)|*.cs;*.csx|All files (*.*)|*.*</value>
+  </data>
+  <data name="SaveFilter" xml:space="preserve">
+    <value>C# files (*.cs)|*.cs|All files (*.*)|*.*</value>
+  </data>
+  <data name="Opened" xml:space="preserve">
+    <value>Opened {0}</value>
+    <comment>{0}: the file</comment>
+  </data>
+  <data name="OpenFailed" xml:space="preserve">
+    <value>Could not open the file:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="Saved" xml:space="preserve">
+    <value>Saved: {0}</value>
+    <comment>{0}: the file</comment>
+  </data>
+  <data name="SaveFailed" xml:space="preserve">
+    <value>Could not save the file:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="UnsavedChanges" xml:space="preserve">
+    <value>The tab “{0}” has unsaved changes. Close it?</value>
+    <comment>{0}: the tab's title</comment>
+  </data>
+  <data name="EmptyScript" xml:space="preserve">
+    <value>Empty script</value>
+  </data>
+  <data name="DebuggerNotAttached" xml:space="preserve">
+    <value>Debugger not attached</value>
+  </data>
+  <data name="DebugStop" xml:space="preserve">
+    <value>Debugging: will stop on the script's first line ({0})</value>
+    <comment>{0}: the file</comment>
+  </data>
+  <data name="Compiling" xml:space="preserve">
+    <value>Compiling…</value>
+  </data>
+  <data name="CompilerCrashed" xml:space="preserve">
+    <value>Compiler failure:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="CompileError" xml:space="preserve">
+    <value>Compile error</value>
+  </data>
+  <data name="CompileFailed" xml:space="preserve">
+    <value>Compilation failed: {0}.</value>
+    <comment>{0}: ErrorsOne/Few/Many</comment>
+  </data>
+  <data name="ErrorsOne" xml:space="preserve">
+    <value>{0} error</value>
+    <comment>Russian: 1, 21, 31…</comment>
+  </data>
+  <data name="ErrorsFew" xml:space="preserve">
+    <value>{0} errors</value>
+    <comment>Russian: 2-4, 22-24… (not 12-14)</comment>
+  </data>
+  <data name="ErrorsMany" xml:space="preserve">
+    <value>{0} errors</value>
+    <comment>Russian: other counts</comment>
+  </data>
+  <data name="NoEntryPoint" xml:space="preserve">
+    <value>No entry point in the code: a class with IExternalCommand, or a Main / Run / Execute method, is needed.</value>
+  </data>
+  <data name="NoEntryPointProblem" xml:space="preserve">
+    <value>No entry point: a file with a class, but without IExternalCommand and without a Main / Run / Execute method.</value>
+  </data>
+  <data name="NoEntryPointStatus" xml:space="preserve">
+    <value>No entry point</value>
+  </data>
+  <data name="Compiled" xml:space="preserve">
+    <value>Compiled in {0} ms → {1}</value>
+    <comment>{0}: milliseconds, {1}: what runs</comment>
+  </data>
+  <data name="Running" xml:space="preserve">
+    <value>Running…</value>
+  </data>
+  <data name="Done" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="FinishedWithError" xml:space="preserve">
+    <value>Finished with an error</value>
+  </data>
+  <data name="HandOverFailed" xml:space="preserve">
+    <value>Could not pass the script to Revit:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="RunError" xml:space="preserve">
+    <value>Run error</value>
+  </data>
+  <data name="RunException" xml:space="preserve">
+    <value>Exception at run time: {0}: {1}</value>
+    <comment>{0}: exception type, {1}: message</comment>
+  </data>
+  <data name="AiCopyScript" xml:space="preserve">
+    <value>Copy the instructions, the script and the errors for an AI</value>
+  </data>
+  <data name="AiCopy" xml:space="preserve">
+    <value>Copy the instructions for an AI</value>
+  </data>
+  <data name="AiDetailedSuffix" xml:space="preserve">
+    <value> (detailed)</value>
+  </data>
+  <data name="AiCopied" xml:space="preserve">
+    <value>AI instructions copied: paste them at the start of a chat</value>
+  </data>
+  <data name="AiScriptCopied" xml:space="preserve">
+    <value>Instructions, script and errors copied: paste them into a chat and write what to do</value>
+  </data>
+  <data name="ClipboardFailed" xml:space="preserve">
+    <value>Could not copy to the clipboard: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="CompletionFailed" xml:space="preserve">
+    <value>Completion unavailable: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="SignatureHelpFailed" xml:space="preserve">
+    <value>Parameter hints unavailable: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="CompletionWarmUpFailed" xml:space="preserve">
+    <value>Completion: could not load the assemblies in advance: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="EditorError" xml:space="preserve">
+    <value>Error in the script editor (brackets or hints): {0}: {1}</value>
+    <comment>{0}: exception type, {1}: message</comment>
+  </data>
+  <data name="ScrollCornerFailed" xml:space="preserve">
+    <value>Scroll bar corner not painted: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="Overloads" xml:space="preserve">
+    <value> (+{0} overloads)</value>
+    <comment>{0}: how many more overloads</comment>
+  </data>
+  <data name="DiagnosticError" xml:space="preserve">
+    <value>error</value>
+  </data>
+  <data name="DiagnosticWarning" xml:space="preserve">
+    <value>warning</value>
+  </data>
+  <data name="CompilerFailed" xml:space="preserve">
+    <value>The compiler failed:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="CompilerFailedMessage" xml:space="preserve">
+    <value>The compiler failed: {0}: {1} (details and assembly versions above in the console)</value>
+    <comment>{0}: exception type, {1}: message</comment>
+  </data>
+  <data name="LoadCompiledFailed" xml:space="preserve">
+    <value>Could not load the compiled assembly:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="LoadAssemblyFailed" xml:space="preserve">
+    <value>Could not load the assembly: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="ReferenceNotFound" xml:space="preserve">
+    <value>Reference from #r "{0}" not found</value>
+    <comment>{0}: what #r names</comment>
+  </data>
+  <data name="AiInstructionsFailedReferences" xml:space="preserve">
+    <value>AI instructions: could not collect the references: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="AiInstructionsFailedScriptBase" xml:space="preserve">
+    <value>AI instructions: could not list the members of ScriptBase: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="AiInstructionsFailedExtStorage" xml:space="preserve">
+    <value>AI instructions: could not list BIMPlugins.ExtStorage: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="AiExampleNoWalls" xml:space="preserve">
+    <value>No walls in the view.</value>
+  </data>
+  <data name="AiExampleShown" xml:space="preserve">
+    <value>walls of the view</value>
+  </data>
+  <data name="AiExampleTransaction" xml:space="preserve">
+    <value>Comment</value>
+  </data>
+  <data name="AiExampleComment" xml:space="preserve">
+    <value>checked</value>
+  </data>
+  <data name="AiExampleCount" xml:space="preserve">
+    <value>Walls in the view: {walls.Count}</value>
+    <comment>C# interpolation inside: keep {walls.Count} as is</comment>
+  </data>
+  <data name="NoDocumentForTransaction" xml:space="preserve">
+    <value>No active document to open a transaction in.</value>
+  </data>
+  <data name="NoName" xml:space="preserve">
+    <value>&lt;no name&gt;</value>
+  </data>
+  <data name="DumpClass" xml:space="preserve">
+    <value>Class:     {0}</value>
+    <comment>{0}: the element's class; the label is padded to the width of DumpCategory</comment>
+  </data>
+  <data name="DumpCategory" xml:space="preserve">
+    <value>Category:  {0}</value>
+    <comment>{0}: the element's category</comment>
+  </data>
+  <data name="CompareTooFew" xml:space="preserve">
+    <value>Compare needs at least two elements, and none can be null.</value>
+  </data>
+  <data name="CompareFirst" xml:space="preserve">
+    <value>The first {0} of {1} elements are compared.</value>
+    <comment>{0}: how many compared, {1}: how many given</comment>
+  </data>
+  <data name="CompareBanner" xml:space="preserve">
+    <value>Comparison: {0}</value>
+    <comment>{0}: the elements</comment>
+  </data>
+  <data name="CompareSame" xml:space="preserve">
+    <value>All the parameters are the same.</value>
+  </data>
+  <data name="CompareParameter" xml:space="preserve">
+    <value>Parameter</value>
+  </data>
+  <data name="CompareDifferences" xml:space="preserve">
+    <value>Differences: {0}</value>
+    <comment>{0}: how many</comment>
+  </data>
+  <data name="ValueMissing" xml:space="preserve">
+    <value>-none-</value>
+    <comment>the element has no such parameter</comment>
+  </data>
+  <data name="ValueEmpty" xml:space="preserve">
+    <value>-empty-</value>
+    <comment>the parameter's value is an empty string</comment>
+  </data>
+  <data name="ValueReadFailed" xml:space="preserve">
+    <value>&lt;read error&gt;</value>
+  </data>
+  <data name="OverloadIndex" xml:space="preserve">
+    <value>{0} of {1}</value>
+    <comment>{0}: the overload shown, {1}: how many</comment>
+  </data>
+</root>

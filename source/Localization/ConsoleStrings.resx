@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Console</value>
+  </data>
+  <data name="ClearToolTip" xml:space="preserve">
+    <value>Clear the console (Ctrl+L)</value>
+  </data>
+  <data name="CopyToolTip" xml:space="preserve">
+    <value>Copy all the output to the clipboard</value>
+  </data>
+  <data name="ClearShownToolTip" xml:space="preserve">
+    <value>Clear what was drawn from the views</value>
+  </data>
+  <data name="OpenPaneHeader" xml:space="preserve">
+    <value>Open the console pane after a DLL runs</value>
+  </data>
+  <data name="OpenOnProblems" xml:space="preserve">
+    <value>On errors</value>
+  </data>
+  <data name="OpenOnProblemsToolTip" xml:space="preserve">
+    <value>An exception, or Revit warnings</value>
+  </data>
+  <data name="OpenOnOutput" xml:space="preserve">
+    <value>On any output</value>
+  </data>
+  <data name="OpenOnOutputToolTip" xml:space="preserve">
+    <value>Also when the command wrote anything: Console, Debug, Trace</value>
+  </data>
+  <data name="OpenAlways" xml:space="preserve">
+    <value>Always</value>
+  </data>
+  <data name="OpenNever" xml:space="preserve">
+    <value>Never</value>
+  </data>
+  <data name="OpenNeverToolTip" xml:space="preserve">
+    <value>Only with the Console button on the ribbon</value>
+  </data>
+  <data name="OpenPaneToolTip" xml:space="preserve">
+    <value>Open the console after a DLL runs: {0}</value>
+    <comment>{0}: one of OpenPaneOn...</comment>
+  </data>
+  <data name="OpenPaneOnProblems" xml:space="preserve">
+    <value>on errors</value>
+  </data>
+  <data name="OpenPaneOnOutput" xml:space="preserve">
+    <value>on output</value>
+  </data>
+  <data name="OpenPaneAlways" xml:space="preserve">
+    <value>always</value>
+  </data>
+  <data name="OpenPaneNever" xml:space="preserve">
+    <value>never</value>
+  </data>
+  <data name="ClearOnRun" xml:space="preserve">
+    <value>Clear console</value>
+  </data>
+  <data name="ClearOnRunToolTip" xml:space="preserve">
+    <value>Clear the console before each run</value>
+  </data>
+  <data name="ClearShownOnRun" xml:space="preserve">
+    <value>Clear views</value>
+  </data>
+  <data name="ClearShownOnRunToolTip" xml:space="preserve">
+    <value>Erase what was drawn on the views before each run</value>
+  </data>
+  <data name="HideWarnings" xml:space="preserve">
+    <value>Quiet mode</value>
+  </data>
+  <data name="HideWarningsToolTip" xml:space="preserve">
+    <value>Revit warnings go only to the console, without dialogs</value>
+  </data>
+  <data name="AutoScroll" xml:space="preserve">
+    <value>Auto-scroll</value>
+  </data>
+  <data name="AutoScrollToolTip" xml:space="preserve">
+    <value>Scroll the console to new output</value>
+  </data>
+  <data name="Timestamps" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="TimestampsToolTip" xml:space="preserve">
+    <value>Start lines with the time</value>
+  </data>
+  <data name="ShowDebug" xml:space="preserve">
+    <value>Call stacks</value>
+  </data>
+  <data name="ShowDebugToolTip" xml:space="preserve">
+    <value>Show call stacks</value>
+  </data>
+  <data name="ViewMenu" xml:space="preserve">
+    <value>View ▾</value>
+  </data>
+  <data name="ViewMenuToolTip" xml:space="preserve">
+    <value>How the console shows the output</value>
+  </data>
+  <data name="EarlyOutputDropped" xml:space="preserve">
+    <value>… earlier output dropped …</value>
+  </data>
+  <data name="Copied" xml:space="preserve">
+    <value>Output copied to the clipboard</value>
+  </data>
+  <data name="ClipboardBusy" xml:space="preserve">
+    <value>The clipboard is busy:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="PaneShowFailed" xml:space="preserve">
+    <value>Could not show the console pane: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="TraceRestored" xml:space="preserve">
+    <value>Another add-in removed DevKit's Debug/Trace listener. DevKit added it back.</value>
+  </data>
+  <data name="InnerException" xml:space="preserve">
+    <value>--- inner exception ---</value>
+  </data>
+  <data name="FirstItemsShown" xml:space="preserve">
+    <value>, … (the first {0} shown)</value>
+    <comment>{0}: how many items</comment>
+  </data>
+  <data name="NotInitialized" xml:space="preserve">
+    <value>DevKit is not initialized; restart Revit.</value>
+  </data>
+  <data name="RunDeferred" xml:space="preserve">
+    <value>Revit deferred the run ({0}). Close the open dialogs and try again.</value>
+    <comment>{0}: Revit's ExternalEventRequest</comment>
+  </data>
+  <data name="NoCommandContext" xml:space="preserve">
+    <value>Could not get a Revit command context. The IExternalCommand will run through ExternalEvent, without commandData.</value>
+  </data>
+  <data name="RunBanner" xml:space="preserve">
+    <value>Run: {0}</value>
+    <comment>{0}: the script's or command's title</comment>
+  </data>
+  <data name="DefaultRunTitle" xml:space="preserve">
+    <value>script</value>
+  </data>
+  <data name="AutoTransactionNoDocument" xml:space="preserve">
+    <value>Auto-transaction is on, but there is no active document.</value>
+  </data>
+  <data name="TransactionCommitted" xml:space="preserve">
+    <value>Transaction committed.</value>
+  </data>
+  <data name="TransactionRolledBack" xml:space="preserve">
+    <value>Transaction rolled back.</value>
+  </data>
+  <data name="RunFailed" xml:space="preserve">
+    <value>Run failed ({0} ms):</value>
+    <comment>{0}: milliseconds; followed by the exception</comment>
+  </data>
+  <data name="CompletedHandlerFailed" xml:space="preserve">
+    <value>Error in the completion handler:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="Done" xml:space="preserve">
+    <value>Done in {0} ms.</value>
+    <comment>{0}: milliseconds</comment>
+  </data>
+  <data name="CommandReturned" xml:space="preserve">
+    <value>The command returned {0} ({1} ms).</value>
+    <comment>{0}: Succeeded, Cancelled or Failed; {1}: milliseconds</comment>
+  </data>
+  <data name="RunResult" xml:space="preserve">
+    <value>Result: {0}</value>
+    <comment>{0}: the value the script returned</comment>
+  </data>
+  <data name="CommandContextFound" xml:space="preserve">
+    <value>Revit command context available: {0}</value>
+    <comment>{0}: the ribbon command id</comment>
+  </data>
+  <data name="RibbonCommandNotFound" xml:space="preserve">
+    <value>Ribbon command not found, so commands will run through ExternalEvent.</value>
+  </data>
+  <data name="PostCommandFailed" xml:space="preserve">
+    <value>PostCommand failed ({0}), falling back to ExternalEvent.</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="FailuresNotRead" xml:space="preserve">
+    <value>Revit failures were not read: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="FailureWarning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="FailureError" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="FailureTransaction" xml:space="preserve">
+    <value> · Transaction “{0}”</value>
+    <comment>{0}: the transaction's name</comment>
+  </data>
+  <data name="TimesFew" xml:space="preserve">
+    <value>{0} times</value>
+    <comment>Russian: counts ending in 2, 3, 4 (not 12-14)</comment>
+  </data>
+  <data name="TimesMany" xml:space="preserve">
+    <value>{0} times</value>
+    <comment>Russian: other counts</comment>
+  </data>
+  <data name="FailureRollsBack" xml:space="preserve">
+    <value>  If the error isn't fixed, Revit will roll back the transaction.</value>
+  </data>
+  <data name="FailureQuietMode" xml:space="preserve">
+    <value>  Quiet mode: Revit's dialog was not shown.</value>
+  </data>
+  <data name="FailureElements" xml:space="preserve">
+    <value>  Elements ({0}):</value>
+    <comment>{0}: how many</comment>
+  </data>
+  <data name="FailureNoElements" xml:space="preserve">
+    <value>no elements</value>
+  </data>
+  <data name="FailuresUnsubscribe" xml:space="preserve">
+    <value>Unsubscribing from Revit failures: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="CompilerEnvironment" xml:space="preserve">
+    <value>Compiler environment</value>
+  </data>
+  <data name="LoadedInProcess" xml:space="preserve">
+    <value>    loaded: {0}</value>
+    <comment>{0}: version and location</comment>
+  </data>
+  <data name="NextToAddin" xml:space="preserve">
+    <value>    in the DevKit folder: {0}</value>
+    <comment>{0}: version</comment>
+  </data>
+  <data name="AddinFolder" xml:space="preserve">
+    <value>Add-in folder: {0}</value>
+    <comment>{0}: the folder</comment>
+  </data>
+  <data name="Unknown" xml:space="preserve">
+    <value>&lt;unknown&gt;</value>
+  </data>
+  <data name="InMemory" xml:space="preserve">
+    <value>&lt;memory&gt;</value>
+  </data>
+  <data name="NotLoaded" xml:space="preserve">
+    <value>not loaded</value>
+  </data>
+  <data name="NoFile" xml:space="preserve">
+    <value>no file</value>
+  </data>
+</root>

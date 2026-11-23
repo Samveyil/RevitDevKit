@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Show
 {
@@ -53,7 +54,8 @@ namespace RevitDevKit.Core.Show
         // The document the shapes belong to; views of other documents show nothing.
         public static Document Document { get; private set; }
 
-        // A colour of its own for every Show: orange, green, blue, red, purple, teal, then again.
+        // A colour of its own for every Show: orange, green, blue, red, purple, teal, then again. The Russian names are
+        // what the colours are called in the console in Russian, and taken in Debug.WriteLine(geometry, "красный: ...") in any language.
         internal static readonly Tuple<string, Color>[] Palette =
         {
             Tuple.Create("оранжевый", new Color(255, 128, 0)),
@@ -80,14 +82,15 @@ namespace RevitDevKit.Core.Show
 
                 if (color == null)
                 {
-                    var next = Palette[_nextColor++ % Palette.Length];
-                    shape.Color = next.Item2;
-                    shape.ColorName = next.Item1;
+                    var index = _nextColor++ % Palette.Length;
+                    shape.Color = Palette[index].Item2;
+                    shape.ColorName = ColorName(index);
                 }
                 else
                 {
                     shape.Color = color;
-                    shape.ColorName = Palette.FirstOrDefault(p => Same(p.Item2, color))?.Item1 ?? "RGB " + color.Red + "," + color.Green + "," + color.Blue;
+                    var index = Array.FindIndex(Palette, p => Same(p.Item2, color));
+                    shape.ColorName = index >= 0 ? ColorName(index) : "RGB " + color.Red + "," + color.Green + "," + color.Blue;
                 }
 
                 shape.Label = label;
@@ -103,10 +106,14 @@ namespace RevitDevKit.Core.Show
         public static ShownShape Show(Document document, object what, Color color, string label)
         {
             var shape = Add(document, what, color, label);
-            var line = "Показано: " + shape.What + ", " + shape.ColorName + (label.IsNullOrEmpty() ? "" : " — " + label);
+            var line = string.Format(CoreStrings.Shown, shape.What, shape.ColorName) + (label.IsNullOrEmpty() ? "" : " — " + label);
             ConsoleOutput.WriteLine(line, shape.Lines.Count + shape.Triangles.Count == 0 ? LogLevel.Warning : LogLevel.Info);
             return shape;
         }
+
+        // A colour of the palette as the console names it: "orange", or in Russian "оранжевый".
+        private static string ColorName(int index) =>
+            Language.IsRussian ? Palette[index].Item1 : PaletteNames[index].ToLowerInvariant();
 
         // Out of a run from DevKit (an add-in's own command or event) nothing redraws the views after it: they redraw
         // when Revit is next free. One request covers any number of shapes added before it runs.
@@ -165,7 +172,7 @@ namespace RevitDevKit.Core.Show
             }
 
             try { document?.UpdateAllOpenViews(); }
-            catch (Exception ex) { ConsoleOutput.Debug("Виды не обновлены: " + ex.Message); }
+            catch (Exception ex) { ConsoleOutput.Debug(string.Format(CoreStrings.ViewsNotRefreshed, ex.Message)); }
         }
 
         private static bool IsSame(Document a, Document b)
@@ -335,33 +342,25 @@ namespace RevitDevKit.Core.Show
             }
         }
 
-        // "Solid (6 граней)", "Line", "Wall (12 граней)", "3 объекта: 2 кривые, 1 точка".
+        // "Solid (6 faces)", "Line", "Wall (12 faces)", "list (2 curves, 1 point)"; in Russian "Solid (6 граней)" and so on.
         internal static string Describe(object what, int faces, int curves, int points, int boxes) =>
             Describe(what, new Counts { Faces = faces, Curves = curves, Points = points, Boxes = boxes });
 
         private static string Describe(object what, Counts counts)
         {
-            var name = what == null ? "ничего" : what is Element element ? element.GetType().Name + " " + Id(element.Id) : what.GetType().Name;
-            if (what is IEnumerable && !(what is string) && !(what is GeometryElement)) name = "список";
+            var name = what == null ? CoreStrings.ShowNothing : what is Element element ? element.GetType().Name + " " + Id(element.Id) : what.GetType().Name;
+            if (what is IEnumerable && !(what is string) && !(what is GeometryElement)) name = CoreStrings.ShowList;
 
             var parts = new List<string>();
-            if (counts.Faces > 0) parts.Add(Plural(counts.Faces, "грань", "грани", "граней"));
-            if (counts.Curves > 0) parts.Add(Plural(counts.Curves, "кривая", "кривые", "кривых"));
-            if (counts.Points > 0) parts.Add(Plural(counts.Points, "точка", "точки", "точек"));
-            if (counts.Boxes > 0) parts.Add(Plural(counts.Boxes, "рамка", "рамки", "рамок"));
+            if (counts.Faces > 0) parts.Add(Language.Count(counts.Faces, CoreStrings.FacesOne, CoreStrings.FacesFew, CoreStrings.FacesMany));
+            if (counts.Curves > 0) parts.Add(Language.Count(counts.Curves, CoreStrings.CurvesOne, CoreStrings.CurvesFew, CoreStrings.CurvesMany));
+            if (counts.Points > 0) parts.Add(Language.Count(counts.Points, CoreStrings.PointsOne, CoreStrings.PointsFew, CoreStrings.PointsMany));
+            if (counts.Boxes > 0) parts.Add(Language.Count(counts.Boxes, CoreStrings.BoxesOne, CoreStrings.BoxesFew, CoreStrings.BoxesMany));
 
-            if (parts.Count == 0) return name + " — нечего показать";
+            if (parts.Count == 0) return string.Format(CoreStrings.NothingToShow, name);
             return parts.Count == 1 && (counts.Curves == 1 || counts.Points == 1 || counts.Boxes == 1) && counts.Faces == 0 && !(what is IEnumerable)
                 ? name
                 : name + " (" + string.Join(", ", parts) + ")";
-        }
-
-        internal static string Plural(int n, string one, string few, string many)
-        {
-            var tens = n % 100;
-            var ones = n % 10;
-            var word = tens >= 11 && tens <= 14 ? many : ones == 1 ? one : ones >= 2 && ones <= 4 ? few : many;
-            return n + " " + word;
         }
 
         private static string Id(ElementId id) => id.GetValue().ToString();

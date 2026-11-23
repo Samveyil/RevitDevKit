@@ -1,6 +1,7 @@
 <UserControl x:Class="RevitDevKit.UI.Console.ConsoleView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:RevitDevKit.Localization"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
@@ -19,21 +20,21 @@
         <DockPanel Margin="1">
             <Border DockPanel.Dock="Top" Background="{DynamicResource SelectedTabBrush}" CornerRadius="3 3 0 0" Padding="6 3">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Консоль" VerticalAlignment="Center"/>
+                    <TextBlock Text="{x:Static loc:ConsoleStrings.Title}" VerticalAlignment="Center"/>
 
                     <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding ClearCommand}"
-                            Style="{DynamicResource MaterialDesignFlatButton}" ToolTip="Очистить консоль (Ctrl+L)">
+                            Style="{DynamicResource MaterialDesignFlatButton}" ToolTip="{x:Static loc:ConsoleStrings.ClearToolTip}">
                         <materialDesign:PackIcon Kind="Broom" Width="25" Height="25" Foreground="{DynamicResource IconBrush}"/>
                     </Button>
 
                     <Button Width="22" Height="22" Margin="8 0 0 0" Padding="0" VerticalAlignment="Center" Click="OnCopy"
-                            Style="{DynamicResource MaterialDesignFlatButton}" ToolTip="Скопировать весь вывод в буфер обмена">
+                            Style="{DynamicResource MaterialDesignFlatButton}" ToolTip="{x:Static loc:ConsoleStrings.CopyToolTip}">
                         <materialDesign:PackIcon Kind="ContentCopy" Width="22" Height="22" Foreground="{DynamicResource IconBrush}"/>
                     </Button>
 
                     <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding ClearShownCommand}"
                             Style="{DynamicResource MaterialDesignFlatButton}"
-                            ToolTip="Очистить виды от нарисованного">
+                            ToolTip="{x:Static loc:ConsoleStrings.ClearShownToolTip}">
                         <materialDesign:PackIcon Kind="VectorSquareRemove" Width="25" Height="25" Foreground="{DynamicResource IconBrush}"/>
                     </Button>
 
@@ -49,51 +50,51 @@
                         </materialDesign:PopupBox.ToggleContent>
 
                             <StackPanel Margin="12 8">
-                                <TextBlock Text="Открывать панель консоли после запуска DLL" Opacity="0.7" Margin="0 0 0 6"/>
-                                <RadioButton Content="При ошибках" Padding="4 0" GroupName="OpenPane" IsChecked="{Binding IsOpenOnProblems}"
-                                             ToolTip="Исключение или предупреждения Revit"/>
-                                <RadioButton Content="При любом выводе" Margin="0 8 0 0" Padding="4 0" GroupName="OpenPane" IsChecked="{Binding IsOpenOnOutput}"
-                                             ToolTip="Ещё и когда команда что-то написала: Console, Debug, Trace"/>
-                                <RadioButton Content="Всегда" Margin="0 8 0 0" Padding="4 0" GroupName="OpenPane" IsChecked="{Binding IsOpenAlways}"/>
-                                <RadioButton Content="Никогда" Margin="0 8 0 0" Padding="4 0" GroupName="OpenPane" IsChecked="{Binding IsOpenNever}"
-                                             ToolTip="Только кнопкой Console на ленте"/>
+                                <TextBlock Text="{x:Static loc:ConsoleStrings.OpenPaneHeader}" Opacity="0.7" Margin="0 0 0 6"/>
+                                <RadioButton Content="{x:Static loc:ConsoleStrings.OpenOnProblems}" Padding="4 0" GroupName="OpenPane" IsChecked="{Binding IsOpenOnProblems}"
+                                             ToolTip="{x:Static loc:ConsoleStrings.OpenOnProblemsToolTip}"/>
+                                <RadioButton Content="{x:Static loc:ConsoleStrings.OpenOnOutput}" Margin="0 8 0 0" Padding="4 0" GroupName="OpenPane" IsChecked="{Binding IsOpenOnOutput}"
+                                             ToolTip="{x:Static loc:ConsoleStrings.OpenOnOutputToolTip}"/>
+                                <RadioButton Content="{x:Static loc:ConsoleStrings.OpenAlways}" Margin="0 8 0 0" Padding="4 0" GroupName="OpenPane" IsChecked="{Binding IsOpenAlways}"/>
+                                <RadioButton Content="{x:Static loc:ConsoleStrings.OpenNever}" Margin="0 8 0 0" Padding="4 0" GroupName="OpenPane" IsChecked="{Binding IsOpenNever}"
+                                             ToolTip="{x:Static loc:ConsoleStrings.OpenNeverToolTip}"/>
                             </StackPanel>
                     </materialDesign:PopupBox>
 
                     <Border Style="{DynamicResource ToolbarSeparator}"/>
 
                     <!-- What a run from DevKit does with the console: one setting for Script Editor and Add-in Explorer. -->
-                    <CheckBox Content="Чистить консоль" VerticalAlignment="Center" Padding="2 0" IsChecked="{Binding IsClearOnRun}"
-                              ToolTip="Очищать консоль перед каждым запуском"/>
-                    <CheckBox Content="Чистить виды" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsClearShownOnRun}"
-                              ToolTip="Стирать с видов нарисованное перед каждым запуском"/>
-                    <CheckBox Content="Тихий режим" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsHideWarnings}"
-                              ToolTip="Предупреждения Revit — только в консоль, без окон"/>
+                    <CheckBox Content="{x:Static loc:ConsoleStrings.ClearOnRun}" VerticalAlignment="Center" Padding="2 0" IsChecked="{Binding IsClearOnRun}"
+                              ToolTip="{x:Static loc:ConsoleStrings.ClearOnRunToolTip}"/>
+                    <CheckBox Content="{x:Static loc:ConsoleStrings.ClearShownOnRun}" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsClearShownOnRun}"
+                              ToolTip="{x:Static loc:ConsoleStrings.ClearShownOnRunToolTip}"/>
+                    <CheckBox Content="{x:Static loc:ConsoleStrings.HideWarnings}" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsHideWarnings}"
+                              ToolTip="{x:Static loc:ConsoleStrings.HideWarningsToolTip}"/>
 
 
                     <Border Style="{DynamicResource ToolbarSeparator}"/>
 
                     <!-- How the console shows its output. The console pane has room for the checkboxes; Script Editor puts them
-                         in a menu (IsViewMenu), framed as Примеры there, so its header stays one short row. -->
+                         in a menu (IsViewMenu), framed as the Examples menu there, so its header stays one short row. -->
                     <StackPanel x:Name="ViewInline" Orientation="Horizontal">
-                        <CheckBox Content="Автопрокрутка" VerticalAlignment="Center" Padding="2 0" IsChecked="{Binding IsAutoScroll}" ToolTip="Прокручивать консоль к новому выводу"/>
-                        <CheckBox Content="Время" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsTimestamps}" ToolTip="Начинать строки со времени"/>
-                        <CheckBox Content="Стек вызовов" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsShowDebug}" ToolTip="Показывать стеки вызовов"/>
+                        <CheckBox Content="{x:Static loc:ConsoleStrings.AutoScroll}" VerticalAlignment="Center" Padding="2 0" IsChecked="{Binding IsAutoScroll}" ToolTip="{x:Static loc:ConsoleStrings.AutoScrollToolTip}"/>
+                        <CheckBox Content="{x:Static loc:ConsoleStrings.Timestamps}" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsTimestamps}" ToolTip="{x:Static loc:ConsoleStrings.TimestampsToolTip}"/>
+                        <CheckBox Content="{x:Static loc:ConsoleStrings.ShowDebug}" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsShowDebug}" ToolTip="{x:Static loc:ConsoleStrings.ShowDebugToolTip}"/>
                     </StackPanel>
 
                     <Border x:Name="ViewMenu" Visibility="Collapsed" Height="23" BorderThickness="1" BorderBrush="{DynamicResource BIMPlugins.PrimaryBrush}" CornerRadius="3" VerticalAlignment="Center">
-                        <materialDesign:PopupBox x:Name="ViewOptions" StaysOpen="True" VerticalAlignment="Stretch" ToolTip="Как консоль показывает вывод">
+                        <materialDesign:PopupBox x:Name="ViewOptions" StaysOpen="True" VerticalAlignment="Stretch" ToolTip="{x:Static loc:ConsoleStrings.ViewMenuToolTip}">
                             <materialDesign:PopupBox.ToggleContent>
-                                <TextBlock Text="Вид ▾" Margin="10 0 8 0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{x:Static loc:ConsoleStrings.ViewMenu}" Margin="10 0 8 0" VerticalAlignment="Center"/>
                             </materialDesign:PopupBox.ToggleContent>
 
                             <StackPanel Margin="12 8">
-                                <CheckBox Content="Автопрокрутка" Padding="4 0" IsChecked="{Binding IsAutoScroll}"
-                                          ToolTip="Прокручивать консоль к новому выводу"/>
-                                <CheckBox Content="Время" Margin="0 8 0 0" Padding="4 0" IsChecked="{Binding IsTimestamps}"
-                                          ToolTip="Начинать строки со времени"/>
-                                <CheckBox Content="Стек вызовов" Margin="0 8 0 0" Padding="4 0" IsChecked="{Binding IsShowDebug}"
-                                          ToolTip="Показывать стеки вызовов"/>
+                                <CheckBox Content="{x:Static loc:ConsoleStrings.AutoScroll}" Padding="4 0" IsChecked="{Binding IsAutoScroll}"
+                                          ToolTip="{x:Static loc:ConsoleStrings.AutoScrollToolTip}"/>
+                                <CheckBox Content="{x:Static loc:ConsoleStrings.Timestamps}" Margin="0 8 0 0" Padding="4 0" IsChecked="{Binding IsTimestamps}"
+                                          ToolTip="{x:Static loc:ConsoleStrings.TimestampsToolTip}"/>
+                                <CheckBox Content="{x:Static loc:ConsoleStrings.ShowDebug}" Margin="0 8 0 0" Padding="4 0" IsChecked="{Binding IsShowDebug}"
+                                          ToolTip="{x:Static loc:ConsoleStrings.ShowDebugToolTip}"/>
                             </StackPanel>
                         </materialDesign:PopupBox>
                     </Border>

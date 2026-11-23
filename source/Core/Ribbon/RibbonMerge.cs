@@ -12,6 +12,7 @@ using System.Resources;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Adw = Autodesk.Windows;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Ribbon
 {
@@ -47,10 +48,10 @@ namespace RevitDevKit.Core.Ribbon
                 .ToList();
 
             if (missing.Count > 0)
-                throw new NotSupportedException("В этой версии Revit лента устроена иначе — не найдены " + string.Join(", ", missing) + ".");
+                throw new NotSupportedException(string.Format(CoreStrings.RibbonUnsupported, string.Join(", ", missing)));
 
             if (Ribbon == null || Registry == null)
-                throw new InvalidOperationException("Лента Revit ещё не создана.");
+                throw new InvalidOperationException(CoreStrings.RibbonNotCreated);
         }
 
         public static Adw.RibbonControl Ribbon => Adw.ComponentManager.Ribbon;
@@ -111,7 +112,7 @@ namespace RevitDevKit.Core.Ribbon
             for (var i = _undo.Count - 1; i >= 0; i--)
             {
                 try { _undo[i](); }
-                catch (Exception ex) { ConsoleOutput.Debug("Откат ленты: " + ex.Message); }
+                catch (Exception ex) { ConsoleOutput.Debug(string.Format(CoreStrings.RibbonRevert, ex.Message)); }
             }
 
             _undo.Clear();
@@ -573,7 +574,7 @@ namespace RevitDevKit.Core.Ribbon
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Лента: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(CoreStrings.RibbonError, ex.Message));
             }
         }
 
@@ -666,7 +667,7 @@ namespace RevitDevKit.Core.Ribbon
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Warning("Не удалось перехватить Application.LoadComponent: " + ex.Message);
+                ConsoleOutput.Warning(string.Format(CoreStrings.LoadComponentHookFailed, ex.Message));
             }
         }
 
@@ -695,7 +696,7 @@ namespace RevitDevKit.Core.Ribbon
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Ресурсы WPF для " + component?.GetType().FullName + " не перенаправлены: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(CoreStrings.WpfResourcesForNotRedirected, component?.GetType().FullName, ex.Message));
             }
         }
 
@@ -719,7 +720,7 @@ namespace RevitDevKit.Core.Ribbon
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Ресурсы WPF не перенаправлены: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(CoreStrings.WpfResourcesNotRedirected, ex.Message));
             }
 
             return new Unpin(managers, folder);
@@ -758,7 +759,7 @@ namespace RevitDevKit.Core.Ribbon
                 }
                 catch (Exception ex)
                 {
-                    ConsoleOutput.Debug("Иконка «" + item.Name + "» не перечитана: " + ex.Message);
+                    ConsoleOutput.Debug(string.Format(CoreStrings.IconNotReread, item.Name, ex.Message));
                 }
             }
         }
@@ -834,7 +835,7 @@ namespace RevitDevKit.Core.Ribbon
                 }
                 catch (Exception ex)
                 {
-                    ConsoleOutput.Debug("Ресурсы WPF не возвращены: " + ex.Message);
+                    ConsoleOutput.Debug(string.Format(CoreStrings.WpfResourcesNotRestored, ex.Message));
                 }
             }
         }

@@ -1,0 +1,478 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="RunToolTip" xml:space="preserve">
+    <value>Run the command (F5)</value>
+  </data>
+  <data name="Run" xml:space="preserve">
+    <value>Run (F5)</value>
+  </data>
+  <data name="DebugToolTip" xml:space="preserve">
+    <value>Run under the Visual Studio debugger (Ctrl+F5)</value>
+  </data>
+  <data name="AddDllToolTip" xml:space="preserve">
+    <value>Add a DLL (Ctrl+O)</value>
+  </data>
+  <data name="ShowDllToolTip" xml:space="preserve">
+    <value>Show the DLL in File Explorer</value>
+  </data>
+  <data name="ApplyToolTip" xml:space="preserve">
+    <value>Update the ribbon from the fresh DLL (F5)</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Refresh (F5)</value>
+  </data>
+  <data name="AddAppToolTip" xml:space="preserve">
+    <value>Add a DLL and update the ribbon (Ctrl+O)</value>
+  </data>
+  <data name="RevertToolTip" xml:space="preserve">
+    <value>Restore the ribbon as the .addin created it</value>
+  </data>
+  <data name="RemoveAppToolTip" xml:space="preserve">
+    <value>Restore the ribbon and remove the DLL from the list</value>
+  </data>
+  <data name="RescanToolTip" xml:space="preserve">
+    <value>Read the add-in folders again (F5)</value>
+  </data>
+  <data name="ShowAddinToolTip" xml:space="preserve">
+    <value>Show the .addin in File Explorer</value>
+  </data>
+  <data name="OpenAddinToolTip" xml:space="preserve">
+    <value>Open the .addin in Notepad (Ctrl+O)</value>
+  </data>
+  <data name="CheckToolTip" xml:space="preserve">
+    <value>Check the add-ins' DLLs (F5)</value>
+  </data>
+  <data name="Check" xml:space="preserve">
+    <value>Check (F5)</value>
+  </data>
+  <data name="SaveReportToolTip" xml:space="preserve">
+    <value>Save the report to a .md file</value>
+  </data>
+  <data name="ShowSelectedDllToolTip" xml:space="preserve">
+    <value>Show the selected DLL in File Explorer</value>
+  </data>
+  <data name="OnlyConflicts" xml:space="preserve">
+    <value>Conflicts only</value>
+  </data>
+  <data name="OnlyConflictsToolTip" xml:space="preserve">
+    <value>Clear to see all the shared DLLs</value>
+  </data>
+  <data name="RefreshAssembliesToolTip" xml:space="preserve">
+    <value>Refresh the list of assemblies (F5)</value>
+  </data>
+  <data name="SaveListToolTip" xml:space="preserve">
+    <value>Save the list to a .md file</value>
+  </data>
+  <data name="ShowSelectedAssemblyToolTip" xml:space="preserve">
+    <value>Show the selected assembly in File Explorer</value>
+  </data>
+  <data name="HideSystem" xml:space="preserve">
+    <value>Hide system</value>
+  </data>
+  <data name="HideSystemToolTip" xml:space="preserve">
+    <value>Hide .NET, GAC, Revit and in-memory assemblies</value>
+  </data>
+  <data name="CollapseAll" xml:space="preserve">
+    <value>Collapse all</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="RefreshCommands" xml:space="preserve">
+    <value>Refresh the command list</value>
+  </data>
+  <data name="ShowInExplorer" xml:space="preserve">
+    <value>Show in File Explorer</value>
+  </data>
+  <data name="RemoveFromList" xml:space="preserve">
+    <value>Remove from the list</value>
+  </data>
+  <data name="NoCommands" xml:space="preserve">
+    <value>   — no IExternalCommand</value>
+  </data>
+  <data name="AddDllHint" xml:space="preserve">
+    <value>Add a DLL with the folder button or Ctrl+O</value>
+  </data>
+  <data name="NothingFound" xml:space="preserve">
+    <value>Nothing found</value>
+  </data>
+  <data name="RefreshMenu" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="RevertMenu" xml:space="preserve">
+    <value>Restore as it was</value>
+  </data>
+  <data name="AddAppHint" xml:space="preserve">
+    <value>Add a DLL with an IExternalApplication with the folder button or Ctrl+O</value>
+  </data>
+  <data name="RestartNeeded" xml:space="preserve">
+    <value>The changes apply at the next start of Revit</value>
+  </data>
+  <data name="OpenAddinMenu" xml:space="preserve">
+    <value>Open the .addin</value>
+  </data>
+  <data name="LoadAtStartupToolTip" xml:space="preserve">
+    <value>Load when Revit starts</value>
+  </data>
+  <data name="NoAddins" xml:space="preserve">
+    <value>There are no .addin files in this Revit version's add-in folders</value>
+  </data>
+  <data name="CopyPath" xml:space="preserve">
+    <value>Copy path</value>
+  </data>
+  <data name="LoadedMark" xml:space="preserve">
+    <value>● loaded</value>
+  </data>
+  <data name="NoConflicts" xml:space="preserve">
+    <value>No conflicts</value>
+  </data>
+  <data name="AsInAddin" xml:space="preserve">
+    <value>as in the .addin</value>
+  </data>
+  <data name="NoApplication" xml:space="preserve">
+    <value>no IExternalApplication</value>
+  </data>
+  <data name="DllFilter" xml:space="preserve">
+    <value>.NET assemblies (*.dll)|*.dll|All files (*.*)|*.*</value>
+  </data>
+  <data name="ApplyingRibbon" xml:space="preserve">
+    <value>Updating the ribbon from {0}</value>
+    <comment>{0}: the DLL</comment>
+  </data>
+  <data name="RevertingRibbon" xml:space="preserve">
+    <value>Restoring the ribbon of {0}</value>
+    <comment>{0}: the DLL</comment>
+  </data>
+  <data name="AppliedAt" xml:space="preserve">
+    <value>updated at {0}</value>
+    <comment>{0}: the time</comment>
+  </data>
+  <data name="AppListSaveFailed" xml:space="preserve">
+    <value>Could not save the list of applications: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="AppListReadFailed" xml:space="preserve">
+    <value>Could not read the list of applications: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="FileVersionLine" xml:space="preserve">
+    <value>
+File version {0}</value>
+    <comment>starts with a line break; {0}: the version</comment>
+  </data>
+  <data name="LoadedTimesOne" xml:space="preserve">
+    <value>
+Loaded {0} time: </value>
+    <comment>starts with a line break, followed by the copies; never used for 1, kept for the plural set</comment>
+  </data>
+  <data name="LoadedTimesFew" xml:space="preserve">
+    <value>
+Loaded {0} times: </value>
+    <comment>Russian: 2-4, 22-24…</comment>
+  </data>
+  <data name="LoadedTimesMany" xml:space="preserve">
+    <value>
+Loaded {0} times: </value>
+    <comment>Russian: other counts</comment>
+  </data>
+  <data name="AssemblyListFailed" xml:space="preserve">
+    <value>Could not get the list of assemblies:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="AssembliesStatus" xml:space="preserve">
+    <value>Loaded: {0} · shown: {1}</value>
+    <comment>{0}: how many loaded, {1}: how many shown</comment>
+  </data>
+  <data name="ListSaved" xml:space="preserve">
+    <value>List saved: {0}</value>
+    <comment>{0}: the file</comment>
+  </data>
+  <data name="ListSaveFailed" xml:space="preserve">
+    <value>Could not save the list:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="PathCopied" xml:space="preserve">
+    <value>Path copied</value>
+  </data>
+  <data name="PathCopyFailed" xml:space="preserve">
+    <value>Could not copy the path:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Could not load {0}:</value>
+    <comment>{0}: the DLL; followed by the exception</comment>
+  </data>
+  <data name="BreakpointsWillHit" xml:space="preserve">
+    <value>Breakpoints in the {0} project will be hit.</value>
+    <comment>{0}: the DLL</comment>
+  </data>
+  <data name="CommandMissing" xml:space="preserve">
+    <value>{0} no longer has command {1}.</value>
+    <comment>{0}: the DLL, {1}: the command's class</comment>
+  </data>
+  <data name="RefreshCommandList" xml:space="preserve">
+    <value> Refresh the command list.</value>
+    <comment>starts with a space, follows CommandMissing</comment>
+  </data>
+  <data name="RunHandOverFailed" xml:space="preserve">
+    <value>Could not pass the command to Revit:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="DllListSaveFailed" xml:space="preserve">
+    <value>Could not save the list of DLLs: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="DllListReadFailed" xml:space="preserve">
+    <value>Could not read the list of DLLs: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="NotLoadedYet" xml:space="preserve">
+    <value>not loaded yet</value>
+  </data>
+  <data name="LoadedFrom" xml:space="preserve">
+    <value>loaded {0}</value>
+    <comment>{0}: the copies joined with LoadedAnd</comment>
+  </data>
+  <data name="LoadedAnd" xml:space="preserve">
+    <value> and </value>
+  </data>
+  <data name="VersionFrom" xml:space="preserve">
+    <value>{0} from {1}</value>
+    <comment>{0}: version, {1}: add-in or folder</comment>
+  </data>
+  <data name="UnsignedTip" xml:space="preserve">
+    <value>Not signed: every add-in gets one copy, the one loaded first. An older version (in red) may break an add-in.</value>
+  </data>
+  <data name="RedirectOlderTip" xml:space="preserve">
+    <value>Revit.exe.config redirects to an older version than the add-in was built against (in red).</value>
+  </data>
+  <data name="FileOnlyTip" xml:space="preserve">
+    <value>All add-ins share one copy of this version, whichever file loads first. Usually fine.</value>
+  </data>
+  <data name="SideBySideTip" xml:space="preserve">
+    <value>Signed: each version of the assembly loads separately, each add-in gets its own.</value>
+  </data>
+  <data name="SameVersionTip" xml:space="preserve">
+    <value>All add-ins use the same version.</value>
+  </data>
+  <data name="CopyNative" xml:space="preserve">
+    <value>, native DLL</value>
+  </data>
+  <data name="CopyAssemblyVersion" xml:space="preserve">
+    <value>, assembly version {0}</value>
+    <comment>{0}: the version</comment>
+  </data>
+  <data name="CopySigned" xml:space="preserve">
+    <value>, signed ({0})</value>
+    <comment>{0}: the public key token</comment>
+  </data>
+  <data name="CopyUnsigned" xml:space="preserve">
+    <value>, not signed</value>
+  </data>
+  <data name="CopyGetsVersion" xml:space="preserve">
+    <value>
+Gets version {0}</value>
+    <comment>starts with a line break; {0}: the version</comment>
+  </data>
+  <data name="PressCheck" xml:space="preserve">
+    <value>Press “Check”</value>
+  </data>
+  <data name="Checking" xml:space="preserve">
+    <value>Checking…</value>
+  </data>
+  <data name="CheckedAt" xml:space="preserve">
+    <value>Checked at {0} · {1}</value>
+    <comment>{0}: the time, {1}: NoConflictsShort or ConflictsCount</comment>
+  </data>
+  <data name="NoConflictsShort" xml:space="preserve">
+    <value>no conflicts</value>
+  </data>
+  <data name="ConflictsCount" xml:space="preserve">
+    <value>conflicts: {0}</value>
+    <comment>{0}: how many</comment>
+  </data>
+  <data name="CheckFailed" xml:space="preserve">
+    <value>Could not check the add-ins' dependencies:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="CheckFailedStatus" xml:space="preserve">
+    <value>The check failed, details in the console</value>
+  </data>
+  <data name="SectionConflicts" xml:space="preserve">
+    <value>Conflicts</value>
+  </data>
+  <data name="SectionSideBySide" xml:space="preserve">
+    <value>Load side by side</value>
+  </data>
+  <data name="SectionSame" xml:space="preserve">
+    <value>Same version in several add-ins</value>
+  </data>
+  <data name="SectionAutodesk" xml:space="preserve">
+    <value>Revit and Autodesk only</value>
+  </data>
+  <data name="ReportSaved" xml:space="preserve">
+    <value>Report saved: {0}</value>
+    <comment>{0}: the file</comment>
+  </data>
+  <data name="ReportSaveFailed" xml:space="preserve">
+    <value>Could not save the report:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="Unreadable" xml:space="preserve">
+    <value>unreadable: {0}</value>
+    <comment>{0}: the error</comment>
+  </data>
+  <data name="Twin" xml:space="preserve">
+    <value>both {0} and {1} exist</value>
+    <comment>{0}: name.addin, {1}: name.addin.disable</comment>
+  </data>
+  <data name="DllNotFound" xml:space="preserve">
+    <value>DLL not found: {0}</value>
+    <comment>{0}: the DLL</comment>
+  </data>
+  <data name="ReadOnly" xml:space="preserve">
+    <value>read-only: administrator rights needed</value>
+  </data>
+  <data name="Disabled" xml:space="preserve">
+    <value>disabled · {0}</value>
+    <comment>{0}: the file</comment>
+  </data>
+  <data name="ApplicationsOne" xml:space="preserve">
+    <value>{0} application</value>
+  </data>
+  <data name="ApplicationsFew" xml:space="preserve">
+    <value>{0} applications</value>
+  </data>
+  <data name="ApplicationsMany" xml:space="preserve">
+    <value>{0} applications</value>
+  </data>
+  <data name="CommandsOne" xml:space="preserve">
+    <value>{0} command</value>
+  </data>
+  <data name="CommandsFew" xml:space="preserve">
+    <value>{0} commands</value>
+  </data>
+  <data name="CommandsMany" xml:space="preserve">
+    <value>{0} commands</value>
+  </data>
+  <data name="Empty" xml:space="preserve">
+    <value>empty</value>
+  </data>
+  <data name="ForCurrentUser" xml:space="preserve">
+    <value>For the current user · {0}</value>
+    <comment>{0}: the folder</comment>
+  </data>
+  <data name="ForAllUsers" xml:space="preserve">
+    <value>For all users · {0}</value>
+    <comment>{0}: the folder</comment>
+  </data>
+  <data name="FolderNotFound" xml:space="preserve">
+    <value>folder not found</value>
+  </data>
+  <data name="AddinFoldersReadFailed" xml:space="preserve">
+    <value>Could not read the add-in folders:</value>
+    <comment>followed by the exception</comment>
+  </data>
+  <data name="EnableFailed" xml:space="preserve">
+    <value>Could not enable {0}: {1}</value>
+    <comment>{0}: the add-in, {1}: the error</comment>
+  </data>
+  <data name="DisableFailed" xml:space="preserve">
+    <value>Could not disable {0}: {1}</value>
+    <comment>{0}: the add-in, {1}: the error</comment>
+  </data>
+  <data name="DisableDevKit" xml:space="preserve">
+    <value>After Revit restarts, DevKit will not load and this window will be gone.
+
+You can turn it back on by renaming RevitDevKit.addin.disable to RevitDevKit.addin in the add-in folder.
+
+Disable DevKit?</value>
+  </data>
+  <data name="ReasonUnsigned" xml:space="preserve">
+    <value>not signed, one copy for everyone</value>
+  </data>
+  <data name="ReasonFileVersions" xml:space="preserve">
+    <value>different file versions</value>
+  </data>
+  <data name="ReasonSameAssemblyFiles" xml:space="preserve">
+    <value>one assembly version, different files</value>
+  </data>
+  <data name="ReasonSame" xml:space="preserve">
+    <value>the same versions</value>
+  </data>
+  <data name="ReasonRedirectOlder" xml:space="preserve">
+    <value>Revit redirects to the older {0}</value>
+    <comment>{0}: the version</comment>
+  </data>
+  <data name="ReasonRedirect" xml:space="preserve">
+    <value>Revit redirects to {0}</value>
+    <comment>{0}: the version</comment>
+  </data>
+  <data name="ReasonVersionFiles" xml:space="preserve">
+    <value>version {0} has different files</value>
+    <comment>{0}: the version</comment>
+  </data>
+  <data name="ReasonSigned" xml:space="preserve">
+    <value>signed, each version loads separately</value>
+  </data>
+  <data name="ReportDependencies" xml:space="preserve">
+    <value>DLL versions of the add-ins</value>
+  </data>
+  <data name="ReportNoDifferences" xml:space="preserve">
+    <value>No differences.</value>
+  </data>
+  <data name="ReportWhy" xml:space="preserve">
+    <value>Why</value>
+  </data>
+  <data name="ReportLoaded" xml:space="preserve">
+    <value>Loaded</value>
+  </data>
+  <data name="InMemoryScript" xml:space="preserve">
+    <value>in memory · script</value>
+  </data>
+  <data name="InMemoryCopy" xml:space="preserve">
+    <value>in memory · copy of {0}</value>
+    <comment>{0}: the DLL</comment>
+  </data>
+  <data name="InMemory" xml:space="preserve">
+    <value>in memory</value>
+  </data>
+  <data name="ReportAssemblies" xml:space="preserve">
+    <value>loaded assemblies</value>
+  </data>
+  <data name="ReportShown" xml:space="preserve">
+    <value>{0} of {1} shown</value>
+    <comment>{0}: how many shown, {1}: how many in all</comment>
+  </data>
+  <data name="ColumnAssembly" xml:space="preserve">
+    <value>Assembly</value>
+  </data>
+  <data name="ColumnVersion" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="ColumnFileVersion" xml:space="preserve">
+    <value>File version</value>
+  </data>
+  <data name="ColumnOwner" xml:space="preserve">
+    <value>Owner</value>
+  </data>
+  <data name="ColumnPath" xml:space="preserve">
+    <value>Path</value>
+  </data>
+  <data name="TwinExists" xml:space="preserve">
+    <value>{0} is already next to it: remove one of the two files first.</value>
+    <comment>{0}: the file</comment>
+  </data>
+</root>

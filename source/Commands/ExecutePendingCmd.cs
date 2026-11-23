@@ -2,6 +2,7 @@ using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using RevitDevKit.Core.Running;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Commands
 {
@@ -41,8 +42,7 @@ namespace RevitDevKit.Commands
 
             if (request == null)
             {
-                TaskDialog.Show("DevKit",
-                    "Нечего повторять. Запустите скрипт в Script Editor или команду в Add-in Explorer хотя бы один раз.");
+                TaskDialog.Show("DevKit", RibbonStrings.NothingToRepeat);
                 return Result.Cancelled;
             }
 

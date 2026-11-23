@@ -1,5 +1,6 @@
 using BIMPlugins.ExtStorage.Extensions;
 using RevitDevKit.Core.Output;
+using RevitDevKit.Localization;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -53,7 +54,7 @@ namespace RevitDevKit.Core.Compiler
         public static LoadedAssembly LoadFromFile(string path)
         {
             if (!File.Exists(path))
-                throw new FileNotFoundException("DLL не найдена", path);
+                throw new FileNotFoundException(CoreStrings.DllNotFound, path);
 
             var original = Path.GetFullPath(path);
             var sourceDir = Path.GetDirectoryName(original);
@@ -184,7 +185,7 @@ namespace RevitDevKit.Core.Compiler
         {
             var file = new FileInfo(Path.GetFullPath(path));
             if (!file.Exists)
-                throw new FileNotFoundException("DLL не найдена", file.FullName);
+                throw new FileNotFoundException(CoreStrings.DllNotFound, file.FullName);
 
             lock (Sync)
             {
@@ -197,8 +198,8 @@ namespace RevitDevKit.Core.Compiler
                 if (cached != null)
                 {
                     ConsoleOutput.Debug(ScriptAssemblyLoader.TryUnload(cached.Loaded)
-                        ? "Предыдущая версия " + loaded.DisplayName + " выгружена."
-                        : "Загружена новая версия " + loaded.DisplayName + "; прежняя останется в памяти до перезапуска Revit.");
+                        ? string.Format(CoreStrings.PreviousUnloaded, loaded.DisplayName)
+                        : string.Format(CoreStrings.NewVersionLoaded, loaded.DisplayName));
                 }
 
                 Cache[file.FullName] = new Entry(loaded, file.LastWriteTimeUtc, file.Length);

@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.UI.ScriptEditor
 {
@@ -48,7 +49,7 @@ namespace RevitDevKit.UI.ScriptEditor
             }
         }
 
-        public string CurrentIndexText => (_selectedIndex + 1) + " из " + Count;
+        public string CurrentIndexText => string.Format(ScriptEditorStrings.OverloadIndex, _selectedIndex + 1, Count);
 
         public object CurrentHeader
         {

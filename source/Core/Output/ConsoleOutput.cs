@@ -7,6 +7,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Output
 {
@@ -127,7 +128,7 @@ namespace RevitDevKit.Core.Output
                 if (Trace.Listeners.Contains(_traceListener)) return;
 
                 Trace.Listeners.Add(_traceListener);
-                Debug("Перехват Debug/Trace был снят другой надстройкой — восстановлен.");
+                Debug(ConsoleStrings.TraceRestored);
             }
         }
 
@@ -212,7 +213,7 @@ namespace RevitDevKit.Core.Output
                 current = current.InnerException;
                 depth++;
                 if (current != null)
-                    WriteLine(new string(' ', depth * 2) + "--- внутреннее исключение ---", LogLevel.Error);
+                    WriteLine(new string(' ', depth * 2) + ConsoleStrings.InnerException, LogLevel.Error);
             }
         }
 
@@ -237,7 +238,7 @@ namespace RevitDevKit.Core.Output
                 {
                     if (count >= 200)
                     {
-                        sb.Append(", … (показаны первые 200)");
+                        sb.Append(string.Format(ConsoleStrings.FirstItemsShown, 200));
                         break;
                     }
 

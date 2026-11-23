@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Ribbon
 {
@@ -59,14 +60,14 @@ namespace RevitDevKit.Core.Ribbon
         public static PreviewState Apply(string path)
         {
             if (_application == null)
-                throw new InvalidOperationException("DevKit не инициализирован — перезапустите Revit.");
+                throw new InvalidOperationException(CoreStrings.NotInitialized);
 
             RibbonAccess.Verify();
             PackResources.FollowComponents();
 
             var original = Path.GetFullPath(path);
             if (!File.Exists(original))
-                throw new FileNotFoundException("DLL не найдена", original);
+                throw new FileNotFoundException(CoreStrings.DllNotFound, original);
 
             // Always compared with the ribbon from .addin, not with the previous preview.
             Revert(original);
@@ -88,7 +89,7 @@ namespace RevitDevKit.Core.Ribbon
 
             if (types.Count == 0)
             {
-                ConsoleOutput.Warning("В " + Path.GetFileName(original) + " нет классов IExternalApplication.");
+                ConsoleOutput.Warning(string.Format(CoreStrings.NoApplications, Path.GetFileName(original)));
                 return state;
             }
 
@@ -99,7 +100,7 @@ namespace RevitDevKit.Core.Ribbon
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(Unwrap(ex), "OnStartup новой версии упал — лента не изменена:");
+                ConsoleOutput.Exception(Unwrap(ex), CoreStrings.NewOnStartupFailed);
                 return state;
             }
 
@@ -116,7 +117,7 @@ namespace RevitDevKit.Core.Ribbon
             // Revit would load a second copy's DLL by its name and get the first copy, whose XAML is no longer found.
             ProxyCommands.Rebind(merge.Adopted.Concat(draft.Items().OfType<PushButton>()).Distinct(), folder, Path.GetDirectoryName(original));
 
-            ConsoleOutput.Info("Лента: обновлено " + merge.Updated + ", добавлено " + merge.Added + ", убрано " + merge.Removed + ".");
+            ConsoleOutput.Info(string.Format(CoreStrings.RibbonMerged, merge.Updated, merge.Added, merge.Removed));
 
             state.Merge = merge;
             Applied[original] = state;
@@ -139,7 +140,7 @@ namespace RevitDevKit.Core.Ribbon
 
                             var result = instance.OnStartup(_application);
                             if (result != Result.Succeeded)
-                                throw new InvalidOperationException(type.FullName + ".OnStartup вернул " + result + ".");
+                                throw new InvalidOperationException(string.Format(CoreStrings.OnStartupReturned, type.FullName, result));
                         }
                     });
                 }
@@ -150,7 +151,7 @@ namespace RevitDevKit.Core.Ribbon
                 foreach (var instance in instances)
                 {
                     try { instance.OnShutdown(_application); }
-                    catch (Exception ex) { ConsoleOutput.Exception(Unwrap(ex), instance.GetType().FullName + ".OnShutdown упал:"); }
+                    catch (Exception ex) { ConsoleOutput.Exception(Unwrap(ex), string.Format(CoreStrings.OnShutdownFailed, instance.GetType().FullName)); }
                 }
             }
         }
@@ -195,7 +196,7 @@ namespace RevitDevKit.Core.Ribbon
             foreach (var file in Directory.GetFiles(source))
             {
                 try { File.Copy(file, Path.Combine(target, Path.GetFileName(file)), true); }
-                catch (Exception ex) { ConsoleOutput.Debug("Не скопирован " + file + ": " + ex.Message); }
+                catch (Exception ex) { ConsoleOutput.Debug(string.Format(CoreStrings.NotCopied, file, ex.Message)); }
             }
 
             foreach (var dir in Directory.GetDirectories(source))
@@ -260,7 +261,7 @@ namespace RevitDevKit.Core.Ribbon
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Не удалось подгрузить " + args.Name + ": " + ex.Message);
+                ConsoleOutput.Debug(string.Format(CoreStrings.DependencyLoadFailed, args.Name, ex.Message));
             }
 
             return null;
@@ -343,7 +344,7 @@ namespace RevitDevKit.Core.Ribbon
                 }
                 catch (Exception ex)
                 {
-                    ConsoleOutput.Debug("Не удалось сравнить " + name + " с загруженной: " + ex.Message);
+                    ConsoleOutput.Debug(string.Format(CoreStrings.CompareLoadedFailed, name, ex.Message));
                 }
 
                 return null;

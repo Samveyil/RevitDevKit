@@ -19,6 +19,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.UI.ScriptEditor
 {
@@ -33,7 +34,7 @@ namespace RevitDevKit.UI.ScriptEditor
 
         [ObservableProperty] private ScriptTabVM _selectedTab;
 
-        [ObservableProperty] private string _txtStatus = "Готово";
+        [ObservableProperty] private string _txtStatus = ScriptEditorStrings.Ready;
         [ObservableProperty] private string _contextText;
 
         [ObservableProperty]
@@ -52,7 +53,7 @@ namespace RevitDevKit.UI.ScriptEditor
         public ScriptEditorVM()
         {
             Output.StatusReported += text => TxtStatus = text;
-            NewTab(Samples.Starter, "Новый скрипт");
+            NewTab(Samples.Starter, ScriptEditorStrings.NewScript);
         }
 
         public void RefreshContext()
@@ -60,24 +61,24 @@ namespace RevitDevKit.UI.ScriptEditor
             try
             {
                 var doc = RevitAPI.Document;
-                ContextText = doc == null ? "Документ не открыт" : "Документ: " + doc.Title;
+                ContextText = doc == null ? ScriptEditorStrings.NoDocument : string.Format(ScriptEditorStrings.DocumentContext, doc.Title);
             }
             catch (Exception ex)
             {
-                ContextText = "Контекст недоступен";
-                ConsoleOutput.Debug("Не удалось прочитать контекст Revit: " + ex.Message);
+                ContextText = ScriptEditorStrings.ContextUnavailable;
+                ConsoleOutput.Debug(string.Format(ScriptEditorStrings.ContextReadFailed, ex.Message));
             }
         }
 
         [RelayCommand]
-        private void NewTab() => NewTab(Samples.Starter, "Скрипт " + (_untitledCounter + 1));
+        private void NewTab() => NewTab(Samples.Starter, string.Format(ScriptEditorStrings.ScriptNumber, _untitledCounter + 1));
 
         [RelayCommand]
         private void OpenFile()
         {
             var dialog = new Microsoft.Win32.OpenFileDialog
             {
-                Filter = "C# файлы (*.cs;*.csx)|*.cs;*.csx|Все файлы (*.*)|*.*",
+                Filter = ScriptEditorStrings.OpenFilter,
                 InitialDirectory = ScriptsFolder()
             };
 
@@ -89,11 +90,11 @@ namespace RevitDevKit.UI.ScriptEditor
                 var text = File.ReadAllText(dialog.FileName);
                 NewTab(text, Path.GetFileName(dialog.FileName), dialog.FileName);
 
-                TxtStatus = "Открыт " + dialog.FileName;
+                TxtStatus = string.Format(ScriptEditorStrings.Opened, dialog.FileName);
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Не удалось открыть файл:");
+                ConsoleOutput.Exception(ex, ScriptEditorStrings.OpenFailed);
             }
         }
 
@@ -130,7 +131,7 @@ namespace RevitDevKit.UI.ScriptEditor
             var hasFile = !tab.FilePath.IsNullOrEmpty();
             var dialog = new Microsoft.Win32.SaveFileDialog
             {
-                Filter = "C# файлы (*.cs)|*.cs|Все файлы (*.*)|*.*",
+                Filter = ScriptEditorStrings.SaveFilter,
                 InitialDirectory = hasFile ? Path.GetDirectoryName(tab.FilePath) : ScriptsFolder(),
                 FileName = hasFile ? Path.GetFileName(tab.FilePath) : tab.Title + ".cs"
             };
@@ -147,11 +148,11 @@ namespace RevitDevKit.UI.ScriptEditor
                 tab.Title = Path.GetFileName(path);
                 tab.IsDirty = false;
 
-                TxtStatus = "Сохранено: " + path;
+                TxtStatus = string.Format(ScriptEditorStrings.Saved, path);
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Не удалось сохранить файл:");
+                ConsoleOutput.Exception(ex, ScriptEditorStrings.SaveFailed);
             }
         }
 
@@ -178,7 +179,7 @@ namespace RevitDevKit.UI.ScriptEditor
             if (tab.IsDirty)
             {
                 var answer = MessageBox.Show(
-                    "Во вкладке «" + tab.Title + "» есть несохранённые изменения. Закрыть?",
+                    string.Format(ScriptEditorStrings.UnsavedChanges, tab.Title),
                     "Script Editor", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (answer != MessageBoxResult.Yes) return;
             }
@@ -187,7 +188,7 @@ namespace RevitDevKit.UI.ScriptEditor
             Tabs.Remove(tab);
 
             if (Tabs.Count == 0)
-                NewTab(Samples.Starter, "Новый скрипт");
+                NewTab(Samples.Starter, ScriptEditorStrings.NewScript);
             else if (SelectedTab == null || SelectedTab == tab)
                 SelectedTab = Tabs[Math.Min(index, Tabs.Count - 1)];
         }
@@ -235,7 +236,7 @@ namespace RevitDevKit.UI.ScriptEditor
 
             var dir = Path.Combine(Path.GetTempPath(), "RevitDevKit", "Debug");
             Directory.CreateDirectory(dir);
-            var name = string.Concat((tab.Title ?? "Скрипт").Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
+            var name = string.Concat((tab.Title ?? ScriptEditorStrings.DefaultScriptName).Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
             if (!name.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)) name += ".cs";
 
             var path = Path.Combine(dir, name);
@@ -251,7 +252,7 @@ namespace RevitDevKit.UI.ScriptEditor
             var code = tab.Document.Text;
             if (code.IsNullOrWhiteSpace())
             {
-                TxtStatus = "Пустой скрипт";
+                TxtStatus = ScriptEditorStrings.EmptyScript;
                 return;
             }
 
@@ -263,16 +264,16 @@ namespace RevitDevKit.UI.ScriptEditor
             {
                 if (!DebugLaunch.TryAttach(tab.FilePath))
                 {
-                    TxtStatus = "Отладчик не подключён";
+                    TxtStatus = ScriptEditorStrings.DebuggerNotAttached;
                     return;
                 }
 
                 debugFile = DebugFile(tab, code);
-                ConsoleOutput.Info("Отладка: остановка на первой строке скрипта, файл " + debugFile);
+                ConsoleOutput.Info(string.Format(ScriptEditorStrings.DebugStop, debugFile));
             }
 
             IsRunning = true;
-            TxtStatus = "Компиляция…";
+            TxtStatus = ScriptEditorStrings.Compiling;
 
             var title = tab.Title;
             var autoTransaction = IsAutoTransaction;
@@ -285,8 +286,8 @@ namespace RevitDevKit.UI.ScriptEditor
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Сбой компилятора:");
-                Finish("Ошибка компиляции");
+                ConsoleOutput.Exception(ex, ScriptEditorStrings.CompilerCrashed);
+                Finish(ScriptEditorStrings.CompileError);
                 return;
             }
 
@@ -302,8 +303,8 @@ namespace RevitDevKit.UI.ScriptEditor
             if (!result.Success)
             {
                 var count = result.Errors.Count();
-                ConsoleOutput.Error("Компиляция не удалась: " + count + (count == 1 ? " ошибка." : " ошибок."));
-                Finish("Ошибка компиляции");
+                ConsoleOutput.Error(string.Format(ScriptEditorStrings.CompileFailed, Language.Count(count, ScriptEditorStrings.ErrorsOne, ScriptEditorStrings.ErrorsFew, ScriptEditorStrings.ErrorsMany)));
+                Finish(ScriptEditorStrings.CompileError);
 
                 var first = result.Errors.FirstOrDefault(m => m.Line > 0);
                 if (first != null) tab.NavigateTo(first.Line, first.Column);
@@ -313,14 +314,14 @@ namespace RevitDevKit.UI.ScriptEditor
             var target = EntryPointResolver.ResolveScriptEntry(result.Assembly);
             if (target == null)
             {
-                ConsoleOutput.Error("В коде не нашлось точки входа: нужен класс с IExternalCommand либо метод Main / Run / Execute.");
-                tab.LastProblems.Add("Нет точки входа: файл с классом, но без IExternalCommand и без метода Main / Run / Execute.");
-                Finish("Нет точки входа");
+                ConsoleOutput.Error(ScriptEditorStrings.NoEntryPoint);
+                tab.LastProblems.Add(ScriptEditorStrings.NoEntryPointProblem);
+                Finish(ScriptEditorStrings.NoEntryPointStatus);
                 return;
             }
 
-            ConsoleOutput.Debug("Скомпилировано за " + result.ElapsedMs + " мс → " + target.Details);
-            TxtStatus = "Выполнение…";
+            ConsoleOutput.Debug(string.Format(ScriptEditorStrings.Compiled, result.ElapsedMs, target.Details));
+            TxtStatus = ScriptEditorStrings.Running;
 
             var request = new RunRequest
             {
@@ -332,7 +333,7 @@ namespace RevitDevKit.UI.ScriptEditor
                 Completed = error => _dispatcher.Invoke(() =>
                 {
                     if (error != null) tab.LastProblems.Add(DescribeFailure(error));
-                    Finish(error == null ? "Готово" : "Завершено с ошибкой");
+                    Finish(error == null ? ScriptEditorStrings.Done : ScriptEditorStrings.FinishedWithError);
                     RefreshContext();
                 })
             };
@@ -343,8 +344,8 @@ namespace RevitDevKit.UI.ScriptEditor
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Не удалось передать скрипт в Revit:");
-                Finish("Ошибка запуска");
+                ConsoleOutput.Exception(ex, ScriptEditorStrings.HandOverFailed);
+                Finish(ScriptEditorStrings.RunError);
             }
         }
 
@@ -367,7 +368,7 @@ namespace RevitDevKit.UI.ScriptEditor
                 .Take(3)
                 .ToList();
 
-            return "Исключение при выполнении: " + error.GetType().Name + ": " + error.Message
+            return string.Format(ScriptEditorStrings.RunException, error.GetType().Name, error.Message)
                    + (inScript.Count == 0 ? string.Empty : " (" + string.Join("; ", inScript) + ")");
         }
 
@@ -405,8 +406,8 @@ namespace RevitDevKit.UI.ScriptEditor
             IsLastAiWithScript ? MaterialDesignThemes.Wpf.PackIconKind.AutoFix : MaterialDesignThemes.Wpf.PackIconKind.CreationOutline;
 
         public string AiButtonToolTip =>
-            (IsLastAiWithScript ? "Скопировать для ИИ инструкцию, скрипт и ошибки" : "Скопировать инструкцию для ИИ") +
-            (IsAiDetailed ? " (подробная)" : "");
+            (IsLastAiWithScript ? ScriptEditorStrings.AiCopyScript : ScriptEditorStrings.AiCopy) +
+            (IsAiDetailed ? ScriptEditorStrings.AiDetailedSuffix : "");
 
         [RelayCommand]
         private void RepeatAiCopy()
@@ -420,7 +421,7 @@ namespace RevitDevKit.UI.ScriptEditor
         private void CopyAiInstructions()
         {
             IsLastAiWithScript = false;
-            CopyToClipboard(AiInstructions.Build(IsAutoTransaction, IsAiDetailed), "Инструкция для ИИ скопирована: вставьте её в начало чата");
+            CopyToClipboard(AiInstructions.Build(IsAutoTransaction, IsAiDetailed), ScriptEditorStrings.AiCopied);
         }
 
         // The same with the current script and what went wrong in its last run, to ask the AI to fix or change it.
@@ -432,7 +433,7 @@ namespace RevitDevKit.UI.ScriptEditor
             if (tab == null) return;
 
             CopyToClipboard(AiInstructions.BuildWithScript(IsAutoTransaction, tab.Title, tab.Document.Text, tab.LastProblems, IsAiDetailed),
-                "Инструкция, скрипт и ошибки скопированы: вставьте в чат и напишите, что сделать");
+                ScriptEditorStrings.AiScriptCopied);
         }
 
         private void CopyToClipboard(string text, string status)
@@ -444,7 +445,7 @@ namespace RevitDevKit.UI.ScriptEditor
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Warning("Не удалось скопировать в буфер обмена: " + ex.Message);
+                ConsoleOutput.Warning(string.Format(ScriptEditorStrings.ClipboardFailed, ex.Message));
             }
         }
     }

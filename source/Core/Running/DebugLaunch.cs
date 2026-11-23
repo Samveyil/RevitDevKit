@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Threading;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Running
 {
@@ -35,7 +36,7 @@ namespace RevitDevKit.Core.Running
             }
             catch (Exception ex)
             {
-                problem = "Не удалось подключить Visual Studio: " + ex.Message;
+                problem = string.Format(CoreStrings.AttachFailed, ex.Message);
             }
 
             if (problem == null) return true;
@@ -51,22 +52,21 @@ namespace RevitDevKit.Core.Running
 
             var running = VisualStudio.Running();
             if (running.Count == 0)
-                return "Откройте Visual Studio с решением надстройки и запустите под отладчиком ещё раз. " +
-                       "Или подключите свой отладчик (Rider, VS Code) к Revit вручную и нажмите ещё раз.";
+                return CoreStrings.OpenVisualStudio;
 
             var studio = VisualStudio.Choose(hintPath, running, VisualStudio.IsDebugging);
             if (studio == null)
-                return "Все открытые Visual Studio уже отлаживают другую программу. Остановите отладку в одной из них и запустите ещё раз.";
+                return CoreStrings.AllStudiosBusy;
 
             if (!VisualStudio.AttachTo(studio.Item1, Process.GetCurrentProcess().Id))
-                return "Visual Studio не подключилась к Revit. Подключите её вручную: Отладка › Подключиться к процессу.";
+                return CoreStrings.AttachByHand;
 
             // The attach is done in Visual Studio's process; the runtime sees it a moment later.
             for (var i = 0; i < 100 && !Debugger.IsAttached; i++) Thread.Sleep(100);
             if (!Debugger.IsAttached)
-                return "Visual Studio не подключилась к Revit. Подключите её вручную: Отладка › Подключиться к процессу.";
+                return CoreStrings.AttachByHand;
 
-            ConsoleOutput.Info("Подключена Visual Studio" + (studio.Item2.IsNullOrEmpty() ? "" : " с " + Path.GetFileName(studio.Item2)) + ".");
+            ConsoleOutput.Info(studio.Item2.IsNullOrEmpty() ? CoreStrings.StudioAttached : string.Format(CoreStrings.StudioAttachedWith, Path.GetFileName(studio.Item2)));
             return null;
         }
 

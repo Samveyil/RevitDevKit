@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Addins
 {
@@ -189,19 +190,19 @@ namespace RevitDevKit.Core.Addins
 
         // The second line of a row: the file, or what is in memory instead.
         public static string Where(ProcessAssembly item) =>
-            item.Location ?? (item.IsScript ? "в памяти · скрипт"
-                : item.Origin != null ? "в памяти · копия " + item.Origin
-                : "в памяти");
+            item.Location ?? (item.IsScript ? ExplorerStrings.InMemoryScript
+                : item.Origin != null ? string.Format(ExplorerStrings.InMemoryCopy, item.Origin)
+                : ExplorerStrings.InMemory);
 
         // Markdown for an issue or a chat: the rows as they are shown.
         public static string ToMarkdown(IEnumerable<ProcessAssembly> items, int total)
         {
             var rows = items.ToList();
             var text = new StringBuilder();
-            text.AppendLine("### Revit " + (AddinManifests.RevitVersion ?? "") + ": загруженные сборки (" + DateTime.Now.ToString("yyyy-MM-dd HH:mm")
-                            + ", показано " + rows.Count + " из " + total + ")");
+            text.AppendLine("### Revit " + (AddinManifests.RevitVersion ?? "") + ": " + ExplorerStrings.ReportAssemblies + " (" + DateTime.Now.ToString("yyyy-MM-dd HH:mm")
+                            + ", " + string.Format(ExplorerStrings.ReportShown, rows.Count, total) + ")");
             text.AppendLine();
-            AddinDependencies.Table(text, new[] { "№", "Сборка", "Версия", "Версия файла", "Чья", "Путь" },
+            AddinDependencies.Table(text, new[] { "№", ExplorerStrings.ColumnAssembly, ExplorerStrings.ColumnVersion, ExplorerStrings.ColumnFileVersion, ExplorerStrings.ColumnOwner, ExplorerStrings.ColumnPath },
                 rows.Select(a => new[] { a.Number.ToString(), Cell(a.Name) + (a.IsDuplicate ? " (x" + a.SameName + ")" : ""), Cell(a.Version?.ToString()),
                     Cell(a.FileVersion), Cell(a.Owner), Cell(Where(a)) }), 0);
             return text.ToString();

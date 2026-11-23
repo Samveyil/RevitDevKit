@@ -2,6 +2,7 @@ using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using RevitDevKit.Core.Running;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Commands
 {
@@ -17,13 +18,13 @@ namespace RevitDevKit.Commands
             var request = ExecutePendingCmd.Last;
             if (request == null)
             {
-                TaskDialog.Show("DevKit", "Нечего повторять. Запустите команду в Add-in Explorer хотя бы один раз.");
+                TaskDialog.Show("DevKit", RibbonStrings.NothingToDebug);
                 return Result.Cancelled;
             }
 
             if (request.SourceDll == null)
             {
-                TaskDialog.Show("DevKit", "Последним запускался скрипт. Скрипт отлаживается в Script Editor, кнопкой с жуком.");
+                TaskDialog.Show("DevKit", RibbonStrings.LastWasScript);
                 return Result.Cancelled;
             }
 

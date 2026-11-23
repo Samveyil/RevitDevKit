@@ -1,4 +1,5 @@
 using RevitDevKit.Core.Output;
+using RevitDevKit.Localization;
 using System;
 using System.IO;
 using System.Runtime.Serialization;
@@ -7,16 +8,21 @@ using System.Text;
 
 namespace RevitDevKit.Core
 {
-    // DevKit's settings kept between Revit sessions in %AppData%\RevitDevKit\settings.json: the console's options, and
-    // Автотранзакция and the detailed AI instructions of Script Editor. Read once at start-up, written on every change.
+    // DevKit's settings kept between Revit sessions in %AppData%\RevitDevKit\settings.json: the language, the console's
+    // options, and Автотранзакция and the detailed AI instructions of Script Editor. Read once at start-up, written on every change.
     // A setting missing from the file, or a file that cannot be read, keeps its default.
     public static class DevKitSettings
     {
         private static bool _loading;
         private static bool _autoTransaction;
         private static bool _aiDetailed;
+        private static string _language = Localization.Language.Auto;
 
         private static string FilePath => Path.Combine(App.DataDirectory, "settings.json");
+
+        // DevKit's language: "auto" follows Revit's, "en" and "ru" set it. Read at start-up only, so a change takes
+        // effect after Revit restarts. Written to the file from the first start, so the option is there to edit.
+        public static string LanguageSetting => _language;
 
         // Script Editor's Автотранзакция.
         public static bool AutoTransaction
@@ -47,14 +53,21 @@ namespace RevitDevKit.Core
             ConsoleOptions.Changed -= OnConsoleOptionsChanged;
             ConsoleOptions.Changed += OnConsoleOptionsChanged;
 
-            if (!File.Exists(FilePath)) return;
+            if (!File.Exists(FilePath))
+            {
+                Save();
+                return;
+            }
 
+            var complete = false;
             _loading = true;
             try
             {
                 SettingsFile file;
                 using (var stream = File.OpenRead(FilePath))
                     file = (SettingsFile)new DataContractJsonSerializer(typeof(SettingsFile)).ReadObject(stream);
+
+                complete = !string.IsNullOrWhiteSpace(file.Language);
 
                 if (file.ClearOnRun is bool clearOnRun) ConsoleOptions.ClearOnRun = clearOnRun;
                 if (file.ClearShownOnRun is bool clearShownOnRun) ConsoleOptions.ClearShownOnRun = clearShownOnRun;
@@ -65,15 +78,21 @@ namespace RevitDevKit.Core
                 if (Enum.TryParse(file.OpenPane, out ConsolePaneOpening openPane)) ConsoleOptions.OpenPane = openPane;
                 if (file.AutoTransaction is bool autoTransaction) _autoTransaction = autoTransaction;
                 if (file.AiDetailed is bool aiDetailed) _aiDetailed = aiDetailed;
+                if (!string.IsNullOrWhiteSpace(file.Language)) _language = file.Language.Trim().ToLowerInvariant();
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Warning("Не удалось прочитать настройки DevKit, взяты настройки по умолчанию: " + ex.Message);
+                // The broken file stays as it is, for the user to fix or delete.
+                ConsoleOutput.Warning(string.Format(CoreStrings.SettingsReadFailed, ex.Message));
+                complete = true;
             }
             finally
             {
                 _loading = false;
             }
+
+            // A file from before the language setting gets it.
+            if (!complete) Save();
         }
 
         private static void OnConsoleOptionsChanged(string name) => Save();
@@ -84,6 +103,7 @@ namespace RevitDevKit.Core
 
             var file = new SettingsFile
             {
+                Language = _language,
                 ClearOnRun = ConsoleOptions.ClearOnRun,
                 ClearShownOnRun = ConsoleOptions.ClearShownOnRun,
                 HideWarnings = ConsoleOptions.HideWarnings,
@@ -108,13 +128,15 @@ namespace RevitDevKit.Core
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Не удалось сохранить настройки DevKit: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(CoreStrings.SettingsSaveFailed, ex.Message));
             }
         }
 
         [DataContract]
         private sealed class SettingsFile
         {
+            // No Order: members without one come first.
+            [DataMember(Name = "language", EmitDefaultValue = false)] public string Language { get; set; }
             [DataMember(Name = "clearOnRun", Order = 0, EmitDefaultValue = false)] public bool? ClearOnRun { get; set; }
             [DataMember(Name = "clearShownOnRun", Order = 1, EmitDefaultValue = false)] public bool? ClearShownOnRun { get; set; }
             [DataMember(Name = "hideWarnings", Order = 2, EmitDefaultValue = false)] public bool? HideWarnings { get; set; }

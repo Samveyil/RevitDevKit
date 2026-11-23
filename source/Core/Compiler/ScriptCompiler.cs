@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Compiler
 {
@@ -26,7 +27,7 @@ namespace RevitDevKit.Core.Compiler
         public override string ToString()
         {
             var where = Line > 0 ? "(" + Line + "," + Column + ") " : string.Empty;
-            return where + (IsError ? "ошибка " : "предупреждение ") + Id + ": " + Message;
+            return where + (IsError ? ScriptEditorStrings.DiagnosticError : ScriptEditorStrings.DiagnosticWarning) + " " + Id + ": " + Message;
         }
     }
 
@@ -76,15 +77,14 @@ namespace RevitDevKit.Core.Compiler
                 {
                     sw.Stop();
 
-                    ConsoleOutput.Exception(ex, "Компилятор упал:");
+                    ConsoleOutput.Exception(ex, ScriptEditorStrings.CompilerFailed);
                     RuntimeDiagnostics.DumpCompilerEnvironment();
 
                     messages.Add(new CompileMessage
                     {
                         IsError = true,
                         Id = "RDK001",
-                        Message = "Компилятор упал: " + ex.GetType().Name + ": " + ex.Message +
-                                  " (подробности и версии сборок — выше в консоли)"
+                        Message = string.Format(ScriptEditorStrings.CompilerFailedMessage, ex.GetType().Name, ex.Message)
                     });
                     return Failed(messages, sw.ElapsedMilliseconds);
                 }
@@ -114,12 +114,12 @@ namespace RevitDevKit.Core.Compiler
                 catch (Exception ex)
                 {
                     sw.Stop();
-                    ConsoleOutput.Exception(ex, "Не удалось загрузить скомпилированную сборку:");
+                    ConsoleOutput.Exception(ex, ScriptEditorStrings.LoadCompiledFailed);
                     messages.Add(new CompileMessage
                     {
                         IsError = true,
                         Id = "RDK002",
-                        Message = "Не удалось загрузить сборку: " + ex.Message
+                        Message = string.Format(ScriptEditorStrings.LoadAssemblyFailed, ex.Message)
                     });
                     return Failed(messages, sw.ElapsedMilliseconds);
                 }
@@ -185,7 +185,7 @@ namespace RevitDevKit.Core.Compiler
             {
                 IsError = d.Severity == DiagnosticSeverity.Error,
                 Id = d.Id,
-                Message = d.GetMessage(),
+                Message = d.GetMessage(Language.Culture),
                 Line = line,
                 Column = column
             };
@@ -234,7 +234,7 @@ namespace RevitDevKit.Core.Compiler
                         {
                             IsError = true,
                             Id = "RDK010",
-                            Message = "Не найдена ссылка из #r \"" + item + "\""
+                            Message = string.Format(ScriptEditorStrings.ReferenceNotFound, item)
                         });
                         continue;
                     }

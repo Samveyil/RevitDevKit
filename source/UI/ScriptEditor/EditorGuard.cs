@@ -1,5 +1,6 @@
 using RevitDevKit.Core.Output;
 using System;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.UI.ScriptEditor
 {
@@ -15,7 +16,7 @@ namespace RevitDevKit.UI.ScriptEditor
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Warning("Ошибка в редакторе скриптов (скобки или подсказки): " + ex.GetType().Name + ": " + ex.Message);
+                ConsoleOutput.Warning(string.Format(ScriptEditorStrings.EditorError, ex.GetType().Name, ex.Message));
             }
         }
     }
