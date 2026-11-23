@@ -3,12 +3,12 @@
                     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
                     xmlns:shared="clr-namespace:RevitDevKit.UI.Shared">
 
+    <!-- MaterialDesign 3 in the BIMPlugins colours, from BIMPlugins.MaterialDesign: MaterialDesign under assembly
+         names of its own, so another add-in's MaterialDesign in the same Revit never takes DevKit's styles, nor DevKit theirs. -->
     <ResourceDictionary.MergedDictionaries>
-        <materialDesign:CustomColorTheme BaseTheme="Light" PrimaryColor="#F88518" SecondaryColor="#FF0052A5" />
-        <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+        <materialDesign:BIMPluginsTheme BaseTheme="Light" />
     </ResourceDictionary.MergedDictionaries>
 
-    <SolidColorBrush x:Key="AccentBrush" Color="#F88518" />
     <SolidColorBrush x:Key="IconBrush" Color="#CC000000" />
     <SolidColorBrush x:Key="SelectedTabBrush" Color="#0F000000" />
 
@@ -47,7 +47,7 @@
 
                         <ContentPresenter Grid.Row="1" x:Name="PART_SelectedContentHost" ContentSource="SelectedContent" Margin="1"/>
 
-                        <shared:TabFrame Grid.RowSpan="2" Stroke="{StaticResource AccentBrush}" Radius="4"/>
+                        <shared:TabFrame Grid.RowSpan="2" Stroke="{StaticResource BIMPlugins.PrimaryBrush}" Radius="4"/>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

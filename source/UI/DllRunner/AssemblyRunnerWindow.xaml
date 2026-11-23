@@ -93,7 +93,7 @@
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding RunCommand}"
                     ToolTip="Выполнить команду (F5)">
                 <StackPanel Orientation="Horizontal">
-                    <materialDesign:PackIcon Kind="Play" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
+                    <materialDesign:PackIcon Kind="Play" Width="20" Height="20" Foreground="{StaticResource BIMPlugins.PrimaryBrush}"
                                              VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
                     <TextBlock Text="Выполнить (F5)" VerticalAlignment="Center"/>
                 </StackPanel>
@@ -123,7 +123,7 @@
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding Apps.ApplyCommand}"
                     ToolTip="Обновить ленту по свежей DLL (F5)">
                 <StackPanel Orientation="Horizontal">
-                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
+                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource BIMPlugins.PrimaryBrush}"
                                              VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
                     <TextBlock Text="Обновить (F5)" VerticalAlignment="Center"/>
                 </StackPanel>
@@ -157,7 +157,7 @@
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding Startup.RefreshCommand}"
                     ToolTip="Перечитать папки надстроек (F5)">
                 <StackPanel Orientation="Horizontal">
-                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
+                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource BIMPlugins.PrimaryBrush}"
                                              VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
                     <TextBlock Text="Обновить (F5)" VerticalAlignment="Center"/>
                 </StackPanel>
@@ -181,7 +181,7 @@
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding Dependencies.RefreshCommand}"
                     ToolTip="Проверить DLL надстроек (F5)">
                 <StackPanel Orientation="Horizontal">
-                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
+                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource BIMPlugins.PrimaryBrush}"
                                              VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
                     <TextBlock Text="Проверить (F5)" VerticalAlignment="Center"/>
                 </StackPanel>
@@ -210,7 +210,7 @@
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding LoadedAssemblies.RefreshCommand}"
                     ToolTip="Обновить список сборок (F5)">
                 <StackPanel Orientation="Horizontal">
-                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
+                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="{StaticResource BIMPlugins.PrimaryBrush}"
                                              VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
                     <TextBlock Text="Обновить (F5)" VerticalAlignment="Center"/>
                 </StackPanel>
@@ -303,7 +303,7 @@
                                                 </ContextMenu>
                                             </StackPanel.ContextMenu>
 
-                                            <materialDesign:PackIcon Kind="PackageVariantClosed" Width="18" Height="18" Foreground="{StaticResource AccentBrush}"
+                                            <materialDesign:PackIcon Kind="PackageVariantClosed" Width="18" Height="18" Foreground="{StaticResource BIMPlugins.PrimaryBrush}"
                                                                      VerticalAlignment="Center" Margin="0 0 6 0"/>
                                             <TextBlock Text="{Binding DisplayName}" FontWeight="DemiBold" VerticalAlignment="Center"/>
                                             <TextBlock Text="   — нет IExternalCommand" Foreground="Gray" VerticalAlignment="Center"
@@ -389,7 +389,7 @@
                                                 <Setter Property="Foreground" Value="Gray"/>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsApplied}" Value="True">
-                                                        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                                        <Setter Property="Foreground" Value="{StaticResource BIMPlugins.PrimaryBrush}"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -415,7 +415,7 @@
                     <Border DockPanel.Dock="Bottom" Margin="2" Padding="8 4" CornerRadius="4" Background="#FFF4E5"
                             Visibility="{Binding Startup.IsRestartNeeded, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="InformationOutline" Width="18" Height="18" Foreground="{StaticResource AccentBrush}"
+                            <materialDesign:PackIcon Kind="InformationOutline" Width="18" Height="18" Foreground="{StaticResource BIMPlugins.PrimaryBrush}"
                                                      VerticalAlignment="Center" Margin="0 0 6 0"/>
                             <TextBlock Text="Изменения применятся при следующем запуске Revit" Foreground="#8A4B00" VerticalAlignment="Center"/>
                         </StackPanel>
@@ -504,7 +504,7 @@
                                                     <Setter Property="Foreground" Value="Gray"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsEnabled}" Value="True">
-                                                            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource BIMPlugins.PrimaryBrush}"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding IsLocked}" Value="True">
                                                             <Setter Property="Kind" Value="LockOutline"/>
@@ -729,7 +729,7 @@
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Text="{Binding Owner}" Style="{StaticResource SeverityText}" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="1" Text="● загружена" FontSize="11" Foreground="{StaticResource AccentBrush}" Margin="8 0 0 0"
+                                        <TextBlock Grid.Column="1" Text="● загружена" FontSize="11" Foreground="{StaticResource BIMPlugins.PrimaryBrush}" Margin="8 0 0 0"
                                                    VerticalAlignment="Center"
                                                    Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibility}}"/>
                                         <TextBlock Grid.Column="2" Text="{Binding Version}" Style="{StaticResource SeverityText}" FontFamily="Consolas"

@@ -13,7 +13,7 @@
     </UserControl.Resources>
 
     <!-- Framed as the editor's tab above it: an orange frame, the toolbar on a gray strip like the tab header, then the output. -->
-    <Border BorderThickness="1" BorderBrush="{DynamicResource AccentBrush}" CornerRadius="4" SnapsToDevicePixels="True">
+    <Border BorderThickness="1" BorderBrush="{DynamicResource BIMPlugins.PrimaryBrush}" CornerRadius="4" SnapsToDevicePixels="True">
         <DockPanel>
             <Border DockPanel.Dock="Top" Background="{DynamicResource SelectedTabBrush}" CornerRadius="3 3 0 0" Padding="6 3">
                 <StackPanel Orientation="Horizontal">
@@ -79,7 +79,7 @@
                         <CheckBox Content="Стек вызовов" VerticalAlignment="Center" Margin="12 0 0 0" Padding="2 0" IsChecked="{Binding IsShowDebug}" ToolTip="Показывать стеки вызовов"/>
                     </StackPanel>
 
-                    <Border x:Name="ViewMenu" Visibility="Collapsed" Height="23" BorderThickness="1" BorderBrush="{DynamicResource AccentBrush}" CornerRadius="3" VerticalAlignment="Center">
+                    <Border x:Name="ViewMenu" Visibility="Collapsed" Height="23" BorderThickness="1" BorderBrush="{DynamicResource BIMPlugins.PrimaryBrush}" CornerRadius="3" VerticalAlignment="Center">
                         <materialDesign:PopupBox x:Name="ViewOptions" StaysOpen="True" VerticalAlignment="Stretch" ToolTip="Как консоль показывает вывод">
                             <materialDesign:PopupBox.ToggleContent>
                                 <TextBlock Text="Вид ▾" Margin="10 0 8 0" VerticalAlignment="Center"/>
