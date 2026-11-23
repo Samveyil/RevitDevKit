@@ -77,7 +77,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AvalonEdit" Version="6.3.1.120" />
+		<PackageReference Include="BIMPlugins.AvalonEdit" Version="6.3.1" />
 		<PackageReference Include="BIMPlugins.ExtStorage" Version="$(RevitVersion).7.0" />
 		<PackageReference Include="BIMPlugins.UI" Version="1.0.4" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
