@@ -5,6 +5,7 @@ using RevitDevKit.Core.Output;
 using System;
 using System.Collections;
 using System.Linq;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Show
 {
@@ -25,8 +26,7 @@ namespace RevitDevKit.Core.Show
             {
                 if (!ShownGeometry.IsApiThread)
                 {
-                    ConsoleOutput.Warning("Debug.WriteLine(" + value.GetType().Name + ") из фонового потока: " +
-                                          "геометрию можно показать только из потока Revit API.");
+                    ConsoleOutput.Warning(string.Format(CoreStrings.TraceShowBackground, value.GetType().Name));
                     return true;
                 }
 
@@ -37,7 +37,7 @@ namespace RevitDevKit.Core.Show
             catch (Exception ex)
             {
                 // Debug.WriteLine must never throw into the add-in that called it.
-                ConsoleOutput.Warning("Не удалось показать " + value.GetType().Name + ": " + ex.Message);
+                ConsoleOutput.Warning(string.Format(CoreStrings.TraceShowFailed, value.GetType().Name, ex.Message));
             }
 
             return true;

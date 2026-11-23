@@ -5,6 +5,7 @@ using RevitDevKit.Core.Output;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Show
 {
@@ -47,7 +48,7 @@ namespace RevitDevKit.Core.Show
             catch (Exception ex)
             {
                 _instance = null;
-                ConsoleOutput.Debug("Show(...) не будет рисовать: сервер DirectContext3D не зарегистрирован: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(CoreStrings.ShowServerNotRegistered, ex.Message));
             }
         }
 
@@ -61,7 +62,7 @@ namespace RevitDevKit.Core.Show
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Сервер DirectContext3D не снят: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(CoreStrings.ShowServerNotRemoved, ex.Message));
             }
 
             _instance.Release();
@@ -72,7 +73,7 @@ namespace RevitDevKit.Core.Show
         public ExternalServiceId GetServiceId() => ExternalServices.BuiltInExternalServices.DirectContext3DService;
         public string GetName() => "DevKit Show";
         public string GetVendorId() => "RevitDevKit";
-        public string GetDescription() => "Геометрия, показанная скриптами DevKit через Show(...)";
+        public string GetDescription() => CoreStrings.ShowServerDescription;
         public string GetApplicationId() => string.Empty;
         public string GetSourceId() => string.Empty;
         public bool UsesHandles() => false;
@@ -115,7 +116,7 @@ namespace RevitDevKit.Core.Show
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Show(...) не нарисовал: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(CoreStrings.ShowDrawFailed, ex.Message));
             }
         }
 

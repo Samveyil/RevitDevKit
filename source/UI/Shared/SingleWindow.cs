@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Interop;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.UI.Shared
 {
@@ -47,7 +48,7 @@ namespace RevitDevKit.UI.Shared
             }
             catch (Exception ex)
             {
-                Core.Output.ConsoleOutput.Debug("Клавиатура окна без ElementHost: " + ex.Message);
+                Core.Output.ConsoleOutput.Debug(string.Format(CoreStrings.KeyboardWithoutElementHost, ex.Message));
             }
 
             _window = window;

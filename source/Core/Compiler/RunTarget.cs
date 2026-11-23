@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Compiler
 {
@@ -60,10 +61,7 @@ namespace RevitDevKit.Core.Compiler
 
             if (commandData == null)
             {
-                throw new InvalidOperationException(
-                    "Для запуска IExternalCommand нужен живой ExternalCommandData, а его выдаёт " +
-                    "только сам Revit. Убедитесь, что на ленте есть кнопка «Repeat Last» — через неё " +
-                    "плагин получает контекст команды.");
+                throw new InvalidOperationException(CoreStrings.NoCommandData);
             }
 
             var instance = Activator.CreateInstance(Type);
@@ -75,10 +73,10 @@ namespace RevitDevKit.Core.Compiler
             var result = command.Execute(commandData, ref message, elements);
 
             if (!message.IsNullOrEmpty())
-                ConsoleOutput.Warning("Команда вернула сообщение: " + message);
+                ConsoleOutput.Warning(string.Format(CoreStrings.CommandMessage, message));
 
             if (elements.Size > 0)
-                ConsoleOutput.Warning("Команда вернула " + elements.Size + " проблемных элементов.");
+                ConsoleOutput.Warning(string.Format(CoreStrings.CommandElements, elements.Size));
 
             return result;
         }
@@ -108,9 +106,7 @@ namespace RevitDevKit.Core.Compiler
 
             if (parameter.HasDefaultValue) return parameter.DefaultValue;
 
-            throw new InvalidOperationException(
-                "Не знаю, что передать в параметр '" + parameter.Name + "' типа " + t.Name +
-                ". Поддерживаются UIApplication, UIDocument, Document, Application, ExternalCommandData.");
+            throw new InvalidOperationException(string.Format(CoreStrings.UnknownParameter, parameter.Name, t.Name));
         }
     }
 
@@ -200,7 +196,7 @@ namespace RevitDevKit.Core.Compiler
             catch (ReflectionTypeLoadException ex)
             {
                 foreach (var loaderError in ex.LoaderExceptions.Take(5))
-                    ConsoleOutput.Warning("Тип не загрузился: " + loaderError.Message);
+                    ConsoleOutput.Warning(string.Format(CoreStrings.TypeNotLoaded, loaderError.Message));
 
                 return ex.Types.Where(t => t != null);
             }

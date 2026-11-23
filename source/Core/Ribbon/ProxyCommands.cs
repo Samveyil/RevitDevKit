@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Ribbon
 {
@@ -44,7 +45,7 @@ namespace RevitDevKit.Core.Ribbon
                     var command = assembly.GetType(button.ClassName);
                     if (command == null)
                     {
-                        ConsoleOutput.Warning("Кнопка «" + button.Name + "»: класс " + button.ClassName + " не найден в " + Path.GetFileName(path) + ".");
+                        ConsoleOutput.Warning(string.Format(CoreStrings.ButtonClassNotFound, button.Name, button.ClassName, Path.GetFileName(path)));
                         continue;
                     }
 
@@ -57,7 +58,7 @@ namespace RevitDevKit.Core.Ribbon
                 }
                 catch (Exception ex)
                 {
-                    ConsoleOutput.Warning("Кнопка «" + button.Name + "» не перенаправлена: " + ex.Message);
+                    ConsoleOutput.Warning(string.Format(CoreStrings.ButtonNotRedirected, button.Name, ex.Message));
                 }
             }
 
@@ -96,7 +97,7 @@ namespace RevitDevKit.Core.Ribbon
             catch (Exception ex)
             {
                 var real = ex is TargetInvocationException && ex.InnerException != null ? ex.InnerException : ex;
-                ConsoleOutput.Exception(real, binding.Command.FullName + " упала:");
+                ConsoleOutput.Exception(real, string.Format(CoreStrings.CommandFailed, binding.Command.FullName));
                 message = real.Message;
                 return Result.Failed;
             }
@@ -165,7 +166,7 @@ namespace RevitDevKit.Core.Ribbon
             var result = compilation.Emit(path);
             if (!result.Success)
             {
-                throw new InvalidOperationException("Не удалось собрать прокси-команды:\n" +
+                throw new InvalidOperationException(CoreStrings.ProxyBuildFailed + "\n" +
                     string.Join("\n", result.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)));
             }
         }

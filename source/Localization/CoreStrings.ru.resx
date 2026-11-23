@@ -18,4 +18,196 @@
   <data name="SettingsSaveFailed" xml:space="preserve">
     <value>Не удалось сохранить настройки DevKit: {0}</value>
   </data>
+  <data name="Shown" xml:space="preserve">
+    <value>Показано: {0}, {1}</value>
+  </data>
+  <data name="ViewsNotRefreshed" xml:space="preserve">
+    <value>Виды не обновлены: {0}</value>
+  </data>
+  <data name="ShowNothing" xml:space="preserve">
+    <value>ничего</value>
+  </data>
+  <data name="ShowList" xml:space="preserve">
+    <value>список</value>
+  </data>
+  <data name="FacesOne" xml:space="preserve">
+    <value>{0} грань</value>
+  </data>
+  <data name="FacesFew" xml:space="preserve">
+    <value>{0} грани</value>
+  </data>
+  <data name="FacesMany" xml:space="preserve">
+    <value>{0} граней</value>
+  </data>
+  <data name="CurvesOne" xml:space="preserve">
+    <value>{0} кривая</value>
+  </data>
+  <data name="CurvesFew" xml:space="preserve">
+    <value>{0} кривые</value>
+  </data>
+  <data name="CurvesMany" xml:space="preserve">
+    <value>{0} кривых</value>
+  </data>
+  <data name="PointsOne" xml:space="preserve">
+    <value>{0} точка</value>
+  </data>
+  <data name="PointsFew" xml:space="preserve">
+    <value>{0} точки</value>
+  </data>
+  <data name="PointsMany" xml:space="preserve">
+    <value>{0} точек</value>
+  </data>
+  <data name="BoxesOne" xml:space="preserve">
+    <value>{0} рамка</value>
+  </data>
+  <data name="BoxesFew" xml:space="preserve">
+    <value>{0} рамки</value>
+  </data>
+  <data name="BoxesMany" xml:space="preserve">
+    <value>{0} рамок</value>
+  </data>
+  <data name="NothingToShow" xml:space="preserve">
+    <value>{0} — нечего показать</value>
+  </data>
+  <data name="ShowServerNotRegistered" xml:space="preserve">
+    <value>Show(...) не будет рисовать: сервер DirectContext3D не зарегистрирован: {0}</value>
+  </data>
+  <data name="ShowServerNotRemoved" xml:space="preserve">
+    <value>Сервер DirectContext3D не снят: {0}</value>
+  </data>
+  <data name="ShowServerDescription" xml:space="preserve">
+    <value>Геометрия, показанная скриптами DevKit через Show(...)</value>
+  </data>
+  <data name="ShowDrawFailed" xml:space="preserve">
+    <value>Show(...) не нарисовал: {0}</value>
+  </data>
+  <data name="TraceShowBackground" xml:space="preserve">
+    <value>Debug.WriteLine({0}) из фонового потока: геометрию можно показать только из потока Revit API.</value>
+  </data>
+  <data name="TraceShowFailed" xml:space="preserve">
+    <value>Не удалось показать {0}: {1}</value>
+  </data>
+  <data name="NotInitialized" xml:space="preserve">
+    <value>DevKit не инициализирован — перезапустите Revit.</value>
+  </data>
+  <data name="DllNotFound" xml:space="preserve">
+    <value>DLL не найдена</value>
+  </data>
+  <data name="NoApplications" xml:space="preserve">
+    <value>В {0} нет классов IExternalApplication.</value>
+  </data>
+  <data name="NewOnStartupFailed" xml:space="preserve">
+    <value>OnStartup новой версии упал — лента не изменена:</value>
+  </data>
+  <data name="RibbonMerged" xml:space="preserve">
+    <value>Лента: обновлено {0}, добавлено {1}, убрано {2}.</value>
+  </data>
+  <data name="OnStartupReturned" xml:space="preserve">
+    <value>{0}.OnStartup вернул {1}.</value>
+  </data>
+  <data name="OnShutdownFailed" xml:space="preserve">
+    <value>{0}.OnShutdown упал:</value>
+  </data>
+  <data name="NotCopied" xml:space="preserve">
+    <value>Не скопирован {0}: {1}</value>
+  </data>
+  <data name="DependencyLoadFailed" xml:space="preserve">
+    <value>Не удалось подгрузить {0}: {1}</value>
+  </data>
+  <data name="CompareLoadedFailed" xml:space="preserve">
+    <value>Не удалось сравнить {0} с загруженной: {1}</value>
+  </data>
+  <data name="RibbonUnsupported" xml:space="preserve">
+    <value>В этой версии Revit лента устроена иначе — не найдены {0}.</value>
+  </data>
+  <data name="RibbonNotCreated" xml:space="preserve">
+    <value>Лента Revit ещё не создана.</value>
+  </data>
+  <data name="RibbonRevert" xml:space="preserve">
+    <value>Откат ленты: {0}</value>
+  </data>
+  <data name="RibbonError" xml:space="preserve">
+    <value>Лента: {0}</value>
+  </data>
+  <data name="LoadComponentHookFailed" xml:space="preserve">
+    <value>Не удалось перехватить Application.LoadComponent: {0}</value>
+  </data>
+  <data name="WpfResourcesForNotRedirected" xml:space="preserve">
+    <value>Ресурсы WPF для {0} не перенаправлены: {1}</value>
+  </data>
+  <data name="WpfResourcesNotRedirected" xml:space="preserve">
+    <value>Ресурсы WPF не перенаправлены: {0}</value>
+  </data>
+  <data name="IconNotReread" xml:space="preserve">
+    <value>Иконка «{0}» не перечитана: {1}</value>
+  </data>
+  <data name="WpfResourcesNotRestored" xml:space="preserve">
+    <value>Ресурсы WPF не возвращены: {0}</value>
+  </data>
+  <data name="ButtonClassNotFound" xml:space="preserve">
+    <value>Кнопка «{0}»: класс {1} не найден в {2}.</value>
+  </data>
+  <data name="ButtonNotRedirected" xml:space="preserve">
+    <value>Кнопка «{0}» не перенаправлена: {1}</value>
+  </data>
+  <data name="CommandFailed" xml:space="preserve">
+    <value>{0} упала:</value>
+  </data>
+  <data name="ProxyBuildFailed" xml:space="preserve">
+    <value>Не удалось собрать прокси-команды:</value>
+  </data>
+  <data name="HookFailed" xml:space="preserve">
+    <value>Не удалось перехватить {0}: {1}</value>
+  </data>
+  <data name="DockablePaneSkipped" xml:space="preserve">
+    <value>RegisterDockablePane «{0}» пропущен: панель уже зарегистрирована при запуске Revit.</value>
+  </data>
+  <data name="NoCommandData" xml:space="preserve">
+    <value>Для запуска IExternalCommand нужен живой ExternalCommandData, а его выдаёт только сам Revit. Убедитесь, что на ленте есть кнопка «Repeat Last» — через неё плагин получает контекст команды.</value>
+  </data>
+  <data name="CommandMessage" xml:space="preserve">
+    <value>Команда вернула сообщение: {0}</value>
+  </data>
+  <data name="CommandElements" xml:space="preserve">
+    <value>Команда вернула {0} проблемных элементов.</value>
+  </data>
+  <data name="UnknownParameter" xml:space="preserve">
+    <value>Не знаю, что передать в параметр '{0}' типа {1}. Поддерживаются UIApplication, UIDocument, Document, Application, ExternalCommandData.</value>
+  </data>
+  <data name="TypeNotLoaded" xml:space="preserve">
+    <value>Тип не загрузился: {0}</value>
+  </data>
+  <data name="PreviousUnloaded" xml:space="preserve">
+    <value>Предыдущая версия {0} выгружена.</value>
+  </data>
+  <data name="NewVersionLoaded" xml:space="preserve">
+    <value>Загружена новая версия {0}; прежняя останется в памяти до перезапуска Revit.</value>
+  </data>
+  <data name="AttachFailed" xml:space="preserve">
+    <value>Не удалось подключить Visual Studio: {0}</value>
+  </data>
+  <data name="OpenVisualStudio" xml:space="preserve">
+    <value>Откройте Visual Studio с решением надстройки и запустите под отладчиком ещё раз. Или подключите свой отладчик (Rider, VS Code) к Revit вручную и нажмите ещё раз.</value>
+  </data>
+  <data name="AllStudiosBusy" xml:space="preserve">
+    <value>Все открытые Visual Studio уже отлаживают другую программу. Остановите отладку в одной из них и запустите ещё раз.</value>
+  </data>
+  <data name="AttachByHand" xml:space="preserve">
+    <value>Visual Studio не подключилась к Revit. Подключите её вручную: Отладка › Подключиться к процессу.</value>
+  </data>
+  <data name="StudioAttached" xml:space="preserve">
+    <value>Подключена Visual Studio.</value>
+  </data>
+  <data name="StudioAttachedWith" xml:space="preserve">
+    <value>Подключена Visual Studio с {0}.</value>
+  </data>
+  <data name="DocumentationReadFailed" xml:space="preserve">
+    <value>Не удалось прочитать документацию {0}: {1}</value>
+  </data>
+  <data name="EmbeddedDocumentationReadFailed" xml:space="preserve">
+    <value>Не удалось прочитать встроенную документацию DevKit: {0}</value>
+  </data>
+  <data name="KeyboardWithoutElementHost" xml:space="preserve">
+    <value>Клавиатура окна без ElementHost: {0}</value>
+  </data>
 </root>
