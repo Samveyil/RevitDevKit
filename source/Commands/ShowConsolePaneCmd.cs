@@ -2,6 +2,7 @@ using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using System;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Commands
 {
@@ -18,7 +19,7 @@ namespace RevitDevKit.Commands
             }
             catch (Exception ex)
             {
-                message = "Панель консоли недоступна: " + ex.Message;
+                message = string.Format(RibbonStrings.ConsolePaneUnavailable, ex.Message);
                 return Result.Failed;
             }
         }

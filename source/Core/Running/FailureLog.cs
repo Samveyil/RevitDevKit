@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Running
 {
@@ -63,7 +64,7 @@ namespace RevitDevKit.Core.Running
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Сбои Revit не прочитаны: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(ConsoleStrings.FailuresNotRead, ex.Message));
             }
         }
 
@@ -78,23 +79,23 @@ namespace RevitDevKit.Core.Running
         {
             var count = occurrences?.Count ?? 0;
             var block = new StringBuilder();
-            block.Append(warning ? "Предупреждение" : "Ошибка");
-            if (!transaction.IsNullOrEmpty()) block.Append(" · Транзакция «").Append(transaction).Append('»');
+            block.Append(warning ? ConsoleStrings.FailureWarning : ConsoleStrings.FailureError);
+            if (!transaction.IsNullOrEmpty()) block.Append(string.Format(ConsoleStrings.FailureTransaction, transaction));
             if (count > 1) block.Append(" · ").Append(Times(count));
             block.AppendLine();
 
             foreach (var line in (text ?? string.Empty).Trim().Replace("\r\n", "\n").Split('\n'))
                 block.Append("  ").AppendLine(line.Trim());
 
-            if (!warning) block.AppendLine("  Если ошибку не решить, Revit отменит транзакцию.");
-            else if (hidden) block.AppendLine("  Тихий режим: окно Revit не показано.");
+            if (!warning) block.AppendLine(ConsoleStrings.FailureRollsBack);
+            else if (hidden) block.AppendLine(ConsoleStrings.FailureQuietMode);
 
             if (count == 1)
             {
                 var elements = occurrences[0];
                 if (elements.Count > 0)
                 {
-                    block.Append("  Элементы (").Append(elements.Count).AppendLine("):");
+                    block.AppendLine(string.Format(ConsoleStrings.FailureElements, elements.Count));
                     foreach (var element in elements)
                         block.Append("    ").AppendLine(element);
                 }
@@ -104,7 +105,7 @@ namespace RevitDevKit.Core.Running
                 for (var i = 0; i < count; i++)
                 {
                     var number = (i + 1) + ") ";
-                    var elements = occurrences[i].Count > 0 ? occurrences[i] : new[] { "без элементов" };
+                    var elements = occurrences[i].Count > 0 ? occurrences[i] : new[] { ConsoleStrings.FailureNoElements };
                     for (var j = 0; j < elements.Count; j++)
                         block.Append("  ").Append(j == 0 ? number : new string(' ', number.Length)).AppendLine(elements[j]);
                 }
@@ -113,13 +114,13 @@ namespace RevitDevKit.Core.Running
             return block.ToString();
         }
 
-        // 2 раза, 5 раз, 21 раз, 22 раза.
+        // "3 times"; in Russian 2 раза, 5 раз, 21 раз, 22 раза: the Russian text has a form for 2, 3 and 4 and one for the rest.
         private static string Times(int n)
         {
             var tens = n % 100;
             var ones = n % 10;
-            var word = tens >= 11 && tens <= 14 ? "раз" : ones >= 2 && ones <= 4 ? "раза" : "раз";
-            return n + " " + word;
+            var few = !(tens >= 11 && tens <= 14) && ones >= 2 && ones <= 4;
+            return string.Format(few ? ConsoleStrings.TimesFew : ConsoleStrings.TimesMany, n);
         }
 
         // "Стены · Базовая стена · Наружная - 300 : Id 412873": category, family and type, or the element's name
@@ -170,7 +171,7 @@ namespace RevitDevKit.Core.Running
             {
                 if (_application == null) return;
                 try { _application.FailuresProcessing -= _handler; }
-                catch (Exception ex) { ConsoleOutput.Debug("Отписка от сбоев Revit: " + ex.Message); }
+                catch (Exception ex) { ConsoleOutput.Debug(string.Format(ConsoleStrings.FailuresUnsubscribe, ex.Message)); }
                 _application = null;
             }
         }

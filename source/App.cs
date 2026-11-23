@@ -9,6 +9,7 @@ using RevitDevKit.Core.Output;
 using RevitDevKit.Core.Ribbon;
 using RevitDevKit.Core.Running;
 using RevitDevKit.Core.Show;
+using RevitDevKit.Localization;
 using System;
 using System.IO;
 using System.Reflection;
@@ -47,7 +48,13 @@ namespace RevitDevKit
                 AppDomain.CurrentDomain.AssemblyResolve += ResolveFromPluginFolder;
 
                 ConsoleOutput.Install();
+
+                // Revit's language first, so that a problem with settings.json is told in it; then as the settings say.
+                var revitIsRussian = application.ControlledApplication.Language == Autodesk.Revit.ApplicationServices.LanguageType.Russian;
+                Language.Apply(revitIsRussian, Language.Auto);
                 DevKitSettings.Load();
+                Language.Apply(revitIsRussian, DevKitSettings.LanguageSetting);
+
                 RevitTaskRunner.Initialize();
                 ShownGeometryServer.Register();
                 LocateAddinFolders(application);
@@ -55,13 +62,12 @@ namespace RevitDevKit
                 BuildRibbon(application);
                 RegisterConsolePane(application);
 
-                ConsoleOutput.System("DevKit загружен. Revit " +
-                                     application.ControlledApplication.VersionNumber + ".");
+                ConsoleOutput.System(string.Format(RibbonStrings.Loaded, application.ControlledApplication.VersionNumber));
                 return Result.Succeeded;
             }
             catch (Exception ex)
             {
-                TaskDialog.Show("DevKit", "Не удалось загрузить надстройку:\n\n" + ex);
+                TaskDialog.Show("DevKit", RibbonStrings.LoadFailed + "\n\n" + ex);
                 return Result.Failed;
             }
         }
@@ -84,53 +90,33 @@ namespace RevitDevKit
             var pullBtn = panel.CreatePulldownButton(PanelName)
                 .SetLargeImage("DevKit_32.png")
                 .SetImage("DevKit_16.png")
-                .SetToolTip("Скрипты, команды из DLL, консоль.")
-                .SetLongDescription(
-                    "Инструменты разработчика надстроек. Script Editor запускает C#-скрипты прямо в Revit, " +
-                    "Add-in Explorer — команды из собранных DLL без перезапуска Revit, а также показывает ленту, " +
-                    "автозагрузку и конфликты версий DLL. Repeat Last повторяет последний запуск, Console показывает вывод."
-                );
+                .SetToolTip(RibbonStrings.PanelToolTip)
+                .SetLongDescription(RibbonStrings.PanelDescription);
 
+            // The buttons' names stay English in every language; their tooltips follow DevKit's language.
             pullBtn.CreatePushButton<OpenScriptEditorCmd>("Script Editor")
-                .SetToolTip("Редактор C#-скриптов.")
-                .SetLongDescription(
-                    "Пишите код прямо в Revit и запускайте его без пересборки надстройки. " +
-                    "Весь вывод — Console.WriteLine, Debug, исключения — попадает в консоль плагина."
-                );
+                .SetToolTip(RibbonStrings.ScriptEditorToolTip)
+                .SetLongDescription(RibbonStrings.ScriptEditorDescription);
 
             // The button's internal name comes from its command class, so renaming the text keeps users' shortcuts.
             pullBtn.CreatePushButton<OpenAssemblyRunnerCmd, AlwaysAvailable>("Add-in Explorer")
-                .SetToolTip("Надстройки и их DLL: команды, лента, автозагрузка, конфликты.")
-                .SetLongDescription(
-                    "Подключите собранную DLL и запустите из неё IExternalCommand: команда берётся из актуальной DLL на диске. " +
-                    "Здесь же видно, как изменится лента надстройки, какие надстройки Revit загружает при запуске " +
-                    "и какие DLL у них расходятся по версиям."
-                );
+                .SetToolTip(RibbonStrings.ExplorerToolTip)
+                .SetLongDescription(RibbonStrings.ExplorerDescription);
 
             // Renamed from Run Again: the internal name comes from ExecutePendingCmd, so shortcuts stay.
             pullBtn.CreatePushButton<ExecutePendingCmd, AlwaysAvailable>("Repeat Last")
-                .SetToolTip("Повторить последний скрипт или команду из DLL.")
-                .SetLongDescription(
-                    "Команда из DLL берётся из файла на диске, так что после пересборки запустится свежая версия. " +
-                    "Скрипт повторяется в том виде, в каком его запустили; правки в редакторе применятся после F5."
-                );
+                .SetToolTip(RibbonStrings.RepeatToolTip)
+                .SetLongDescription(RibbonStrings.RepeatDescription);
 
             pullBtn.CreatePushButton<DebugLastCmd, AlwaysAvailable>("Repeat Last: Debug")
-                .SetToolTip("Повторить последнюю команду под отладчиком Visual Studio.")
-                .SetLongDescription(
-                    "Повторяет последнюю команду из Add-in Explorer, подключив открытую Visual Studio: точки останова, " +
-                    "поставленные в проекте, сработают. Visual Studio должна быть открыта с решением надстройки. " +
-                    "Скрипты отлаживаются в Script Editor, кнопкой с жуком."
-                );
+                .SetToolTip(RibbonStrings.DebugToolTip)
+                .SetLongDescription(RibbonStrings.DebugDescription);
 
             pullBtn.AddSeparator();
 
             pullBtn.CreatePushButton<ShowConsolePaneCmd>("Console")
-                .SetToolTip("Показать или скрыть консоль.")
-                .SetLongDescription(
-                    "Сюда попадает вывод скриптов и команд из DLL: Console.WriteLine, Debug, Trace и исключения. " +
-                    "Галочки в шапке задают, что делать с консолью и видами перед каждым запуском."
-                );
+                .SetToolTip(RibbonStrings.ConsoleToolTip)
+                .SetLongDescription(RibbonStrings.ConsoleDescription);
         }
 
         // The folders Revit loads .addin files from, for the Startup and Dependencies tabs of Add-in Explorer.
@@ -143,7 +129,7 @@ namespace RevitDevKit
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Папки надстроек Revit не определились: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(RibbonStrings.AddinFoldersFailed, ex.Message));
                 AddinManifests.Locate(null, null, revit.VersionNumber);
             }
         }
@@ -156,7 +142,7 @@ namespace RevitDevKit
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Не удалось зарегистрировать панель консоли:");
+                ConsoleOutput.Exception(ex, RibbonStrings.ConsolePaneRegisterFailed);
             }
         }
 
@@ -181,9 +167,7 @@ namespace RevitDevKit
                 if (requested.Version != null && found.Version != null && found.Version < requested.Version)
                 {
                     if (requester == Requester.DevKit)
-                        ConsoleOutput.Error(
-                            "Рядом с плагином лежит " + requested.Name + " версии " + found.Version +
-                            ", а требуется " + requested.Version + ". Соберите и разложите один и тот же набор сборок.");
+                        ConsoleOutput.Error(string.Format(RibbonStrings.OlderAssembly, requested.Name, found.Version, requested.Version));
                     return null;
                 }
 

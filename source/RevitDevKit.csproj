@@ -5,9 +5,31 @@
 		<LangVersion>latest</LangVersion>
 		<Configurations>Debug R2019;Debug R2020;Debug R2021;Debug R2022;Debug R2023;Debug R2024;R2019;R2020;R2021;R2022;R2023;R2024</Configurations>
 		<SatelliteResourceLanguages>ru</SatelliteResourceLanguages>
+		<NeutralLanguage>en</NeutralLanguage>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
 	</PropertyGroup>
+
+	<!-- DevKit's text (see Localization\Language.cs): each English Localization\*Strings.resx gets a public class of its name,
+	     generated before anything compiles, the XAML of WPF's temporary assembly too (the SDK's own generation runs after it);
+	     the Russian *Strings.ru.resx go to ru\RevitDevKit.resources.dll. -->
+	<Target Name="GenerateStringClasses" BeforeTargets="MarkupCompilePass1;CoreCompile">
+		<ItemGroup>
+			<_StringsResx Include="Localization\*Strings.resx" />
+		</ItemGroup>
+		<MakeDir Directories="$(IntermediateOutputPath)Localization" />
+		<GenerateResource Sources="%(_StringsResx.Identity)"
+		                  OutputResources="$(IntermediateOutputPath)Localization\%(_StringsResx.Filename).class.resources"
+		                  StronglyTypedLanguage="CSharp" StronglyTypedClassName="%(_StringsResx.Filename)"
+		                  StronglyTypedNamespace="RevitDevKit.Localization" StronglyTypedManifestPrefix="RevitDevKit.Localization"
+		                  StronglyTypedFileName="$(IntermediateOutputPath)Localization\%(_StringsResx.Filename).Designer.cs"
+		                  PublicClass="true" ExecuteAsTool="false" />
+		<ItemGroup>
+			<Compile Include="@(_StringsResx->'$(IntermediateOutputPath)Localization\%(Filename).Designer.cs')" Exclude="@(Compile)" />
+			<FileWrites Include="@(_StringsResx->'$(IntermediateOutputPath)Localization\%(Filename).Designer.cs')" />
+			<FileWrites Include="@(_StringsResx->'$(IntermediateOutputPath)Localization\%(Filename).class.resources')" />
+		</ItemGroup>
+	</Target>
 
 	<ItemGroup>
 		<!-- The script editor's tooltips read the doc comments of ScriptBase from this copy of its source

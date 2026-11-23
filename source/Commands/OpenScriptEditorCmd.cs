@@ -4,6 +4,7 @@ using Autodesk.Revit.UI;
 using RevitDevKit.Core.Output;
 using RevitDevKit.Core.Running;
 using System;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Commands
 {
@@ -24,7 +25,7 @@ namespace RevitDevKit.Commands
             catch (Exception ex)
             {
                 message = ex.Message;
-                ConsoleOutput.Exception(ex, "Не удалось открыть окно Script Editor:");
+                ConsoleOutput.Exception(ex, RibbonStrings.ScriptEditorOpenFailed);
                 return Result.Failed;
             }
         }

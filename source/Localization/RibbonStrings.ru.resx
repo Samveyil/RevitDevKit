@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PanelToolTip" xml:space="preserve">
+    <value>Скрипты, команды из DLL, консоль.</value>
+  </data>
+  <data name="PanelDescription" xml:space="preserve">
+    <value>Инструменты разработчика надстроек. Script Editor запускает C#-скрипты прямо в Revit, Add-in Explorer — команды из собранных DLL без перезапуска Revit, а также показывает ленту, автозагрузку и конфликты версий DLL. Repeat Last повторяет последний запуск, Console показывает вывод.</value>
+  </data>
+  <data name="ScriptEditorToolTip" xml:space="preserve">
+    <value>Редактор C#-скриптов.</value>
+  </data>
+  <data name="ScriptEditorDescription" xml:space="preserve">
+    <value>Пишите код прямо в Revit и запускайте его без пересборки надстройки. Весь вывод — Console.WriteLine, Debug, исключения — попадает в консоль плагина.</value>
+  </data>
+  <data name="ExplorerToolTip" xml:space="preserve">
+    <value>Надстройки и их DLL: команды, лента, автозагрузка, конфликты.</value>
+  </data>
+  <data name="ExplorerDescription" xml:space="preserve">
+    <value>Подключите собранную DLL и запустите из неё IExternalCommand: команда берётся из актуальной DLL на диске. Здесь же видно, как изменится лента надстройки, какие надстройки Revit загружает при запуске и какие DLL у них расходятся по версиям.</value>
+  </data>
+  <data name="RepeatToolTip" xml:space="preserve">
+    <value>Повторить последний скрипт или команду из DLL.</value>
+  </data>
+  <data name="RepeatDescription" xml:space="preserve">
+    <value>Команда из DLL берётся из файла на диске, так что после пересборки запустится свежая версия. Скрипт повторяется в том виде, в каком его запустили; правки в редакторе применятся после F5.</value>
+  </data>
+  <data name="DebugToolTip" xml:space="preserve">
+    <value>Повторить последнюю команду под отладчиком Visual Studio.</value>
+  </data>
+  <data name="DebugDescription" xml:space="preserve">
+    <value>Повторяет последнюю команду из Add-in Explorer, подключив открытую Visual Studio: точки останова, поставленные в проекте, сработают. Visual Studio должна быть открыта с решением надстройки. Скрипты отлаживаются в Script Editor, кнопкой с жуком.</value>
+  </data>
+  <data name="ConsoleToolTip" xml:space="preserve">
+    <value>Показать или скрыть консоль.</value>
+  </data>
+  <data name="ConsoleDescription" xml:space="preserve">
+    <value>Сюда попадает вывод скриптов и команд из DLL: Console.WriteLine, Debug, Trace и исключения. Галочки в шапке задают, что делать с консолью и видами перед каждым запуском.</value>
+  </data>
+  <data name="Loaded" xml:space="preserve">
+    <value>DevKit загружен. Revit {0}.</value>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Не удалось загрузить надстройку:</value>
+  </data>
+  <data name="AddinFoldersFailed" xml:space="preserve">
+    <value>Папки надстроек Revit не определились: {0}</value>
+  </data>
+  <data name="ConsolePaneRegisterFailed" xml:space="preserve">
+    <value>Не удалось зарегистрировать панель консоли:</value>
+  </data>
+  <data name="OlderAssembly" xml:space="preserve">
+    <value>Рядом с плагином лежит {0} версии {1}, а требуется {2}. Соберите и разложите один и тот же набор сборок.</value>
+  </data>
+  <data name="NothingToDebug" xml:space="preserve">
+    <value>Нечего повторять. Запустите команду в Add-in Explorer хотя бы один раз.</value>
+  </data>
+  <data name="LastWasScript" xml:space="preserve">
+    <value>Последним запускался скрипт. Скрипт отлаживается в Script Editor, кнопкой с жуком.</value>
+  </data>
+  <data name="NothingToRepeat" xml:space="preserve">
+    <value>Нечего повторять. Запустите скрипт в Script Editor или команду в Add-in Explorer хотя бы один раз.</value>
+  </data>
+  <data name="ExplorerOpenFailed" xml:space="preserve">
+    <value>Не удалось открыть окно Add-in Explorer:</value>
+  </data>
+  <data name="ScriptEditorOpenFailed" xml:space="preserve">
+    <value>Не удалось открыть окно Script Editor:</value>
+  </data>
+  <data name="ConsolePaneUnavailable" xml:space="preserve">
+    <value>Панель консоли недоступна: {0}</value>
+  </data>
+</root>

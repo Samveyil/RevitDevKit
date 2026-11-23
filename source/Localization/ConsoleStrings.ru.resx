@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Консоль</value>
+  </data>
+  <data name="ClearToolTip" xml:space="preserve">
+    <value>Очистить консоль (Ctrl+L)</value>
+  </data>
+  <data name="CopyToolTip" xml:space="preserve">
+    <value>Скопировать весь вывод в буфер обмена</value>
+  </data>
+  <data name="ClearShownToolTip" xml:space="preserve">
+    <value>Очистить виды от нарисованного</value>
+  </data>
+  <data name="OpenPaneHeader" xml:space="preserve">
+    <value>Открывать панель консоли после запуска DLL</value>
+  </data>
+  <data name="OpenOnProblems" xml:space="preserve">
+    <value>При ошибках</value>
+  </data>
+  <data name="OpenOnProblemsToolTip" xml:space="preserve">
+    <value>Исключение или предупреждения Revit</value>
+  </data>
+  <data name="OpenOnOutput" xml:space="preserve">
+    <value>При любом выводе</value>
+  </data>
+  <data name="OpenOnOutputToolTip" xml:space="preserve">
+    <value>Ещё и когда команда что-то написала: Console, Debug, Trace</value>
+  </data>
+  <data name="OpenAlways" xml:space="preserve">
+    <value>Всегда</value>
+  </data>
+  <data name="OpenNever" xml:space="preserve">
+    <value>Никогда</value>
+  </data>
+  <data name="OpenNeverToolTip" xml:space="preserve">
+    <value>Только кнопкой Console на ленте</value>
+  </data>
+  <data name="OpenPaneToolTip" xml:space="preserve">
+    <value>Открывать консоль после запуска DLL: {0}</value>
+  </data>
+  <data name="OpenPaneOnProblems" xml:space="preserve">
+    <value>при ошибках</value>
+  </data>
+  <data name="OpenPaneOnOutput" xml:space="preserve">
+    <value>при выводе</value>
+  </data>
+  <data name="OpenPaneAlways" xml:space="preserve">
+    <value>всегда</value>
+  </data>
+  <data name="OpenPaneNever" xml:space="preserve">
+    <value>никогда</value>
+  </data>
+  <data name="ClearOnRun" xml:space="preserve">
+    <value>Чистить консоль</value>
+  </data>
+  <data name="ClearOnRunToolTip" xml:space="preserve">
+    <value>Очищать консоль перед каждым запуском</value>
+  </data>
+  <data name="ClearShownOnRun" xml:space="preserve">
+    <value>Чистить виды</value>
+  </data>
+  <data name="ClearShownOnRunToolTip" xml:space="preserve">
+    <value>Стирать с видов нарисованное перед каждым запуском</value>
+  </data>
+  <data name="HideWarnings" xml:space="preserve">
+    <value>Тихий режим</value>
+  </data>
+  <data name="HideWarningsToolTip" xml:space="preserve">
+    <value>Предупреждения Revit — только в консоль, без окон</value>
+  </data>
+  <data name="AutoScroll" xml:space="preserve">
+    <value>Автопрокрутка</value>
+  </data>
+  <data name="AutoScrollToolTip" xml:space="preserve">
+    <value>Прокручивать консоль к новому выводу</value>
+  </data>
+  <data name="Timestamps" xml:space="preserve">
+    <value>Время</value>
+  </data>
+  <data name="TimestampsToolTip" xml:space="preserve">
+    <value>Начинать строки со времени</value>
+  </data>
+  <data name="ShowDebug" xml:space="preserve">
+    <value>Стек вызовов</value>
+  </data>
+  <data name="ShowDebugToolTip" xml:space="preserve">
+    <value>Показывать стеки вызовов</value>
+  </data>
+  <data name="ViewMenu" xml:space="preserve">
+    <value>Вид ▾</value>
+  </data>
+  <data name="ViewMenuToolTip" xml:space="preserve">
+    <value>Как консоль показывает вывод</value>
+  </data>
+  <data name="EarlyOutputDropped" xml:space="preserve">
+    <value>… ранний вывод отброшен …</value>
+  </data>
+  <data name="Copied" xml:space="preserve">
+    <value>Вывод скопирован в буфер обмена</value>
+  </data>
+  <data name="ClipboardBusy" xml:space="preserve">
+    <value>Буфер обмена занят:</value>
+  </data>
+  <data name="PaneShowFailed" xml:space="preserve">
+    <value>Не удалось показать панель консоли: {0}</value>
+  </data>
+  <data name="TraceRestored" xml:space="preserve">
+    <value>Перехват Debug/Trace был снят другой надстройкой — восстановлен.</value>
+  </data>
+  <data name="InnerException" xml:space="preserve">
+    <value>--- внутреннее исключение ---</value>
+  </data>
+  <data name="FirstItemsShown" xml:space="preserve">
+    <value>, … (показаны первые {0})</value>
+  </data>
+  <data name="NotInitialized" xml:space="preserve">
+    <value>DevKit не инициализирован — перезапустите Revit.</value>
+  </data>
+  <data name="RunDeferred" xml:space="preserve">
+    <value>Revit отложил запуск ({0}). Закройте активные диалоги и попробуйте ещё раз.</value>
+  </data>
+  <data name="NoCommandContext" xml:space="preserve">
+    <value>Не удалось получить контекст команды Revit. IExternalCommand будет запущен через ExternalEvent — commandData окажется недоступен.</value>
+  </data>
+  <data name="RunBanner" xml:space="preserve">
+    <value>Запуск: {0}</value>
+  </data>
+  <data name="DefaultRunTitle" xml:space="preserve">
+    <value>скрипт</value>
+  </data>
+  <data name="AutoTransactionNoDocument" xml:space="preserve">
+    <value>Автотранзакция включена, но активного документа нет.</value>
+  </data>
+  <data name="TransactionCommitted" xml:space="preserve">
+    <value>Транзакция закоммичена.</value>
+  </data>
+  <data name="TransactionRolledBack" xml:space="preserve">
+    <value>Транзакция откачена.</value>
+  </data>
+  <data name="RunFailed" xml:space="preserve">
+    <value>Ошибка выполнения ({0} мс):</value>
+  </data>
+  <data name="CompletedHandlerFailed" xml:space="preserve">
+    <value>Ошибка в обработчике завершения:</value>
+  </data>
+  <data name="Done" xml:space="preserve">
+    <value>Готово за {0} мс.</value>
+  </data>
+  <data name="CommandReturned" xml:space="preserve">
+    <value>Команда вернула {0} ({1} мс).</value>
+  </data>
+  <data name="RunResult" xml:space="preserve">
+    <value>Результат: {0}</value>
+  </data>
+  <data name="CommandContextFound" xml:space="preserve">
+    <value>Контекст команды Revit доступен: {0}</value>
+  </data>
+  <data name="RibbonCommandNotFound" xml:space="preserve">
+    <value>Команда ленты не найдена — IExternalCommand будет запускаться через ExternalEvent.</value>
+  </data>
+  <data name="PostCommandFailed" xml:space="preserve">
+    <value>PostCommand не сработал ({0}), используем ExternalEvent.</value>
+  </data>
+  <data name="FailuresNotRead" xml:space="preserve">
+    <value>Сбои Revit не прочитаны: {0}</value>
+  </data>
+  <data name="FailureWarning" xml:space="preserve">
+    <value>Предупреждение</value>
+  </data>
+  <data name="FailureError" xml:space="preserve">
+    <value>Ошибка</value>
+  </data>
+  <data name="FailureTransaction" xml:space="preserve">
+    <value> · Транзакция «{0}»</value>
+  </data>
+  <data name="TimesFew" xml:space="preserve">
+    <value>{0} раза</value>
+  </data>
+  <data name="TimesMany" xml:space="preserve">
+    <value>{0} раз</value>
+  </data>
+  <data name="FailureRollsBack" xml:space="preserve">
+    <value>  Если ошибку не решить, Revit отменит транзакцию.</value>
+  </data>
+  <data name="FailureQuietMode" xml:space="preserve">
+    <value>  Тихий режим: окно Revit не показано.</value>
+  </data>
+  <data name="FailureElements" xml:space="preserve">
+    <value>  Элементы ({0}):</value>
+  </data>
+  <data name="FailureNoElements" xml:space="preserve">
+    <value>без элементов</value>
+  </data>
+  <data name="FailuresUnsubscribe" xml:space="preserve">
+    <value>Отписка от сбоев Revit: {0}</value>
+  </data>
+  <data name="CompilerEnvironment" xml:space="preserve">
+    <value>Окружение компилятора</value>
+  </data>
+  <data name="LoadedInProcess" xml:space="preserve">
+    <value>    в процессе: {0}</value>
+  </data>
+  <data name="NextToAddin" xml:space="preserve">
+    <value>    рядом с плагином: {0}</value>
+  </data>
+  <data name="AddinFolder" xml:space="preserve">
+    <value>Папка плагина: {0}</value>
+  </data>
+  <data name="Unknown" xml:space="preserve">
+    <value>&lt;неизвестно&gt;</value>
+  </data>
+  <data name="InMemory" xml:space="preserve">
+    <value>&lt;память&gt;</value>
+  </data>
+  <data name="NotLoaded" xml:space="preserve">
+    <value>не загружена</value>
+  </data>
+  <data name="NoFile" xml:space="preserve">
+    <value>файла нет</value>
+  </data>
+</root>
