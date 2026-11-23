@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.IntelliSense
 {
@@ -556,7 +557,7 @@ namespace RevitDevKit.Core.IntelliSense
                 : symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
 
             if (overloads > 1)
-                description += " (+" + (overloads - 1) + " перегр.)";
+                description += string.Format(ScriptEditorStrings.Overloads, overloads - 1);
 
             var summary = SymbolDocumentation.Summary(symbol, token);
             if (summary != null)

@@ -16,6 +16,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.UI.ScriptEditor
 {
@@ -186,7 +187,7 @@ namespace RevitDevKit.UI.ScriptEditor
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Подсказки недоступны: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(ScriptEditorStrings.CompletionFailed, ex.Message));
                 return;
             }
 
@@ -302,7 +303,7 @@ namespace RevitDevKit.UI.ScriptEditor
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Подсказка параметров недоступна: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(ScriptEditorStrings.SignatureHelpFailed, ex.Message));
                 return;
             }
 
@@ -416,7 +417,7 @@ namespace RevitDevKit.UI.ScriptEditor
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Подсказки: не удалось заранее загрузить сборки: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(ScriptEditorStrings.CompletionWarmUpFailed, ex.Message));
             }
         }
 

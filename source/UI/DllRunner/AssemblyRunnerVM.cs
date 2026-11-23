@@ -14,6 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Threading;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.UI.DllRunner
 {
@@ -111,7 +112,7 @@ namespace RevitDevKit.UI.DllRunner
         {
             var dialog = new Microsoft.Win32.OpenFileDialog
             {
-                Filter = "Сборки .NET (*.dll)|*.dll|Все файлы (*.*)|*.*",
+                Filter = ExplorerStrings.DllFilter,
                 Multiselect = true
             };
 
@@ -185,7 +186,7 @@ namespace RevitDevKit.UI.DllRunner
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Не удалось загрузить " + path + ":");
+                ConsoleOutput.Exception(ex, string.Format(ExplorerStrings.LoadFailed, path));
             }
         }
 
@@ -249,7 +250,7 @@ namespace RevitDevKit.UI.DllRunner
             // Without a debugger nothing runs: the user has been told to open Visual Studio.
             if (!DebugLaunch.TryAttach(node.Owner.FilePath)) return;
 
-            ConsoleOutput.Info("Точки останова в проекте " + node.Owner.DisplayName + " сработают.");
+            ConsoleOutput.Info(string.Format(ExplorerStrings.BreakpointsWillHit, node.Owner.DisplayName));
             Run(node);
         }
 
@@ -263,7 +264,7 @@ namespace RevitDevKit.UI.DllRunner
 
             var path = node.Owner.FilePath;
             var typeName = node.TypeName;
-            var missing = "В актуальной " + node.Owner.DisplayName + " нет команды " + typeName + ".";
+            var missing = string.Format(ExplorerStrings.CommandMissing, node.Owner.DisplayName, typeName);
 
             RunTarget target;
             try
@@ -272,13 +273,13 @@ namespace RevitDevKit.UI.DllRunner
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Не удалось загрузить " + path + ":");
+                ConsoleOutput.Exception(ex, string.Format(ExplorerStrings.LoadFailed, path));
                 return;
             }
 
             if (target == null)
             {
-                ConsoleOutput.Error(missing + " Обновите список команд.");
+                ConsoleOutput.Error(missing + ExplorerStrings.RefreshCommandList);
                 return;
             }
 
@@ -315,7 +316,7 @@ namespace RevitDevKit.UI.DllRunner
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Не удалось передать запуск в Revit:");
+                ConsoleOutput.Exception(ex, ExplorerStrings.RunHandOverFailed);
                 IsRunning = false;
             }
         }
@@ -343,7 +344,7 @@ namespace RevitDevKit.UI.DllRunner
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Не удалось сохранить список DLL: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(ExplorerStrings.DllListSaveFailed, ex.Message));
             }
         }
 
@@ -373,7 +374,7 @@ namespace RevitDevKit.UI.DllRunner
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Не удалось прочитать список DLL: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(ExplorerStrings.DllListReadFailed, ex.Message));
             }
         }
     }

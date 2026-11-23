@@ -9,6 +9,7 @@ using RevitDevKit.Core.Show;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.ScriptApi
 {
@@ -145,7 +146,7 @@ namespace RevitDevKit.ScriptApi
 
             var doc = Doc;
             if (doc == null)
-                throw new InvalidOperationException("Нет активного документа — транзакцию открыть не в чем.");
+                throw new InvalidOperationException(ScriptEditorStrings.NoDocumentForTransaction);
 
             using (var t = new Transaction(doc, name))
             {
@@ -322,9 +323,9 @@ namespace RevitDevKit.ScriptApi
                 return;
             }
 
-            ConsoleOutput.Banner(element.Id + "  " + (element.Name ?? "<без имени>"));
-            ConsoleOutput.WriteLine("Класс:     " + element.GetType().FullName);
-            ConsoleOutput.WriteLine("Категория: " + (element.Category != null ? element.Category.Name : "—"));
+            ConsoleOutput.Banner(element.Id + "  " + (element.Name ?? ScriptEditorStrings.NoName));
+            ConsoleOutput.WriteLine(string.Format(ScriptEditorStrings.DumpClass, element.GetType().FullName));
+            ConsoleOutput.WriteLine(string.Format(ScriptEditorStrings.DumpCategory, element.Category != null ? element.Category.Name : "—"));
 
             foreach (var p in ReadParameters(element, useType).OrderBy(p => p.Definition.Name, NaturalComparer.CurrentCultureIgnoreCase))
                 ConsoleOutput.WriteLine("  " + p.Definition.Name.PadRight(NameWidth) + " = " + ReadValue(p));
@@ -336,7 +337,7 @@ namespace RevitDevKit.ScriptApi
         /// <param name="useType">True to compare the parameters of the elements' types as well.</param>
         /// <remarks>
         /// Only the parameters shown in the Properties palette are compared.
-        /// "-нет-" marks a parameter the element does not have.
+        /// "-none-" ("-нет-" in Russian) marks a parameter the element does not have.
         /// </remarks>
         public void Compare(Element first, Element second, bool useType = false) =>
             Compare(new[] { first, second }, useType);
@@ -357,13 +358,13 @@ namespace RevitDevKit.ScriptApi
 
             if (items.Count < 2 || items.Any(e => e == null))
             {
-                Warn("Для сравнения нужны минимум два элемента, и ни один не должен быть null.");
+                Warn(ScriptEditorStrings.CompareTooFew);
                 return;
             }
 
             if (items.Count > MaxCompared)
             {
-                Warn("Сравниваются первые " + MaxCompared + " из " + items.Count + " элементов.");
+                Warn(string.Format(ScriptEditorStrings.CompareFirst, MaxCompared, items.Count));
                 items = items.Take(MaxCompared).ToList();
             }
 
@@ -381,13 +382,13 @@ namespace RevitDevKit.ScriptApi
                 .OrderBy(r => r.Name, NaturalComparer.CurrentCultureIgnoreCase)
                 .ToList();
 
-            var titles = items.Select(e => e.Id + " " + (e.Name ?? "<без имени>")).ToList();
+            var titles = items.Select(e => e.Id + " " + (e.Name ?? ScriptEditorStrings.NoName)).ToList();
 
-            ConsoleOutput.Banner("Сравнение: " + string.Join("  ↔  ", titles));
+            ConsoleOutput.Banner(string.Format(ScriptEditorStrings.CompareBanner, string.Join("  ↔  ", titles)));
 
             if (rows.Count == 0)
             {
-                Ok("Все параметры совпадают.");
+                Ok(ScriptEditorStrings.CompareSame);
                 return;
             }
 
@@ -413,20 +414,20 @@ namespace RevitDevKit.ScriptApi
                 ConsoleOutput.WriteLine();
             }
 
-            Row("Параметр", titles);
+            Row(ScriptEditorStrings.CompareParameter, titles);
             ConsoleOutput.WriteLine("  " + new string('-', NameWidth) + string.Concat(widths.Select(w => "-+-" + new string('-', w))));
 
             foreach (var r in rows)
                 Row(r.Name, r.Values);
 
-            ConsoleOutput.WriteLine("Различий: " + rows.Count, LogLevel.Warning);
+            ConsoleOutput.WriteLine(string.Format(ScriptEditorStrings.CompareDifferences, rows.Count), LogLevel.Warning);
         }
 
         private const int NameWidth = 38;
         private const int MaxValueWidth = 20;
         private const int MaxTableWidth = 50;
         private const int MaxCompared = 5;
-        private const string Missing = "-нет-";
+        private static string Missing => ScriptEditorStrings.ValueMissing;
 
         private static List<Parameter> ReadParameters(Element element, bool useType, bool visibleOnly = false)
         {
@@ -452,11 +453,11 @@ namespace RevitDevKit.ScriptApi
                 if (!p.HasValue) return "-";
 
                 var text = p.StorageType == StorageType.String ? p.AsString() : p.AsValueString();
-                return text.IsNullOrEmpty() ? "-пусто-" : text;
+                return text.IsNullOrEmpty() ? ScriptEditorStrings.ValueEmpty : text;
             }
             catch
             {
-                return "<ошибка чтения>";
+                return ScriptEditorStrings.ValueReadFailed;
             }
         }
 

@@ -1,3 +1,4 @@
+using RevitDevKit.Localization;
 using System.Collections.Generic;
 
 namespace RevitDevKit.ScriptApi
@@ -8,70 +9,76 @@ namespace RevitDevKit.ScriptApi
         public string Code { get; set; }
     }
 
-    public static class Samples
+    // The examples of the Examples menu and the code of a new tab, in DevKit's language: English here, Russian in
+    // Samples.Russian.cs. The two sets go in the same order with the same code, only the comments and texts differ.
+    public static partial class Samples
     {
-        public const string Starter =
-@"// Короткий фрагмент: плагин сам обернёт его в класс.
-// Доступны Doc, UIDoc, UIApp, App, ActiveView, Selection, S0, S1, S2.
-// Также Print() / Tx() / S() / All() / Instances() / Types() / Table() / Dump() / Compare() / Show().
-// Запуск — F5 или Ctrl+Enter.
+        public static string Starter => Language.IsRussian ? RussianStarter : EnglishStarter;
 
-Print(""Документ: "" + Doc.Title);
-Print(""Путь: "" + (Doc.PathName == """" ? ""<не сохранён>"" : Doc.PathName));
+        public static IReadOnlyList<Sample> All => Language.IsRussian ? RussianSamples : EnglishSamples;
+
+        private const string EnglishStarter =
+@"// A short fragment: the add-in wraps it in a class itself.
+// Doc, UIDoc, UIApp, App, ActiveView, Selection, S0, S1, S2 are available.
+// So are Print() / Tx() / S() / All() / Instances() / Types() / Table() / Dump() / Compare() / Show().
+// Run with F5 or Ctrl+Enter.
+
+Print(""Document: "" + Doc.Title);
+Print(""Path: "" + (Doc.PathName == """" ? ""<not saved>"" : Doc.PathName));
 
 var walls = All<Wall>();
-Print($""Стен в модели: {walls.Count}"");
+Print($""Walls in the model: {walls.Count}"");
 ";
 
-        private static readonly Sample[] _all =
+        private static readonly Sample[] EnglishSamples =
         {
             new Sample
             {
-                Title = "1. Привет, Revit",
+                Title = "1. Hello, Revit",
                 Code =
-@"Print(""Revit "" + App.VersionNumber + "" сборка "" + App.VersionBuild);
-Print(""Документ: "" + Doc.Title);
-Print(""Пользователь: "" + App.Username);
+@"Print(""Revit "" + App.VersionNumber + "" build "" + App.VersionBuild);
+Print(""Document: "" + Doc.Title);
+Print(""User: "" + App.Username);
 "
             },
 
             new Sample
             {
-                Title = "2. Console.WriteLine и уровни вывода",
+                Title = "2. Console.WriteLine and output levels",
                 Code =
-@"// Обычный Console.WriteLine тоже попадает в консоль плагина —
-// поэтому чужие библиотеки логируются сюда же без переделок.
-Console.WriteLine(""Это обычный Console.WriteLine"");
-System.Diagnostics.Debug.WriteLine(""Это Debug.WriteLine (серый)"");
+@"// A plain Console.WriteLine goes to the add-in's console too,
+// so other libraries log here without any changes.
+Console.WriteLine(""This is a plain Console.WriteLine"");
+System.Diagnostics.Debug.WriteLine(""This is Debug.WriteLine (gray)"");
 
-Ok(""Успех — зелёный"");
-Warn(""Предупреждение — жёлтое"");
-Fail(""Ошибка — красная"");
+Ok(""Success is green"");
+Warn(""A warning is yellow"");
+Fail(""An error is red"");
 
 for (int i = 1; i <= 5; i++)
-    Console.WriteLine($""строка {i} из 5"");
+    Console.WriteLine($""line {i} of 5"");
 "
             },
 
             new Sample
             {
-                Title = "3. Обход элементов и таблица",
+                Title = "3. Going through elements and a table",
                 Code =
-@"// All<type>() — возвращает все элементы указанного класса, например All<FamilyInstance>().
-// Instances(category) — возвращает все экземпляры указанной категории,
-// например Instances(BuiltInCategory.OST_Walls).
-// Types(category) — возвращает все типоразмеры указанной категории, например Types(BuiltInCategory.OST_Floors).
+@"// All<type>() returns all the elements of the given class, for example All<FamilyInstance>().
+// Instances(category) returns all the instances of the given category,
+// for example Instances(BuiltInCategory.OST_Walls).
+// Types(category) returns all the types of the given category, for example Types(BuiltInCategory.OST_Floors).
 //
-// Дополнительно можно указать ID вида, чтобы ограничить выборку элементами, видимыми на этом виде:
+// A view's Id may be given as well, to take only the elements visible in that view:
 // All<type>(viewId), Instances(viewId, category), Types(viewId, category).
-// Например, All<Dimension>(ActiveView.Id) возвращает все размеры, видимые на текущем виде.
+// For example, All<Dimension>(ActiveView.Id) returns all the dimensions visible in the current view.
 //
-// Для All<type>() также доступны перегрузки с фильтрацией по категории:
-// All<type>(category) и All<type>(viewId, category).
-// Например, All<FamilyInstance>(BuiltInCategory.OST_StructuralColumns)
-// возвращает все экземпляры семейств категории «Несущие колонны».
+// All<type>() also has overloads that filter by category:
+// All<type>(category) and All<type>(viewId, category).
+// For example, All<FamilyInstance>(BuiltInCategory.OST_StructuralColumns)
+// returns all the family instances of the Structural Columns category.
 var walls = All<Wall>();
-Print($""Найдено стен: {walls.Count}"");
+Print($""Walls found: {walls.Count}"");
 
 Table(walls,
     w => w.Id,
@@ -82,90 +89,90 @@ Table(walls,
 
             new Sample
             {
-                Title = "4. Изменение модели в транзакции",
+                Title = "4. Changing the model in a transaction",
                 Code =
-@"// Транзакцию открываем сами — галочку «Автотранзакция» держите выключенной.
+@"// The transaction is opened here, so keep the Auto-transaction checkbox off.
 var walls = All<Wall>();
-if (walls.Count == 0) { Warn(""В модели нет стен.""); return; }
+if (walls.Count == 0) { Warn(""There are no walls in the model.""); return; }
 
-Tx(""Пометить стены комментарием"", () =>
+Tx(""Mark walls with a comment"", () =>
 {
     foreach (var wall in walls)
     {
         var p = wall.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS);
         if (p != null && !p.IsReadOnly)
-            p.Set(""проверено скриптом"");
+            p.Set(""checked by a script"");
     }
 });
 
-Ok($""Обновлено стен: {walls.Count}"");
+Ok($""Walls updated: {walls.Count}"");
 "
             },
 
             new Sample
             {
-                Title = "5. Параметры выбранных элементов",
+                Title = "5. Parameters of the selected elements",
                 Code =
-@"// S0 возвращает первый элемент, S1 — второй, S2 — третий.
-// Для получения элемента по индексу используйте S(i), где i — индекс элемента, начиная с 0.
-if (Selection.Count == 0) { Warn(""Ничего не выбрано в модели.""); return; }
+@"// S0 returns the first selected element, S1 the second, S2 the third.
+// For an element by index use S(i), where i is the element's index starting from 0.
+if (Selection.Count == 0) { Warn(""Nothing is selected in the model.""); return; }
 
-// ""-"" — параметр без значения; ""-пусто-"" — пустая строка.
+// ""-"" is a parameter without a value; ""-empty-"" is an empty string.
 foreach (var element in Selection)
     Dump(element);
 
-// Другие варианты:
-// Dump(S0);         — выбран один элемент
-// Dump(S0, true);   — с параметрами типов
+// Other options:
+// Dump(S0);         — one selected element
+// Dump(S0, true);   — with the type's parameters
 "
             },
 
             new Sample
             {
-                Title = "6. Сравнение параметров элементов",
+                Title = "6. Comparing the parameters of elements",
                 Code =
-@"// Выберите в модели от двух до пяти элементов: выводятся только параметры с разными значениями.
-// Сравниваются только параметры, видимые в палитре свойств.
-// ""-нет-"" (оранжевым) — у элемента такого параметра нет; ""-"" — параметр без значения; ""-пусто-"" — пустая строка.
-if (Selection.Count < 2) { Warn(""Выберите в модели минимум два элемента.""); return; }
+@"// Select two to five elements in the model: only the parameters with different values are shown.
+// Only the parameters visible in the Properties palette are compared.
+// ""-none-"" (in orange): the element has no such parameter; ""-"": a parameter without a value; ""-empty-"": an empty string.
+if (Selection.Count < 2) { Warn(""Select at least two elements in the model.""); return; }
 
 Compare(Selection);
 
-// Другие варианты:
-// Compare(S0, S1);            — два конкретных элемента
-// Compare(S0, S1, S2);        — до пяти элементов через запятую
-// Compare(Selection, true);   — с параметрами типов
+// Other options:
+// Compare(S0, S1);            — two given elements
+// Compare(S0, S1, S2);        — up to five elements, separated by commas
+// Compare(Selection, true);   — with the types' parameters
 "
             },
 
             new Sample
             {
-                Title = "7. Показать геометрию на видах",
+                Title = "7. Showing geometry in the views",
                 Code =
-@"// Show(...) рисует поверх модели, ничего не создавая в ней. Выберите стену или любой элемент.
-// Нарисованное держится до следующего запуска; убрать раньше — ClearShown() или кнопка на панели.
-if (Selection.Count == 0) { Warn(""Выберите элемент.""); return; }
+@"// Show(...) draws over the model without creating anything in it. Select a wall or any element.
+// What is drawn stays until the next run; to clear it earlier, ClearShown() or the button on the pane.
+if (Selection.Count == 0) { Warn(""Select an element.""); return; }
 
 var element = S0;
-Show(element);                                    // вся геометрия: грани полупрозрачные, рёбра линиями
-Show(element.get_BoundingBox(null), Orange);      // рамка
-Show(element.Location, Red, ""расположение"");      // точка или линия расположения
+Show(element);                                    // all the geometry: faces see-through, edges as lines
+Show(element.get_BoundingBox(null), Orange);      // the bounding box
+Show(element.Location, Red, ""location"");          // the location point or line
 
 if (element is Wall wall)
 {
     var side = HostObjectUtils.GetSideFaces(wall, ShellLayerType.Exterior).FirstOrDefault();
-    if (side != null) Show(wall.GetGeometryObjectFromReference(side), Green, ""наружная грань"");
+    if (side != null) Show(wall.GetGeometryObjectFromReference(side), Green, ""exterior face"");
 }
 
-Show(XYZ.Zero, Purple, ""начало координат"");
+Show(XYZ.Zero, Purple, ""origin"");
 "
             },
 
             new Sample
             {
-                Title = "8. Полноценный IExternalCommand",
+                Title = "8. A complete IExternalCommand",
                 Code =
-@"// Если в коде есть объявление класса, плагин компилирует файл как есть.
+@"// When the code declares a class, the add-in compiles the file as it is.
 using System;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -178,13 +185,13 @@ public class MyCommand : IExternalCommand
     {
         var doc = commandData.Application.ActiveUIDocument.Document;
 
-        Console.WriteLine(""Команда запущена так же, как это делает Revit."");
-        Console.WriteLine(""Документ: "" + doc.Title);
+        Console.WriteLine(""The command runs the way Revit runs it."");
+        Console.WriteLine(""Document: "" + doc.Title);
 
-        using (var t = new Transaction(doc, ""Демо""))
+        using (var t = new Transaction(doc, ""Demo""))
         {
             t.Start();
-            // ... изменения модели ...
+            // ... changes to the model ...
             t.Commit();
         }
 
@@ -196,21 +203,21 @@ public class MyCommand : IExternalCommand
 
             new Sample
             {
-                Title = "9. Свой класс с методом Main",
+                Title = "9. A class of your own with a Main method",
                 Code =
 @"using System;
 using System.Linq;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 
-// Параметры метода подставляются по типу: UIApplication, UIDocument,
+// The method's parameters are filled by their type: UIApplication, UIDocument,
 // Document, Application, ExternalCommandData.
 public class Report
 {
     public void Main(Document doc, UIApplication uiapp)
     {
-        Console.WriteLine(""Документ: "" + doc.Title);
-        Console.WriteLine(""Версия: "" + uiapp.Application.VersionNumber);
+        Console.WriteLine(""Document: "" + doc.Title);
+        Console.WriteLine(""Version: "" + uiapp.Application.VersionNumber);
 
         var categories = new FilteredElementCollector(doc)
             .WhereElementIsNotElementType()
@@ -227,9 +234,9 @@ public class Report
 
             new Sample
             {
-                Title = "10. Подключение внешней библиотеки через #r",
+                Title = "10. Referencing an external library with #r",
                 Code =
-@"// Директива #r добавляет ссылку на сборку: по имени или по полному пути.
+@"// The #r directive adds a reference to an assembly: by name or by full path.
 #r ""System.Xml""
 #r ""System.Xml.Linq""
 
@@ -243,10 +250,5 @@ Print(xml.ToString());
 "
             }
         };
-
-        public static IReadOnlyList<Sample> All
-        {
-            get { return _all; }
-        }
     }
 }

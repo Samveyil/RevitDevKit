@@ -11,6 +11,7 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Addins
 {
@@ -352,9 +353,9 @@ namespace RevitDevKit.Core.Addins
                 group.Level = copies.Any(c => c.State == CopyState.Breaks) ? DependencyLevel.Assembly
                     : versionsDiffer || copies.Any(c => c.State == CopyState.Differs) ? DependencyLevel.FileOnly
                     : DependencyLevel.None;
-                group.Reason = versionsDiffer ? "не подписана, одна копия на всех"
-                    : group.Level == DependencyLevel.FileOnly ? (native ? "разные версии файла" : "одна версия сборки, разные файлы")
-                    : "одинаковые версии";
+                group.Reason = versionsDiffer ? ExplorerStrings.ReasonUnsigned
+                    : group.Level == DependencyLevel.FileOnly ? (native ? ExplorerStrings.ReasonFileVersions : ExplorerStrings.ReasonSameAssemblyFiles)
+                    : ExplorerStrings.ReasonSame;
                 return;
             }
 
@@ -385,24 +386,24 @@ namespace RevitDevKit.Core.Addins
             if (copies.Any(c => c.State == CopyState.Breaks))
             {
                 group.Level = DependencyLevel.Assembly;
-                group.Reason = "Revit перенаправляет на более старую " + copies.First(c => c.State == CopyState.Breaks).EffectiveVersion;
+                group.Reason = string.Format(ExplorerStrings.ReasonRedirectOlder, copies.First(c => c.State == CopyState.Breaks).EffectiveVersion);
             }
             else if (copies.Any(c => c.State == CopyState.Differs))
             {
                 group.Level = DependencyLevel.FileOnly;
-                group.Reason = filesDiffer == null ? "Revit перенаправляет на " + group.RedirectedTo
-                    : versions.Count > 1 ? "у версии " + filesDiffer + " разные файлы"
-                    : "одна версия сборки, разные файлы";
+                group.Reason = filesDiffer == null ? string.Format(ExplorerStrings.ReasonRedirect, group.RedirectedTo)
+                    : versions.Count > 1 ? string.Format(ExplorerStrings.ReasonVersionFiles, filesDiffer)
+                    : ExplorerStrings.ReasonSameAssemblyFiles;
             }
             else if (versions.Count > 1)
             {
                 group.Level = DependencyLevel.SideBySide;
-                group.Reason = "подписана, каждая версия загрузится отдельно";
+                group.Reason = ExplorerStrings.ReasonSigned;
             }
             else
             {
                 group.Level = DependencyLevel.None;
-                group.Reason = "одинаковые версии";
+                group.Reason = ExplorerStrings.ReasonSame;
             }
         }
 
@@ -544,19 +545,19 @@ namespace RevitDevKit.Core.Addins
         public static string ToMarkdown(DependencyReport report, bool onlyProblems)
         {
             var text = new StringBuilder();
-            text.AppendLine("### Revit " + (report.RevitVersion ?? "") + ": версии DLL у надстроек (" + report.CheckedAt.ToString("yyyy-MM-dd HH:mm") + ")");
+            text.AppendLine("### Revit " + (report.RevitVersion ?? "") + ": " + ExplorerStrings.ReportDependencies + " (" + report.CheckedAt.ToString("yyyy-MM-dd HH:mm") + ")");
             text.AppendLine();
 
             var groups = report.Groups.Where(g => !onlyProblems || g.IsConflict).ToList();
             if (groups.Count == 0)
             {
-                text.AppendLine("Расхождений нет.");
+                text.AppendLine(ExplorerStrings.ReportNoDifferences);
                 return text.ToString();
             }
 
             var owners = groups.SelectMany(g => g.Copies.Select(c => c.Owner)).Distinct()
                 .OrderBy(o => o == RevitOwner ? 0 : 1).ThenBy(o => o, StringComparer.OrdinalIgnoreCase).ToList();
-            var header = new[] { "DLL", "Почему" }.Concat(owners).Concat(new[] { "Загружена" }).ToArray();
+            var header = new[] { "DLL", ExplorerStrings.ReportWhy }.Concat(owners).Concat(new[] { ExplorerStrings.ReportLoaded }).ToArray();
             Table(text, header, groups.Select(g => new[] { g.FileName, Reason(g) }
                 .Concat(owners.Select(o => g.Copies.FirstOrDefault(c => c.Owner == o)?.Dll.FileVersion ?? "-"))
                 .Concat(new[] { g.Loaded.Count == 0 ? "-" : string.Join(", ", g.Loaded.Select(l => l.FileVersion + " (" + (l.Owner ?? l.Path) + ")")) })

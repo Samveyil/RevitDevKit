@@ -14,6 +14,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.Core.Ai
 {
@@ -27,6 +28,11 @@ namespace RevitDevKit.Core.Ai
     public static class AiInstructions
     {
         private const string ExtStorageRepository = "https://github.com/Samveyil/BIMPlugins.ExtStorage";
+
+        // The instructions are English in every language, but name the option as the user sees it, in Russian with a gloss.
+        private static string AutoTransactionName => Language.IsRussian
+            ? ScriptEditorStrings.AutoTransaction + " (auto transaction)"
+            : ScriptEditorStrings.AutoTransaction;
         private const string ExtStoragePackage = "https://www.nuget.org/packages/BIMPlugins.ExtStorage";
 
         // The ExtStorage methods the standard text gives with signatures: those scripts need most, whose parameters an AI guesses wrong.
@@ -61,8 +67,8 @@ namespace RevitDevKit.Core.Ai
 
             text.AppendLine("## Transactions");
             text.AppendLine(autoTransaction
-                ? "- The Автотранзакция (auto transaction) option is on: the whole script already runs in a transaction. Do not create a `Transaction` or call `Tx`."
-                : "- The Автотранзакция (auto transaction) option is off. Reading the model needs no transaction. Wrap every change " +
+                ? "- The " + AutoTransactionName + " option is on: the whole script already runs in a transaction. Do not create a `Transaction` or call `Tx`."
+                : "- The " + AutoTransactionName + " option is off. Reading the model needs no transaction. Wrap every change " +
                   "(`SetValue`, `Doc.Delete`, `Create`, moving) in `Tx(\"Name\", () => { ... })` or `var x = Tx(\"Name\", () => ...)`; " +
                   "never create a `Transaction` yourself. Without one Revit throws \"Modification of the document is forbidden\".");
             text.AppendLine();
@@ -121,15 +127,15 @@ namespace RevitDevKit.Core.Ai
             text.AppendLine("var walls = All<Wall>(ActiveView.Id);");
             text.AppendLine("if (walls.Count == 0)");
             text.AppendLine("{");
-            text.AppendLine("    Warn(\"На виде нет стен.\");");
+            text.AppendLine("    Warn(\"" + ScriptEditorStrings.AiExampleNoWalls + "\");");
             text.AppendLine("    return;");
             text.AppendLine("}");
             text.AppendLine();
             text.AppendLine("Table(walls, w => w.Id, w => w.Name, w => w.Width.ToMillimeters());");
-            text.AppendLine("Show(walls, Red, \"стены вида\");");
+            text.AppendLine("Show(walls, Red, \"" + ScriptEditorStrings.AiExampleShown + "\");");
             if (!autoTransaction)
-                text.AppendLine("Tx(\"Комментарий\", () => walls.First().get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS).SetValue(\"проверено\"));");
-            text.AppendLine("Ok($\"Стен на виде: {walls.Count}\");");
+                text.AppendLine("Tx(\"" + ScriptEditorStrings.AiExampleTransaction + "\", () => walls.First().get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS).SetValue(\"" + ScriptEditorStrings.AiExampleComment + "\"));");
+            text.AppendLine("Ok($\"" + ScriptEditorStrings.AiExampleCount + "\");");
             text.AppendLine("```");
 
             return text.ToString();
@@ -230,7 +236,7 @@ namespace RevitDevKit.Core.Ai
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Инструкция для ИИ: не удалось собрать ссылки: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(ScriptEditorStrings.AiInstructionsFailedReferences, ex.Message));
                 return null;
             }
         }
@@ -288,7 +294,7 @@ namespace RevitDevKit.Core.Ai
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Инструкция для ИИ: не удалось перечислить члены ScriptBase: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(ScriptEditorStrings.AiInstructionsFailedScriptBase, ex.Message));
             }
 
             return lines;
@@ -355,7 +361,7 @@ namespace RevitDevKit.Core.Ai
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Инструкция для ИИ: не удалось перечислить BIMPlugins.ExtStorage: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(ScriptEditorStrings.AiInstructionsFailedExtStorage, ex.Message));
             }
 
             return lines;
@@ -416,7 +422,7 @@ namespace RevitDevKit.Core.Ai
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Инструкция для ИИ: не удалось перечислить BIMPlugins.ExtStorage: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(ScriptEditorStrings.AiInstructionsFailedExtStorage, ex.Message));
             }
 
             return lines;

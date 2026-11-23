@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Threading;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.UI.DllRunner
 {
@@ -22,10 +23,10 @@ namespace RevitDevKit.UI.DllRunner
             Assembly = assembly;
             Number = assembly.Number.ToString().PadLeft(digits);
             ToolTip = (assembly.FullName ?? assembly.Name)
-                      + (assembly.FileVersion.IsNullOrEmpty() ? string.Empty : "\nВерсия файла " + assembly.FileVersion)
+                      + (assembly.FileVersion.IsNullOrEmpty() ? string.Empty : string.Format(ExplorerStrings.FileVersionLine, assembly.FileVersion))
                       + "\n" + ProcessAssemblies.Where(assembly)
                       + (sameName.Count > 1
-                          ? "\nЗагружена " + sameName.Count + " раза: " + string.Join(", ", sameName.Select(a => "№" + a.Number + " " + a.Version
+                          ? Language.Count(sameName.Count, ExplorerStrings.LoadedTimesOne, ExplorerStrings.LoadedTimesFew, ExplorerStrings.LoadedTimesMany) + string.Join(", ", sameName.Select(a => "№" + a.Number + " " + a.Version
                               + (a.Owner.IsNullOrEmpty() ? string.Empty : " (" + a.Owner + ")")))
                           : string.Empty);
         }
@@ -79,7 +80,7 @@ namespace RevitDevKit.UI.DllRunner
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Не удалось получить список сборок:");
+                ConsoleOutput.Exception(ex, ExplorerStrings.AssemblyListFailed);
                 _all = new List<ProcessAssembly>();
             }
 
@@ -105,7 +106,7 @@ namespace RevitDevKit.UI.DllRunner
 
             SelectedItem = Items.FirstOrDefault(i => i.Assembly.Number == selected);
             IsEmpty = Items.Count == 0;
-            Status = "Загружено: " + _all.Count + " · показано: " + Items.Count;
+            Status = string.Format(ExplorerStrings.AssembliesStatus, _all.Count, Items.Count);
         }
 
         private void Notify(string text)
@@ -132,11 +133,11 @@ namespace RevitDevKit.UI.DllRunner
             try
             {
                 var path = ReportFiles.Save("Assemblies", ProcessAssemblies.ToMarkdown(Items.Select(i => i.Assembly), _all.Count));
-                Notify("Список сохранён: " + Path.GetFileName(path));
+                Notify(string.Format(ExplorerStrings.ListSaved, Path.GetFileName(path)));
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Не удалось сохранить список:");
+                ConsoleOutput.Exception(ex, ExplorerStrings.ListSaveFailed);
             }
         }
 
@@ -151,11 +152,11 @@ namespace RevitDevKit.UI.DllRunner
             try
             {
                 Clipboard.SetText(path);
-                Notify("Путь скопирован");
+                Notify(ExplorerStrings.PathCopied);
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Не удалось скопировать путь:");
+                ConsoleOutput.Exception(ex, ExplorerStrings.PathCopyFailed);
             }
         }
 

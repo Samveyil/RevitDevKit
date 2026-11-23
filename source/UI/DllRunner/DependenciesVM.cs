@@ -13,6 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.UI.DllRunner
 {
@@ -90,8 +91,8 @@ namespace RevitDevKit.UI.DllRunner
             get
             {
                 var loaded = Group.Loaded.Count == 0
-                    ? "ещё не загружена"
-                    : "загружена " + string.Join(" и ", Group.Loaded.Select(l => l.FileVersion + " из " + (l.Owner ?? Path.GetDirectoryName(l.Path))));
+                    ? ExplorerStrings.NotLoadedYet
+                    : string.Format(ExplorerStrings.LoadedFrom, string.Join(ExplorerStrings.LoadedAnd, Group.Loaded.Select(l => string.Format(ExplorerStrings.VersionFrom, l.FileVersion, l.Owner ?? Path.GetDirectoryName(l.Path)))));
                 return AddinDependencies.Reason(Group) + " · " + loaded;
             }
         }
@@ -104,18 +105,18 @@ namespace RevitDevKit.UI.DllRunner
                 var signed = Group.Copies.All(c => c.Dll.IsSigned);
                 var versionsDiffer = Group.Copies.All(c => c.Dll.IsManaged) && Group.Copies.Select(c => c.Dll.AssemblyVersion).Distinct().Count() > 1;
                 if (!signed && versionsDiffer)
-                    return "Не подписана: все надстройки получат одну копию — ту, что загрузилась первой. Старая версия (красным) может не подойти.";
+                    return ExplorerStrings.UnsignedTip;
 
                 switch (Group.Level)
                 {
                     case DependencyLevel.Assembly:
-                        return "Revit.exe.config перенаправляет на более старую версию, чем та, под которую собрана надстройка (красным).";
+                        return ExplorerStrings.RedirectOlderTip;
                     case DependencyLevel.FileOnly:
-                        return "У всех одна копия этой версии сборки, файл той, что загрузится первой. Обычно это безопасно.";
+                        return ExplorerStrings.FileOnlyTip;
                     case DependencyLevel.SideBySide:
-                        return "Подписана: каждая версия сборки загрузится отдельно, каждая надстройка получит свою.";
+                        return ExplorerStrings.SideBySideTip;
                     default:
-                        return "У всех одна и та же версия.";
+                        return ExplorerStrings.SameVersionTip;
                 }
             }
         }
@@ -144,12 +145,12 @@ namespace RevitDevKit.UI.DllRunner
         public string Version => Copy.Dll.FileVersion;
         public bool IsLoaded => Copy.IsLoaded;
 
-        public string ToolTip => Copy.Dll.Path + "\nВерсия файла " + Copy.Dll.FileVersion
-                                 + (!Copy.Dll.IsManaged ? ", нативная DLL"
-                                     : ", версия сборки " + Copy.Dll.AssemblyVersion
-                                       + (Copy.Dll.IsSigned ? ", подписана (" + Copy.Dll.PublicKeyToken + ")" : ", не подписана")
+        public string ToolTip => Copy.Dll.Path + string.Format(ExplorerStrings.FileVersionLine, Copy.Dll.FileVersion)
+                                 + (!Copy.Dll.IsManaged ? ExplorerStrings.CopyNative
+                                     : string.Format(ExplorerStrings.CopyAssemblyVersion, Copy.Dll.AssemblyVersion)
+                                       + (Copy.Dll.IsSigned ? string.Format(ExplorerStrings.CopySigned, Copy.Dll.PublicKeyToken) : ExplorerStrings.CopyUnsigned)
                                        + (Copy.EffectiveVersion != null && Copy.EffectiveVersion != Copy.Dll.AssemblyVersion
-                                           ? "\nПолучит версию " + Copy.EffectiveVersion : string.Empty));
+                                           ? string.Format(ExplorerStrings.CopyGetsVersion, Copy.EffectiveVersion) : string.Empty));
 
         public override string FilePath => Copy.Dll.Path;
     }
@@ -168,7 +169,7 @@ namespace RevitDevKit.UI.DllRunner
         private bool _isBusy;
 
         // The status bar: the check on the left, a short note of the last action on the right, gone after a while.
-        [ObservableProperty] private string _status = "Нажмите «Проверить»";
+        [ObservableProperty] private string _status = ExplorerStrings.PressCheck;
         [ObservableProperty] private string _notice = string.Empty;
         private DispatcherTimer _noticeTimer;
         [ObservableProperty] private string _searchText = string.Empty;
@@ -200,7 +201,7 @@ namespace RevitDevKit.UI.DllRunner
         public void Refresh()
         {
             IsBusy = true;
-            Status = "Проверка…";
+            Status = ExplorerStrings.Checking;
 
             List<AddinManifest> manifests;
             List<Tuple<string, string>> loaded;
@@ -231,14 +232,14 @@ namespace RevitDevKit.UI.DllRunner
             IsBusy = false;
 
             var conflicts = report.Groups.Count(g => g.IsConflict);
-            Status = "Проверено в " + report.CheckedAt.ToString("HH:mm:ss") + " · " + (conflicts == 0 ? "конфликтов нет" : "конфликтов: " + conflicts);
+            Status = string.Format(ExplorerStrings.CheckedAt, report.CheckedAt.ToString("HH:mm:ss"), conflicts == 0 ? ExplorerStrings.NoConflictsShort : string.Format(ExplorerStrings.ConflictsCount, conflicts));
             Rebuild();
         }
 
         private void Failed(Exception ex)
         {
-            ConsoleOutput.Exception(ex, "Не удалось проверить зависимости надстроек:");
-            Status = "Проверка не удалась, подробности в консоли";
+            ConsoleOutput.Exception(ex, ExplorerStrings.CheckFailed);
+            Status = ExplorerStrings.CheckFailedStatus;
             IsBusy = false;
         }
 
@@ -289,12 +290,12 @@ namespace RevitDevKit.UI.DllRunner
 
             // Conflicts always; with the box cleared, also what loads side by side, what is the same everywhere,
             // and what only Revit and Autodesk add-ins share, which the user cannot change anyway.
-            AddGroups("Конфликты", "SourceBranch", g => g.IsConflict, Matches);
+            AddGroups(ExplorerStrings.SectionConflicts, "SourceBranch", g => g.IsConflict, Matches);
             if (!OnlyProblems)
             {
-                AddGroups("Загрузятся рядом", "LayersOutline", g => !g.OnlyAutodesk && g.Level == DependencyLevel.SideBySide, Matches);
-                AddGroups("Одинаковые у нескольких", "CheckAll", g => !g.OnlyAutodesk && g.Level == DependencyLevel.None, Matches);
-                AddGroups("Только Revit и Autodesk", "LockOutline", g => g.OnlyAutodesk, Matches);
+                AddGroups(ExplorerStrings.SectionSideBySide, "LayersOutline", g => !g.OnlyAutodesk && g.Level == DependencyLevel.SideBySide, Matches);
+                AddGroups(ExplorerStrings.SectionSame, "CheckAll", g => !g.OnlyAutodesk && g.Level == DependencyLevel.None, Matches);
+                AddGroups(ExplorerStrings.SectionAutodesk, "LockOutline", g => g.OnlyAutodesk, Matches);
             }
 
             IsEmpty = Sections.Count == 0;
@@ -350,11 +351,11 @@ namespace RevitDevKit.UI.DllRunner
             try
             {
                 var path = ReportFiles.Save("Dependencies", AddinDependencies.ToMarkdown(_report, OnlyProblems));
-                Notify("Отчёт сохранён: " + Path.GetFileName(path));
+                Notify(string.Format(ExplorerStrings.ReportSaved, Path.GetFileName(path)));
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Не удалось сохранить отчёт:");
+                ConsoleOutput.Exception(ex, ExplorerStrings.ReportSaveFailed);
             }
         }
 
@@ -369,11 +370,11 @@ namespace RevitDevKit.UI.DllRunner
             try
             {
                 Clipboard.SetText(path);
-                Notify("Путь скопирован");
+                Notify(ExplorerStrings.PathCopied);
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Exception(ex, "Не удалось скопировать путь:");
+                ConsoleOutput.Exception(ex, ExplorerStrings.PathCopyFailed);
             }
         }
 

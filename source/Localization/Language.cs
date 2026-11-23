@@ -31,6 +31,31 @@ namespace RevitDevKit.Localization
             CoreStrings.Culture = Culture;
             RibbonStrings.Culture = Culture;
             ConsoleStrings.Culture = Culture;
+            ScriptEditorStrings.Culture = Culture;
+            ExplorerStrings.Culture = Culture;
+        }
+
+        // A count with its word: "1 error", "3 errors"; in Russian "1 ошибка", "3 ошибки", "5 ошибок". The texts take
+        // {0} for the number; English has the same text for few and many.
+        public static string Count(int n, string one, string few, string many)
+        {
+            var form = many;
+            if (IsRussian)
+            {
+                var tens = n % 100;
+                var ones = n % 10;
+                if (tens < 11 || tens > 14)
+                {
+                    if (ones == 1) form = one;
+                    else if (ones >= 2 && ones <= 4) form = few;
+                }
+            }
+            else if (n == 1)
+            {
+                form = one;
+            }
+
+            return string.Format(form, n);
         }
 
         public static CultureInfo Choose(bool revitIsRussian, string setting)

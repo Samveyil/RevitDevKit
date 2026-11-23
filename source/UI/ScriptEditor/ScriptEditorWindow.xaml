@@ -1,6 +1,7 @@
 <Window x:Class="RevitDevKit.UI.ScriptEditor.ScriptEditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:RevitDevKit.Localization"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
@@ -35,48 +36,48 @@
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5">
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding RunCommand}"
-                    ToolTip="Скомпилировать и выполнить (F5 или Ctrl+Enter)" >
+                    ToolTip="{x:Static loc:ScriptEditorStrings.RunToolTip}" >
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="Play" Width="20" Height="20" Foreground="{StaticResource BIMPlugins.PrimaryBrush}"
                                              VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
-                    <TextBlock Text="Запустить (F5)" VerticalAlignment="Center"/>
+                    <TextBlock Text="{x:Static loc:ScriptEditorStrings.Run}" VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>
 
             <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding RunWithDebuggerCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}"
-                    ToolTip="Запустить под отладчиком Visual Studio (Ctrl+F5)">
+                    ToolTip="{x:Static loc:ScriptEditorStrings.DebugToolTip}">
                 <materialDesign:PackIcon Kind="BugPlayOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
             <Border Style="{StaticResource ToolbarSeparator}"/>
 
             <Button Width="25" Height="25" Padding="0" Command="{Binding NewTabCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Новая вкладка (Ctrl+N)">
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="{x:Static loc:ScriptEditorStrings.NewTabToolTip}">
                 <materialDesign:PackIcon Kind="FileCodeOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
             <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding OpenFileCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Открыть .cs (Ctrl+O)">
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="{x:Static loc:ScriptEditorStrings.OpenToolTip}">
                 <materialDesign:PackIcon Kind="FolderOpenOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
             <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding SaveFileCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить (Ctrl+S)">
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="{x:Static loc:ScriptEditorStrings.SaveToolTip}">
                 <materialDesign:PackIcon Kind="ContentSaveOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
             <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding SaveFileAsCommand}"
-                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="Сохранить как (Ctrl+Shift+S)">
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="{x:Static loc:ScriptEditorStrings.SaveAsToolTip}">
                 <materialDesign:PackIcon Kind="ContentSaveEditOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
             <Border Style="{StaticResource ToolbarSeparator}"/>
 
             <Border BorderThickness="1" BorderBrush="{StaticResource BIMPlugins.PrimaryBrush}" CornerRadius="3">
-                <materialDesign:PopupBox ToolTip="Вставить готовый пример в новую вкладку">
+                <materialDesign:PopupBox ToolTip="{x:Static loc:ScriptEditorStrings.SamplesToolTip}">
                     <materialDesign:PopupBox.ToggleContent>
-                        <TextBlock Text="Примеры ▾" Margin="10 0 5 0" />
+                        <TextBlock Text="{x:Static loc:ScriptEditorStrings.Samples}" Margin="10 0 5 0" />
                     </materialDesign:PopupBox.ToggleContent>
 
                     <ItemsControl ItemsSource="{Binding CodeSamples}">
@@ -92,8 +93,8 @@
 
             <Border Style="{StaticResource ToolbarSeparator}"/>
 
-            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="Автотранзакция" IsChecked="{Binding IsAutoTransaction}"
-                      ToolTip="Обернуть скрипт в транзакцию"/>
+            <CheckBox VerticalAlignment="Center" Padding="2 0" Content="{x:Static loc:ScriptEditorStrings.AutoTransaction}" IsChecked="{Binding IsAutoTransaction}"
+                      ToolTip="{x:Static loc:ScriptEditorStrings.AutoTransactionToolTip}"/>
 
             <Border Style="{StaticResource ToolbarSeparator}"/>
 
@@ -129,7 +130,7 @@
 
                     <Border Width="1" Background="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=Border}}"/>
 
-                    <materialDesign:PopupBox x:Name="AiPopup" StaysOpen="True" ToolTip="Инструкция для ИИ: выбрать, что скопировать" VerticalAlignment="Center" Padding="0">
+                    <materialDesign:PopupBox x:Name="AiPopup" StaysOpen="True" ToolTip="{x:Static loc:ScriptEditorStrings.AiMenuToolTip}" VerticalAlignment="Center" Padding="0">
                         <materialDesign:PopupBox.ToggleContent>
                             <materialDesign:PackIcon Kind="MenuDown" Width="16" Height="16" Margin="1 0" Foreground="{StaticResource IconBrush}"/>
                         </materialDesign:PopupBox.ToggleContent>
@@ -163,23 +164,23 @@
                                 </Style>
                             </StackPanel.Resources>
 
-                            <Button Style="{StaticResource AiMenuItem}" Click="AiMenuItem_Click" Command="{Binding CopyAiInstructionsCommand}" ToolTip="Вставьте в начало чата с ИИ, затем опишите задачу">
+                            <Button Style="{StaticResource AiMenuItem}" Click="AiMenuItem_Click" Command="{Binding CopyAiInstructionsCommand}" ToolTip="{x:Static loc:ScriptEditorStrings.AiInstructionsToolTip}">
                                 <StackPanel Orientation="Horizontal">
                                     <materialDesign:PackIcon Kind="CreationOutline" Width="16" Height="16" VerticalAlignment="Center" Foreground="{StaticResource IconBrush}"/>
-                                    <TextBlock Text="Инструкция" Margin="8 0 0 0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{x:Static loc:ScriptEditorStrings.AiInstructions}" Margin="8 0 0 0" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
-                            <Button Style="{StaticResource AiMenuItem}" Click="AiMenuItem_Click" Command="{Binding CopyAiInstructionsWithScriptCommand}" ToolTip="Инструкция, текущий скрипт и ошибки его запуска: чтобы ИИ поправил или доработал скрипт">
+                            <Button Style="{StaticResource AiMenuItem}" Click="AiMenuItem_Click" Command="{Binding CopyAiInstructionsWithScriptCommand}" ToolTip="{x:Static loc:ScriptEditorStrings.AiScriptAndErrorsToolTip}">
                                 <StackPanel Orientation="Horizontal">
                                     <materialDesign:PackIcon Kind="AutoFix" Width="16" Height="16" VerticalAlignment="Center" Foreground="{StaticResource IconBrush}"/>
-                                    <TextBlock Text="Скрипт и ошибки" Margin="8 0 0 0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{x:Static loc:ScriptEditorStrings.AiScriptAndErrors}" Margin="8 0 0 0" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                             <Separator Height="1" Margin="0 4 0 2"/>
                             <!-- Applies to both items and to the icon. The list stays open on it (StaysOpen); the items close it themselves. -->
                             <CheckBox IsChecked="{Binding IsAiDetailed}" Height="26" Margin="6 0 10 0" Padding="4 0 0 0" VerticalContentAlignment="Center" FontSize="12"
-                                      Content="Подробная"
-                                      ToolTip="Вся BIMPlugins.ExtStorage с сигнатурами: примерно в 3 раза больше токенов"/>
+                                      Content="{x:Static loc:ScriptEditorStrings.AiDetailed}"
+                                      ToolTip="{x:Static loc:ScriptEditorStrings.AiDetailedToolTip}"/>
                         </StackPanel>
                     </materialDesign:PopupBox>
                 </StackPanel>
@@ -219,12 +220,12 @@
 
                                         <Grid.ContextMenu>
                                             <ContextMenu>
-                                                <MenuItem Header="Закрыть вкладку" CommandParameter="{Binding}"
+                                                <MenuItem Header="{x:Static loc:ScriptEditorStrings.CloseTab}" CommandParameter="{Binding}"
                                                           Command="{Binding PlacementTarget.Tag.CloseTabCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                                <MenuItem Header="Сохранить как…" CommandParameter="{Binding}"
+                                                <MenuItem Header="{x:Static loc:ScriptEditorStrings.SaveAsMenu}" CommandParameter="{Binding}"
                                                           Command="{Binding PlacementTarget.Tag.SaveFileAsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                                 <!-- Only a tab saved to a file has one to show. -->
-                                                <MenuItem Header="Показать в проводнике" CommandParameter="{Binding}"
+                                                <MenuItem Header="{x:Static loc:ScriptEditorStrings.ShowInExplorer}" CommandParameter="{Binding}"
                                                           Command="{Binding PlacementTarget.Tag.RevealInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                           Visibility="{Binding HasFile, Converter={StaticResource BoolToVisibility}}"/>
                                             </ContextMenu>
@@ -234,7 +235,7 @@
                                                    VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
 
                                         <Button Grid.Column="1" Style="{StaticResource MaterialDesignToolButton}"
-                                                Padding="0" Margin="6 0 0 0" Width="14" Height="14" VerticalAlignment="Center" ToolTip="Закрыть"
+                                                Padding="0" Margin="6 0 0 0" Width="14" Height="14" VerticalAlignment="Center" ToolTip="{x:Static loc:ScriptEditorStrings.Close}"
                                                 Command="{Binding DataContext.CloseTabCommand, RelativeSource={RelativeSource AncestorType=TabControl}}"
                                                 CommandParameter="{Binding}">
                                             <materialDesign:PackIcon Kind="Close" Width="12" Height="12"/>

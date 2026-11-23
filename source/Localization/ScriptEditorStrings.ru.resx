@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="RunToolTip" xml:space="preserve">
+    <value>Скомпилировать и выполнить (F5 или Ctrl+Enter)</value>
+  </data>
+  <data name="Run" xml:space="preserve">
+    <value>Запустить (F5)</value>
+  </data>
+  <data name="DebugToolTip" xml:space="preserve">
+    <value>Запустить под отладчиком Visual Studio (Ctrl+F5)</value>
+  </data>
+  <data name="NewTabToolTip" xml:space="preserve">
+    <value>Новая вкладка (Ctrl+N)</value>
+  </data>
+  <data name="OpenToolTip" xml:space="preserve">
+    <value>Открыть .cs (Ctrl+O)</value>
+  </data>
+  <data name="SaveToolTip" xml:space="preserve">
+    <value>Сохранить (Ctrl+S)</value>
+  </data>
+  <data name="SaveAsToolTip" xml:space="preserve">
+    <value>Сохранить как (Ctrl+Shift+S)</value>
+  </data>
+  <data name="SamplesToolTip" xml:space="preserve">
+    <value>Вставить готовый пример в новую вкладку</value>
+  </data>
+  <data name="Samples" xml:space="preserve">
+    <value>Примеры ▾</value>
+  </data>
+  <data name="AutoTransaction" xml:space="preserve">
+    <value>Автотранзакция</value>
+  </data>
+  <data name="AutoTransactionToolTip" xml:space="preserve">
+    <value>Обернуть скрипт в транзакцию</value>
+  </data>
+  <data name="AiMenuToolTip" xml:space="preserve">
+    <value>Инструкция для ИИ: выбрать, что скопировать</value>
+  </data>
+  <data name="AiInstructions" xml:space="preserve">
+    <value>Инструкция</value>
+  </data>
+  <data name="AiInstructionsToolTip" xml:space="preserve">
+    <value>Вставьте в начало чата с ИИ, затем опишите задачу</value>
+  </data>
+  <data name="AiScriptAndErrors" xml:space="preserve">
+    <value>Скрипт и ошибки</value>
+  </data>
+  <data name="AiScriptAndErrorsToolTip" xml:space="preserve">
+    <value>Инструкция, текущий скрипт и ошибки его запуска: чтобы ИИ поправил или доработал скрипт</value>
+  </data>
+  <data name="AiDetailed" xml:space="preserve">
+    <value>Подробная</value>
+  </data>
+  <data name="AiDetailedToolTip" xml:space="preserve">
+    <value>Вся BIMPlugins.ExtStorage с сигнатурами: примерно в 3 раза больше токенов</value>
+  </data>
+  <data name="CloseTab" xml:space="preserve">
+    <value>Закрыть вкладку</value>
+  </data>
+  <data name="SaveAsMenu" xml:space="preserve">
+    <value>Сохранить как…</value>
+  </data>
+  <data name="ShowInExplorer" xml:space="preserve">
+    <value>Показать в проводнике</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Закрыть</value>
+  </data>
+  <data name="Ready" xml:space="preserve">
+    <value>Готово</value>
+  </data>
+  <data name="NewScript" xml:space="preserve">
+    <value>Новый скрипт</value>
+  </data>
+  <data name="ScriptNumber" xml:space="preserve">
+    <value>Скрипт {0}</value>
+  </data>
+  <data name="DefaultScriptName" xml:space="preserve">
+    <value>Скрипт</value>
+  </data>
+  <data name="NoDocument" xml:space="preserve">
+    <value>Документ не открыт</value>
+  </data>
+  <data name="DocumentContext" xml:space="preserve">
+    <value>Документ: {0}</value>
+  </data>
+  <data name="ContextUnavailable" xml:space="preserve">
+    <value>Контекст недоступен</value>
+  </data>
+  <data name="ContextReadFailed" xml:space="preserve">
+    <value>Не удалось прочитать контекст Revit: {0}</value>
+  </data>
+  <data name="OpenFilter" xml:space="preserve">
+    <value>C# файлы (*.cs;*.csx)|*.cs;*.csx|Все файлы (*.*)|*.*</value>
+  </data>
+  <data name="SaveFilter" xml:space="preserve">
+    <value>C# файлы (*.cs)|*.cs|Все файлы (*.*)|*.*</value>
+  </data>
+  <data name="Opened" xml:space="preserve">
+    <value>Открыт {0}</value>
+  </data>
+  <data name="OpenFailed" xml:space="preserve">
+    <value>Не удалось открыть файл:</value>
+  </data>
+  <data name="Saved" xml:space="preserve">
+    <value>Сохранено: {0}</value>
+  </data>
+  <data name="SaveFailed" xml:space="preserve">
+    <value>Не удалось сохранить файл:</value>
+  </data>
+  <data name="UnsavedChanges" xml:space="preserve">
+    <value>Во вкладке «{0}» есть несохранённые изменения. Закрыть?</value>
+  </data>
+  <data name="EmptyScript" xml:space="preserve">
+    <value>Пустой скрипт</value>
+  </data>
+  <data name="DebuggerNotAttached" xml:space="preserve">
+    <value>Отладчик не подключён</value>
+  </data>
+  <data name="DebugStop" xml:space="preserve">
+    <value>Отладка: остановка на первой строке скрипта, файл {0}</value>
+  </data>
+  <data name="Compiling" xml:space="preserve">
+    <value>Компиляция…</value>
+  </data>
+  <data name="CompilerCrashed" xml:space="preserve">
+    <value>Сбой компилятора:</value>
+  </data>
+  <data name="CompileError" xml:space="preserve">
+    <value>Ошибка компиляции</value>
+  </data>
+  <data name="CompileFailed" xml:space="preserve">
+    <value>Компиляция не удалась: {0}.</value>
+  </data>
+  <data name="ErrorsOne" xml:space="preserve">
+    <value>{0} ошибка</value>
+  </data>
+  <data name="ErrorsFew" xml:space="preserve">
+    <value>{0} ошибки</value>
+  </data>
+  <data name="ErrorsMany" xml:space="preserve">
+    <value>{0} ошибок</value>
+  </data>
+  <data name="NoEntryPoint" xml:space="preserve">
+    <value>В коде не нашлось точки входа: нужен класс с IExternalCommand либо метод Main / Run / Execute.</value>
+  </data>
+  <data name="NoEntryPointProblem" xml:space="preserve">
+    <value>Нет точки входа: файл с классом, но без IExternalCommand и без метода Main / Run / Execute.</value>
+  </data>
+  <data name="NoEntryPointStatus" xml:space="preserve">
+    <value>Нет точки входа</value>
+  </data>
+  <data name="Compiled" xml:space="preserve">
+    <value>Скомпилировано за {0} мс → {1}</value>
+  </data>
+  <data name="Running" xml:space="preserve">
+    <value>Выполнение…</value>
+  </data>
+  <data name="Done" xml:space="preserve">
+    <value>Готово</value>
+  </data>
+  <data name="FinishedWithError" xml:space="preserve">
+    <value>Завершено с ошибкой</value>
+  </data>
+  <data name="HandOverFailed" xml:space="preserve">
+    <value>Не удалось передать скрипт в Revit:</value>
+  </data>
+  <data name="RunError" xml:space="preserve">
+    <value>Ошибка запуска</value>
+  </data>
+  <data name="RunException" xml:space="preserve">
+    <value>Исключение при выполнении: {0}: {1}</value>
+  </data>
+  <data name="AiCopyScript" xml:space="preserve">
+    <value>Скопировать для ИИ инструкцию, скрипт и ошибки</value>
+  </data>
+  <data name="AiCopy" xml:space="preserve">
+    <value>Скопировать инструкцию для ИИ</value>
+  </data>
+  <data name="AiDetailedSuffix" xml:space="preserve">
+    <value> (подробная)</value>
+  </data>
+  <data name="AiCopied" xml:space="preserve">
+    <value>Инструкция для ИИ скопирована: вставьте её в начало чата</value>
+  </data>
+  <data name="AiScriptCopied" xml:space="preserve">
+    <value>Инструкция, скрипт и ошибки скопированы: вставьте в чат и напишите, что сделать</value>
+  </data>
+  <data name="ClipboardFailed" xml:space="preserve">
+    <value>Не удалось скопировать в буфер обмена: {0}</value>
+  </data>
+  <data name="CompletionFailed" xml:space="preserve">
+    <value>Подсказки недоступны: {0}</value>
+  </data>
+  <data name="SignatureHelpFailed" xml:space="preserve">
+    <value>Подсказка параметров недоступна: {0}</value>
+  </data>
+  <data name="CompletionWarmUpFailed" xml:space="preserve">
+    <value>Подсказки: не удалось заранее загрузить сборки: {0}</value>
+  </data>
+  <data name="EditorError" xml:space="preserve">
+    <value>Ошибка в редакторе скриптов (скобки или подсказки): {0}: {1}</value>
+  </data>
+  <data name="ScrollCornerFailed" xml:space="preserve">
+    <value>Угол полос прокрутки не перекрашен: {0}</value>
+  </data>
+  <data name="Overloads" xml:space="preserve">
+    <value> (+{0} перегр.)</value>
+  </data>
+  <data name="DiagnosticError" xml:space="preserve">
+    <value>ошибка</value>
+  </data>
+  <data name="DiagnosticWarning" xml:space="preserve">
+    <value>предупреждение</value>
+  </data>
+  <data name="CompilerFailed" xml:space="preserve">
+    <value>Компилятор упал:</value>
+  </data>
+  <data name="CompilerFailedMessage" xml:space="preserve">
+    <value>Компилятор упал: {0}: {1} (подробности и версии сборок — выше в консоли)</value>
+  </data>
+  <data name="LoadCompiledFailed" xml:space="preserve">
+    <value>Не удалось загрузить скомпилированную сборку:</value>
+  </data>
+  <data name="LoadAssemblyFailed" xml:space="preserve">
+    <value>Не удалось загрузить сборку: {0}</value>
+  </data>
+  <data name="ReferenceNotFound" xml:space="preserve">
+    <value>Не найдена ссылка из #r "{0}"</value>
+  </data>
+  <data name="AiInstructionsFailedReferences" xml:space="preserve">
+    <value>Инструкция для ИИ: не удалось собрать ссылки: {0}</value>
+  </data>
+  <data name="AiInstructionsFailedScriptBase" xml:space="preserve">
+    <value>Инструкция для ИИ: не удалось перечислить члены ScriptBase: {0}</value>
+  </data>
+  <data name="AiInstructionsFailedExtStorage" xml:space="preserve">
+    <value>Инструкция для ИИ: не удалось перечислить BIMPlugins.ExtStorage: {0}</value>
+  </data>
+  <data name="AiExampleNoWalls" xml:space="preserve">
+    <value>На виде нет стен.</value>
+  </data>
+  <data name="AiExampleShown" xml:space="preserve">
+    <value>стены вида</value>
+  </data>
+  <data name="AiExampleTransaction" xml:space="preserve">
+    <value>Комментарий</value>
+  </data>
+  <data name="AiExampleComment" xml:space="preserve">
+    <value>проверено</value>
+  </data>
+  <data name="AiExampleCount" xml:space="preserve">
+    <value>Стен на виде: {walls.Count}</value>
+  </data>
+  <data name="NoDocumentForTransaction" xml:space="preserve">
+    <value>Нет активного документа — транзакцию открыть не в чем.</value>
+  </data>
+  <data name="NoName" xml:space="preserve">
+    <value>&lt;без имени&gt;</value>
+  </data>
+  <data name="DumpClass" xml:space="preserve">
+    <value>Класс:     {0}</value>
+  </data>
+  <data name="DumpCategory" xml:space="preserve">
+    <value>Категория: {0}</value>
+  </data>
+  <data name="CompareTooFew" xml:space="preserve">
+    <value>Для сравнения нужны минимум два элемента, и ни один не должен быть null.</value>
+  </data>
+  <data name="CompareFirst" xml:space="preserve">
+    <value>Сравниваются первые {0} из {1} элементов.</value>
+  </data>
+  <data name="CompareBanner" xml:space="preserve">
+    <value>Сравнение: {0}</value>
+  </data>
+  <data name="CompareSame" xml:space="preserve">
+    <value>Все параметры совпадают.</value>
+  </data>
+  <data name="CompareParameter" xml:space="preserve">
+    <value>Параметр</value>
+  </data>
+  <data name="CompareDifferences" xml:space="preserve">
+    <value>Различий: {0}</value>
+  </data>
+  <data name="ValueMissing" xml:space="preserve">
+    <value>-нет-</value>
+  </data>
+  <data name="ValueEmpty" xml:space="preserve">
+    <value>-пусто-</value>
+  </data>
+  <data name="ValueReadFailed" xml:space="preserve">
+    <value>&lt;ошибка чтения&gt;</value>
+  </data>
+  <data name="OverloadIndex" xml:space="preserve">
+    <value>{0} из {1}</value>
+  </data>
+</root>

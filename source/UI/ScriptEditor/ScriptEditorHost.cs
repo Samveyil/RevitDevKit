@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using RevitDevKit.Localization;
 
 namespace RevitDevKit.UI.ScriptEditor
 {
@@ -149,7 +150,7 @@ namespace RevitDevKit.UI.ScriptEditor
             }
             catch (Exception ex)
             {
-                ConsoleOutput.Debug("Угол полос прокрутки не перекрашен: " + ex.Message);
+                ConsoleOutput.Debug(string.Format(ScriptEditorStrings.ScrollCornerFailed, ex.Message));
             }
         }
 
