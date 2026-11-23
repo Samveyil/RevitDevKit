@@ -38,6 +38,18 @@ namespace RevitDevKit.UI.Shared
             }
             catch { } // owning the window is cosmetic
 
+            // A modeless window gets its keys through Revit's message loop, which takes its own shortcuts first:
+            // Ctrl+C, Ctrl+V and Delete would copy and delete elements instead of editing text. This passes the
+            // window's keys to it first. It must come before Show.
+            try
+            {
+                System.Windows.Forms.Integration.ElementHost.EnableModelessKeyboardInterop(window);
+            }
+            catch (Exception ex)
+            {
+                Core.Output.ConsoleOutput.Debug("Клавиатура окна без ElementHost: " + ex.Message);
+            }
+
             _window = window;
             window.Show();
         }

@@ -12,7 +12,67 @@ namespace RevitDevKit.UI.Console
     {
         public ConsoleVM()
         {
-            ConsoleOptions.Changed += name => OnPropertyChanged("Is" + name);
+            ConsoleOptions.Changed += name =>
+            {
+                if (name != nameof(ConsoleOptions.OpenPane))
+                {
+                    OnPropertyChanged("Is" + name);
+                    return;
+                }
+
+                OnPropertyChanged(nameof(OpenPaneText));
+                OnPropertyChanged(nameof(OpenPaneIcon));
+                OnPropertyChanged(nameof(OpenPaneToolTip));
+                OnPropertyChanged(nameof(IsOpenOnProblems));
+                OnPropertyChanged(nameof(IsOpenOnOutput));
+                OnPropertyChanged(nameof(IsOpenAlways));
+                OnPropertyChanged(nameof(IsOpenNever));
+            };
+        }
+
+        // When a run from Add-in Explorer or Repeat Last opens the console pane: one radio button each, and the
+        // choice shown on the menu's button.
+        public bool IsOpenOnProblems { get => Is(ConsolePaneOpening.OnProblems); set => Pick(ConsolePaneOpening.OnProblems, value); }
+        public bool IsOpenOnOutput { get => Is(ConsolePaneOpening.OnOutput); set => Pick(ConsolePaneOpening.OnOutput, value); }
+        public bool IsOpenAlways { get => Is(ConsolePaneOpening.Always); set => Pick(ConsolePaneOpening.Always, value); }
+        public bool IsOpenNever { get => Is(ConsolePaneOpening.Never); set => Pick(ConsolePaneOpening.Never, value); }
+
+        public string OpenPaneText
+        {
+            get
+            {
+                switch (ConsoleOptions.OpenPane)
+                {
+                    case ConsolePaneOpening.OnOutput: return "при выводе";
+                    case ConsolePaneOpening.Always: return "всегда";
+                    case ConsolePaneOpening.Never: return "никогда";
+                    default: return "при ошибках";
+                }
+            }
+        }
+
+        // The bell on the menu's button: with "!" on problems, ringing on any output, plain always, crossed out never.
+        public MaterialDesignThemes.Wpf.PackIconKind OpenPaneIcon
+        {
+            get
+            {
+                switch (ConsoleOptions.OpenPane)
+                {
+                    case ConsolePaneOpening.OnOutput: return MaterialDesignThemes.Wpf.PackIconKind.BellRingOutline;
+                    case ConsolePaneOpening.Always: return MaterialDesignThemes.Wpf.PackIconKind.BellOutline;
+                    case ConsolePaneOpening.Never: return MaterialDesignThemes.Wpf.PackIconKind.BellOffOutline;
+                    default: return MaterialDesignThemes.Wpf.PackIconKind.BellAlertOutline;
+                }
+            }
+        }
+
+        public string OpenPaneToolTip => "Открывать консоль после запуска DLL: " + OpenPaneText;
+
+        private static bool Is(ConsolePaneOpening opening) => ConsoleOptions.OpenPane == opening;
+
+        private static void Pick(ConsolePaneOpening opening, bool value)
+        {
+            if (value) ConsoleOptions.OpenPane = opening;
         }
 
         // What runs from Script Editor and Add-in Explorer do with the console.

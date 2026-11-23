@@ -71,16 +71,10 @@ namespace RevitDevKit.UI.ScriptEditor
         }
     }
 
-    // Revit may already have an old AvalonEdit loaded (e.g. 4.3 from Dynamo),
-    // so only members available in every version are used here.
     internal static class EditorFactory
     {
-        private static bool _versionLogged;
-
         public static TextEditor Create()
         {
-            LogAvalonEditVersionOnce();
-
             var editor = new TextEditor
             {
                 FontFamily = new System.Windows.Media.FontFamily("Consolas"),
@@ -205,25 +199,6 @@ namespace RevitDevKit.UI.ScriptEditor
             }
 
             caret.BringCaretToView();
-        }
-
-        private static void LogAvalonEditVersionOnce()
-        {
-            if (_versionLogged) return;
-            _versionLogged = true;
-
-            try
-            {
-                var assembly = typeof(TextEditor).Assembly;
-                var location = assembly.Location;
-
-                ConsoleOutput.Debug("AvalonEdit " + assembly.GetName().Version +
-                                    " из " + (location.IsNullOrEmpty() ? "<память>" : location));
-            }
-            catch (Exception ex)
-            {
-                ConsoleOutput.Debug("Не удалось определить версию AvalonEdit: " + ex.Message);
-            }
         }
     }
 }

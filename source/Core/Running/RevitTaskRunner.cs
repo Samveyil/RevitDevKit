@@ -28,6 +28,23 @@ namespace RevitDevKit.Core.Running
 
         // Warnings Revit raises while it runs are written to the console and deleted, so no dialog shows.
         public bool HideWarnings { get; set; }
+
+        // Called in the API context once the run is over, with what it wrote: Add-in Explorer opens the console
+        // pane from here when the run calls for it (ConsoleOptions.OpenPane).
+        public Action<RunReport> Reported { get; set; }
+    }
+
+    // What a run left in the console.
+    public sealed class RunReport
+    {
+        // It threw, or the command returned Failed.
+        public bool Failed { get; set; }
+
+        // Revit or the run wrote a warning or an error, failures of its transactions among them.
+        public bool HasProblems { get; set; }
+
+        // The run itself wrote something: Console, Debug, Trace, Show.
+        public bool HasOutput { get; set; }
     }
 
     public sealed class RevitTaskRunner : IExternalEventHandler
@@ -121,6 +138,21 @@ namespace RevitDevKit.Core.Running
             if (ConsoleOptions.ClearShownOnRun)
                 ShownGeometry.Clear();
 
+            // What the run writes, for Reported: warnings and errors until it ends, other output only from the body.
+            // DevKit's own lines (the banner, "Готово", "Команда вернула Cancelled") do not count.
+            var report = new RunReport();
+            var inBody = false;
+            var counting = true;
+            EventHandler<LogChunkEventArgs> watch = (s, e) =>
+            {
+                if (!counting) return;
+                if (e.Level == LogLevel.Warning || e.Level == LogLevel.Error)
+                    report.HasProblems = true;
+                else if (inBody && e.Level != LogLevel.System)
+                    report.HasOutput = true;
+            };
+            ConsoleOutput.ChunkWritten += watch;
+
             // Only transactions committed while this request runs: not the user's, nor other add-ins' between runs.
             var failures = FailureLog.Watch(request.HideWarnings);
             Transaction transaction = null;
@@ -136,7 +168,13 @@ namespace RevitDevKit.Core.Running
                     transaction.Start();
                 }
 
-                var result = request.Body();
+                inBody = true;
+                object result;
+                try { result = request.Body(); }
+                finally { inBody = false; }
+
+                if (result is Result returned && returned == Result.Failed)
+                    report.Failed = true;
 
                 if (transaction != null)
                 {
@@ -145,12 +183,14 @@ namespace RevitDevKit.Core.Running
                 }
 
                 sw.Stop();
+                counting = false;
                 ReportResult(result, sw.ElapsedMilliseconds);
             }
             catch (Exception ex)
             {
                 sw.Stop();
                 failure = ex;
+                report.Failed = true;
 
                 if (transaction != null && transaction.GetStatus() == TransactionStatus.Started)
                 {
@@ -173,6 +213,13 @@ namespace RevitDevKit.Core.Running
                 ShownGeometry.RefreshIfChanged(RevitAPI.UIDocument);
 
                 if (transaction != null) transaction.Dispose();
+
+                ConsoleOutput.ChunkWritten -= watch;
+                if (request.Reported != null)
+                {
+                    try { request.Reported(report); }
+                    catch (Exception ex) { ConsoleOutput.Debug("DevKit: " + ex.Message); }
+                }
 
                 if (request.Completed != null)
                 {

@@ -2,7 +2,9 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BIMPlugins.UI;
 using RevitDevKit.Commands;
+using RevitDevKit.Core;
 using RevitDevKit.Core.Addins;
+using RevitDevKit.Core.Compiler;
 using RevitDevKit.Core.Output;
 using RevitDevKit.Core.Ribbon;
 using RevitDevKit.Core.Running;
@@ -45,6 +47,7 @@ namespace RevitDevKit
                 AppDomain.CurrentDomain.AssemblyResolve += ResolveFromPluginFolder;
 
                 ConsoleOutput.Install();
+                DevKitSettings.Load();
                 RevitTaskRunner.Initialize();
                 ShownGeometryServer.Register();
                 LocateAddinFolders(application);
@@ -157,13 +160,17 @@ namespace RevitDevKit
             }
         }
 
-        // Revit ships its own Roslyn and other libraries. When the loader cannot find an
-        // assembly, fall back to the copy next to the add-in - but never to an older version:
-        // that would load fine and then fail later with MissingMethodException.
+        // Revit ships its own Roslyn and other libraries. When the loader cannot find an assembly DevKit needs, it falls
+        // back to the copy next to DevKit - but never to an older version: that would load fine and then fail later
+        // with MissingMethodException. AssemblyResolve is raised for every add-in in Revit, so a request from another
+        // add-in is left to that add-in: DevKit never hands it its own copy.
         private static Assembly ResolveFromPluginFolder(object sender, ResolveEventArgs args)
         {
             try
             {
+                var requester = RequesterOf(args.RequestingAssembly);
+                if (requester == Requester.Foreign) return null;
+
                 var requested = new AssemblyName(args.Name);
                 var candidate = Path.Combine(PluginDirectory ?? ".", requested.Name + ".dll");
 
@@ -173,9 +180,10 @@ namespace RevitDevKit
 
                 if (requested.Version != null && found.Version != null && found.Version < requested.Version)
                 {
-                    ConsoleOutput.Error(
-                        "Рядом с плагином лежит " + requested.Name + " версии " + found.Version +
-                        ", а требуется " + requested.Version + ". Соберите и разложите один и тот же набор сборок.");
+                    if (requester == Requester.DevKit)
+                        ConsoleOutput.Error(
+                            "Рядом с плагином лежит " + requested.Name + " версии " + found.Version +
+                            ", а требуется " + requested.Version + ". Соберите и разложите один и тот же набор сборок.");
                     return null;
                 }
 
@@ -185,6 +193,33 @@ namespace RevitDevKit
             {
                 return null;
             }
+        }
+
+        private enum Requester
+        {
+            // An assembly from DevKit's folder, or a script DevKit compiled.
+            DevKit,
+
+            // Nobody named, or a DLL Add-in Explorer loaded from bytes: DevKit's copies have always served these.
+            Unknown,
+
+            // An assembly another add-in or Revit loaded from its own folder.
+            Foreign
+        }
+
+        private static Requester RequesterOf(Assembly assembly)
+        {
+            if (assembly == null || assembly.IsDynamic) return Requester.Unknown;
+
+            if (ScriptAssemblyLoader.TryGetOrigin(assembly, out var origin))
+                return string.IsNullOrEmpty(origin) ? Requester.DevKit : Requester.Unknown;
+
+            var location = assembly.Location;
+            if (string.IsNullOrEmpty(location)) return Requester.Unknown;
+
+            return string.Equals(Path.GetDirectoryName(location), PluginDirectory, StringComparison.OrdinalIgnoreCase)
+                ? Requester.DevKit
+                : Requester.Foreign;
         }
     }
 

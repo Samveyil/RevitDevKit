@@ -37,7 +37,7 @@
             <Button Style="{StaticResource MaterialDesignPaperButton}" Padding="8 0" Height="25" Command="{Binding RunCommand}"
                     ToolTip="Скомпилировать и выполнить (F5 или Ctrl+Enter)" >
                 <StackPanel Orientation="Horizontal">
-                    <materialDesign:PackIcon Kind="Play" Width="20" Height="20" Foreground="{StaticResource AccentBrush}"
+                    <materialDesign:PackIcon Kind="Play" Width="20" Height="20" Foreground="{StaticResource BIMPlugins.PrimaryBrush}"
                                              VerticalAlignment="Center" Padding="0" Margin="-5 0 2 0"/>
                     <TextBlock Text="Запустить (F5)" VerticalAlignment="Center"/>
                 </StackPanel>
@@ -73,7 +73,7 @@
 
             <Border Style="{StaticResource ToolbarSeparator}"/>
 
-            <Border BorderThickness="1" BorderBrush="{StaticResource AccentBrush}" CornerRadius="3">
+            <Border BorderThickness="1" BorderBrush="{StaticResource BIMPlugins.PrimaryBrush}" CornerRadius="3">
                 <materialDesign:PopupBox ToolTip="Вставить готовый пример в новую вкладку">
                     <materialDesign:PopupBox.ToggleContent>
                         <TextBlock Text="Примеры ▾" Margin="10 0 5 0" />
@@ -107,10 +107,10 @@
                         <Setter Property="BorderBrush" Value="Transparent"/>
                         <Style.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                <Setter Property="BorderBrush" Value="{StaticResource BIMPlugins.PrimaryBrush}"/>
                             </Trigger>
                             <DataTrigger Binding="{Binding IsPopupOpen, ElementName=AiPopup}" Value="True">
-                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                <Setter Property="BorderBrush" Value="{StaticResource BIMPlugins.PrimaryBrush}"/>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
@@ -122,7 +122,7 @@
                         <Grid>
                             <materialDesign:PackIcon Kind="{Binding AiButtonIcon}" Width="20" Height="20" Foreground="{StaticResource IconBrush}"/>
                             <!-- The detailed instructions are on: the icon copies them. -->
-                            <Ellipse Width="6" Height="6" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0 0 -2 0" Fill="{StaticResource AccentBrush}"
+                            <Ellipse Width="6" Height="6" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0 0 -2 0" Fill="{StaticResource BIMPlugins.PrimaryBrush}"
                                      Visibility="{Binding IsAiDetailed, Converter={StaticResource BoolToVisibility}}"/>
                         </Grid>
                     </Button>
@@ -256,7 +256,7 @@
 
             <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
 
-            <console:ConsoleView Grid.Row="2" Margin="5" DataContext="{Binding Output}" WrapWidth="-1" IsViewMenu="True"/>
+            <console:ConsoleView Grid.Row="2" Margin="5" DataContext="{Binding Output}" WrapWidth="-1" IsViewMenu="True" HasPaneOpening="False"/>
         </Grid>
     </DockPanel>
 </Window>
