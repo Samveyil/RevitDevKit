@@ -2,6 +2,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BIMPlugins.UI;
 using RevitDevKit.Commands;
+using RevitDevKit.Core;
 using RevitDevKit.Core.Addins;
 using RevitDevKit.Core.Compiler;
 using RevitDevKit.Core.Output;
@@ -46,6 +47,7 @@ namespace RevitDevKit
                 AppDomain.CurrentDomain.AssemblyResolve += ResolveFromPluginFolder;
 
                 ConsoleOutput.Install();
+                DevKitSettings.Load();
                 RevitTaskRunner.Initialize();
                 ShownGeometryServer.Register();
                 LocateAddinFolders(application);

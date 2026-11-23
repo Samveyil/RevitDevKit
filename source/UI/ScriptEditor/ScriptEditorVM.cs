@@ -3,6 +3,7 @@ using BIMPlugins.ExtStorage.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ICSharpCode.AvalonEdit.Document;
+using RevitDevKit.Core;
 using RevitDevKit.Core.Ai;
 using RevitDevKit.Core.Compiler;
 using RevitDevKit.Core.Output;
@@ -25,7 +26,10 @@ namespace RevitDevKit.UI.ScriptEditor
     {
         private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
 
-        [ObservableProperty] private bool _isAutoTransaction = false;
+        // Kept between sessions in DevKitSettings.
+        [ObservableProperty] private bool _isAutoTransaction = DevKitSettings.AutoTransaction;
+
+        partial void OnIsAutoTransactionChanged(bool value) => DevKitSettings.AutoTransaction = value;
 
         [ObservableProperty] private ScriptTabVM _selectedTab;
 
@@ -383,16 +387,15 @@ namespace RevitDevKit.UI.ScriptEditor
             }
         }
 
-        // The detailed instructions: all of BIMPlugins.ExtStorage with signatures, about three times the tokens. Kept like the last choice.
-        private static bool _aiDetailed;
-
+        // The detailed instructions: all of BIMPlugins.ExtStorage with signatures, about three times the tokens.
+        // Kept like the last choice, between sessions too (DevKitSettings).
         public bool IsAiDetailed
         {
-            get => _aiDetailed;
+            get => DevKitSettings.AiDetailed;
             set
             {
-                if (_aiDetailed == value) return;
-                _aiDetailed = value;
+                if (DevKitSettings.AiDetailed == value) return;
+                DevKitSettings.AiDetailed = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(AiButtonToolTip));
             }
