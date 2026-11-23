@@ -58,7 +58,7 @@
     <value>Script and errors</value>
   </data>
   <data name="AiScriptAndErrorsToolTip" xml:space="preserve">
-    <value>The instructions, the current script and the errors of its run: for the AI to fix or extend the script</value>
+    <value>Instructions plus the current script and its last errors, so the AI can fix or extend it</value>
   </data>
   <data name="AiDetailed" xml:space="preserve">
     <value>Detailed</value>
@@ -138,7 +138,7 @@
     <value>Debugger not attached</value>
   </data>
   <data name="DebugStop" xml:space="preserve">
-    <value>Debugging: stops on the first line of the script, file {0}</value>
+    <value>Debugging: will stop on the script's first line ({0})</value>
     <comment>{0}: the file</comment>
   </data>
   <data name="Compiling" xml:space="preserve">
@@ -190,7 +190,7 @@
     <value>Finished with an error</value>
   </data>
   <data name="HandOverFailed" xml:space="preserve">
-    <value>Could not hand the script over to Revit:</value>
+    <value>Could not pass the script to Revit:</value>
     <comment>followed by the exception</comment>
   </data>
   <data name="RunError" xml:space="preserve">
@@ -298,7 +298,7 @@
     <comment>C# interpolation inside: keep {walls.Count} as is</comment>
   </data>
   <data name="NoDocumentForTransaction" xml:space="preserve">
-    <value>No active document: there is nothing to open a transaction in.</value>
+    <value>No active document to open a transaction in.</value>
   </data>
   <data name="NoName" xml:space="preserve">
     <value>&lt;no name&gt;</value>
@@ -312,7 +312,7 @@
     <comment>{0}: the element's category</comment>
   </data>
   <data name="CompareTooFew" xml:space="preserve">
-    <value>Comparing needs at least two elements, none of them null.</value>
+    <value>Compare needs at least two elements, and none can be null.</value>
   </data>
   <data name="CompareFirst" xml:space="preserve">
     <value>The first {0} of {1} elements are compared.</value>

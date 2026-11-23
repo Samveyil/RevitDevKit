@@ -55,13 +55,13 @@
     <value>Не удалось загрузить надстройку:</value>
   </data>
   <data name="AddinFoldersFailed" xml:space="preserve">
-    <value>Папки надстроек Revit не определились: {0}</value>
+    <value>Не удалось найти папки надстроек Revit: {0}</value>
   </data>
   <data name="ConsolePaneRegisterFailed" xml:space="preserve">
     <value>Не удалось зарегистрировать панель консоли:</value>
   </data>
   <data name="OlderAssembly" xml:space="preserve">
-    <value>Рядом с плагином лежит {0} версии {1}, а требуется {2}. Соберите и разложите один и тот же набор сборок.</value>
+    <value>Рядом с плагином лежит {0} версии {1}, а требуется {2}. Положите рядом те же DLL, с которыми собирали.</value>
   </data>
   <data name="NothingToDebug" xml:space="preserve">
     <value>Нечего повторять. Запустите команду в Add-in Explorer хотя бы один раз.</value>

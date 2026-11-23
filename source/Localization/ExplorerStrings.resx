@@ -219,7 +219,7 @@ Loaded {0} times: </value>
     <comment>{0}: the DLL</comment>
   </data>
   <data name="CommandMissing" xml:space="preserve">
-    <value>The current {0} has no command {1}.</value>
+    <value>{0} no longer has command {1}.</value>
     <comment>{0}: the DLL, {1}: the command's class</comment>
   </data>
   <data name="RefreshCommandList" xml:space="preserve">
@@ -227,7 +227,7 @@ Loaded {0} times: </value>
     <comment>starts with a space, follows CommandMissing</comment>
   </data>
   <data name="RunHandOverFailed" xml:space="preserve">
-    <value>Could not hand the run over to Revit:</value>
+    <value>Could not pass the command to Revit:</value>
     <comment>followed by the exception</comment>
   </data>
   <data name="DllListSaveFailed" xml:space="preserve">
@@ -253,19 +253,19 @@ Loaded {0} times: </value>
     <comment>{0}: version, {1}: add-in or folder</comment>
   </data>
   <data name="UnsignedTip" xml:space="preserve">
-    <value>Not signed: every add-in gets one copy, the one loaded first. An older version (in red) may not fit.</value>
+    <value>Not signed: every add-in gets one copy, the one loaded first. An older version (in red) may break an add-in.</value>
   </data>
   <data name="RedirectOlderTip" xml:space="preserve">
     <value>Revit.exe.config redirects to an older version than the add-in was built against (in red).</value>
   </data>
   <data name="FileOnlyTip" xml:space="preserve">
-    <value>Everyone gets one copy of this assembly version, the file of the one loaded first. Usually this is safe.</value>
+    <value>All add-ins share one copy of this version, whichever file loads first. Usually fine.</value>
   </data>
   <data name="SideBySideTip" xml:space="preserve">
     <value>Signed: each version of the assembly loads separately, each add-in gets its own.</value>
   </data>
   <data name="SameVersionTip" xml:space="preserve">
-    <value>Everyone has the same version.</value>
+    <value>All add-ins use the same version.</value>
   </data>
   <data name="CopyNative" xml:space="preserve">
     <value>, native DLL</value>
@@ -317,7 +317,7 @@ Gets version {0}</value>
     <value>Load side by side</value>
   </data>
   <data name="SectionSame" xml:space="preserve">
-    <value>The same in several</value>
+    <value>Same version in several add-ins</value>
   </data>
   <data name="SectionAutodesk" xml:space="preserve">
     <value>Revit and Autodesk only</value>
@@ -466,7 +466,7 @@ Disable DevKit?</value>
     <value>File version</value>
   </data>
   <data name="ColumnOwner" xml:space="preserve">
-    <value>Whose</value>
+    <value>Owner</value>
   </data>
   <data name="ColumnPath" xml:space="preserve">
     <value>Path</value>

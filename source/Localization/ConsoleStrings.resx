@@ -121,7 +121,7 @@
     <comment>{0}: the error</comment>
   </data>
   <data name="TraceRestored" xml:space="preserve">
-    <value>Another add-in removed the Debug/Trace listener; it is restored.</value>
+    <value>Another add-in removed DevKit's Debug/Trace listener. DevKit added it back.</value>
   </data>
   <data name="InnerException" xml:space="preserve">
     <value>--- inner exception ---</value>
@@ -181,10 +181,10 @@
     <comment>{0}: the ribbon command id</comment>
   </data>
   <data name="RibbonCommandNotFound" xml:space="preserve">
-    <value>Ribbon command not found; an IExternalCommand will run through ExternalEvent.</value>
+    <value>Ribbon command not found, so commands will run through ExternalEvent.</value>
   </data>
   <data name="PostCommandFailed" xml:space="preserve">
-    <value>PostCommand failed ({0}); ExternalEvent is used.</value>
+    <value>PostCommand failed ({0}), falling back to ExternalEvent.</value>
     <comment>{0}: the error</comment>
   </data>
   <data name="FailuresNotRead" xml:space="preserve">
@@ -210,7 +210,7 @@
     <comment>Russian: other counts</comment>
   </data>
   <data name="FailureRollsBack" xml:space="preserve">
-    <value>  If the error is not resolved, Revit rolls the transaction back.</value>
+    <value>  If the error isn't fixed, Revit will roll back the transaction.</value>
   </data>
   <data name="FailureQuietMode" xml:space="preserve">
     <value>  Quiet mode: Revit's dialog was not shown.</value>
@@ -230,11 +230,11 @@
     <value>Compiler environment</value>
   </data>
   <data name="LoadedInProcess" xml:space="preserve">
-    <value>    in the process: {0}</value>
+    <value>    loaded: {0}</value>
     <comment>{0}: version and location</comment>
   </data>
   <data name="NextToAddin" xml:space="preserve">
-    <value>    next to the add-in: {0}</value>
+    <value>    in the DevKit folder: {0}</value>
     <comment>{0}: version</comment>
   </data>
   <data name="AddinFolder" xml:space="preserve">

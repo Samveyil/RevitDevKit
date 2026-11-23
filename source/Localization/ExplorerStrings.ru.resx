@@ -203,7 +203,7 @@
     <value>Точки останова в проекте {0} сработают.</value>
   </data>
   <data name="CommandMissing" xml:space="preserve">
-    <value>В актуальной {0} нет команды {1}.</value>
+    <value>В текущей {0} больше нет команды {1}.</value>
   </data>
   <data name="RefreshCommandList" xml:space="preserve">
     <value> Обновите список команд.</value>
@@ -236,7 +236,7 @@
     <value>Revit.exe.config перенаправляет на более старую версию, чем та, под которую собрана надстройка (красным).</value>
   </data>
   <data name="FileOnlyTip" xml:space="preserve">
-    <value>У всех одна копия этой версии сборки, файл той, что загрузится первой. Обычно это безопасно.</value>
+    <value>Все надстройки получат один файл этой версии — тот, что загрузится первым. Обычно это не страшно.</value>
   </data>
   <data name="SideBySideTip" xml:space="preserve">
     <value>Подписана: каждая версия сборки загрузится отдельно, каждая надстройка получит свою.</value>
@@ -288,7 +288,7 @@
     <value>Загрузятся рядом</value>
   </data>
   <data name="SectionSame" xml:space="preserve">
-    <value>Одинаковые у нескольких</value>
+    <value>Одна версия у нескольких надстроек</value>
   </data>
   <data name="SectionAutodesk" xml:space="preserve">
     <value>Только Revit и Autodesk</value>

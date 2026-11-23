@@ -65,7 +65,7 @@
     <comment>followed by the exception</comment>
   </data>
   <data name="OlderAssembly" xml:space="preserve">
-    <value>Next to the add-in lies {0} version {1}, but {2} is required. Build and deploy one and the same set of assemblies.</value>
+    <value>The add-in folder has {0} {1}, but {2} is needed. Deploy the same set of DLLs you built against.</value>
     <comment>{0}: assembly name, {1}: version found, {2}: version required</comment>
   </data>
   <data name="NothingToDebug" xml:space="preserve">

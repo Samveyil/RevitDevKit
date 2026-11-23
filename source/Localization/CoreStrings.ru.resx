@@ -139,7 +139,7 @@
     <value>Ресурсы WPF не перенаправлены: {0}</value>
   </data>
   <data name="IconNotReread" xml:space="preserve">
-    <value>Иконка «{0}» не перечитана: {1}</value>
+    <value>Не удалось обновить иконку «{0}»: {1}</value>
   </data>
   <data name="WpfResourcesNotRestored" xml:space="preserve">
     <value>Ресурсы WPF не возвращены: {0}</value>
@@ -208,6 +208,6 @@
     <value>Не удалось прочитать встроенную документацию DevKit: {0}</value>
   </data>
   <data name="KeyboardWithoutElementHost" xml:space="preserve">
-    <value>Клавиатура окна без ElementHost: {0}</value>
+    <value>Не удалось настроить клавиатуру окна: {0}</value>
   </data>
 </root>

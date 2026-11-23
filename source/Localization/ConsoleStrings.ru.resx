@@ -118,7 +118,7 @@
     <value>Не удалось показать панель консоли: {0}</value>
   </data>
   <data name="TraceRestored" xml:space="preserve">
-    <value>Перехват Debug/Trace был снят другой надстройкой — восстановлен.</value>
+    <value>Другая надстройка сняла перехват Debug/Trace, DevKit его вернул.</value>
   </data>
   <data name="InnerException" xml:space="preserve">
     <value>--- внутреннее исключение ---</value>
@@ -133,7 +133,7 @@
     <value>Revit отложил запуск ({0}). Закройте активные диалоги и попробуйте ещё раз.</value>
   </data>
   <data name="NoCommandContext" xml:space="preserve">
-    <value>Не удалось получить контекст команды Revit. IExternalCommand будет запущен через ExternalEvent — commandData окажется недоступен.</value>
+    <value>Не удалось получить контекст команды Revit. IExternalCommand будет запущен через ExternalEvent — commandData будет null.</value>
   </data>
   <data name="RunBanner" xml:space="preserve">
     <value>Запуск: {0}</value>
@@ -172,10 +172,10 @@
     <value>Команда ленты не найдена — IExternalCommand будет запускаться через ExternalEvent.</value>
   </data>
   <data name="PostCommandFailed" xml:space="preserve">
-    <value>PostCommand не сработал ({0}), используем ExternalEvent.</value>
+    <value>PostCommand не сработал ({0}), запуск идёт через ExternalEvent.</value>
   </data>
   <data name="FailuresNotRead" xml:space="preserve">
-    <value>Сбои Revit не прочитаны: {0}</value>
+    <value>Не удалось прочитать ошибки Revit: {0}</value>
   </data>
   <data name="FailureWarning" xml:space="preserve">
     <value>Предупреждение</value>
@@ -205,7 +205,7 @@
     <value>без элементов</value>
   </data>
   <data name="FailuresUnsubscribe" xml:space="preserve">
-    <value>Отписка от сбоев Revit: {0}</value>
+    <value>Не удалось отписаться от ошибок Revit: {0}</value>
   </data>
   <data name="CompilerEnvironment" xml:space="preserve">
     <value>Окружение компилятора</value>

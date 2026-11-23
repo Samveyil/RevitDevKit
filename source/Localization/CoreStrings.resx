@@ -163,7 +163,7 @@
     <comment>{0}: the error</comment>
   </data>
   <data name="IconNotReread" xml:space="preserve">
-    <value>Icon of “{0}” not read again: {1}</value>
+    <value>Could not reload the icon of “{0}”: {1}</value>
     <comment>{0}: the button, {1}: the error</comment>
   </data>
   <data name="WpfResourcesNotRestored" xml:space="preserve">
@@ -195,7 +195,7 @@
     <comment>{0}: the pane's id</comment>
   </data>
   <data name="NoCommandData" xml:space="preserve">
-    <value>Running an IExternalCommand needs a live ExternalCommandData, and only Revit itself gives one. Make sure the ribbon has the “Repeat Last” button: through it the add-in gets the command context.</value>
+    <value>An IExternalCommand needs a real ExternalCommandData, and only Revit can give one. Make sure Repeat Last is on the ribbon: DevKit gets the command context through that button.</value>
   </data>
   <data name="CommandMessage" xml:space="preserve">
     <value>The command returned a message: {0}</value>
@@ -206,7 +206,7 @@
     <comment>{0}: how many</comment>
   </data>
   <data name="UnknownParameter" xml:space="preserve">
-    <value>Don't know what to pass to the parameter '{0}' of type {1}. Supported: UIApplication, UIDocument, Document, Application, ExternalCommandData.</value>
+    <value>Can't fill parameter '{0}' of type {1}. Supported types: UIApplication, UIDocument, Document, Application, ExternalCommandData.</value>
     <comment>{0}: the parameter, {1}: its type</comment>
   </data>
   <data name="TypeNotLoaded" xml:space="preserve">
@@ -218,7 +218,7 @@
     <comment>{0}: the DLL</comment>
   </data>
   <data name="NewVersionLoaded" xml:space="preserve">
-    <value>A new version of {0} is loaded; the old one stays in memory until Revit restarts.</value>
+    <value>Loaded a new version of {0}. The old one stays in memory until you restart Revit.</value>
     <comment>{0}: the DLL</comment>
   </data>
   <data name="AttachFailed" xml:space="preserve">
@@ -250,7 +250,7 @@
     <comment>{0}: the error</comment>
   </data>
   <data name="KeyboardWithoutElementHost" xml:space="preserve">
-    <value>Window keyboard without ElementHost: {0}</value>
+    <value>Could not set up keyboard input for the window: {0}</value>
     <comment>{0}: the error</comment>
   </data>
 </root>

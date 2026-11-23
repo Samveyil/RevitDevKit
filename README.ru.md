@@ -11,7 +11,7 @@
 
 ![Script Editor](assets/ru/script-editor.png)
 
-> DevKit говорит по-русски в русском Revit и по-английски в остальных. Чтобы выбрать язык самому, укажите `"language"` в `%AppData%\RevitDevKit\settings.json`: `"ru"` или `"en"`.
+> DevKit на русском, если Revit русский, иначе на английском. Чтобы выбрать язык самому, укажите `"language"` в `%AppData%\RevitDevKit\settings.json`: `"ru"` или `"en"`.
 
 ## Что внутри
 
