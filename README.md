@@ -11,7 +11,7 @@ A toolbox for people who write Revit add-ins. Try an idea as a C# script without
 
 ![Script Editor](assets/script-editor.png)
 
-> The interface is in Russian. The [wiki](https://github.com/Samveyil/RevitDevKit/wiki) gives every button with a translation.
+> DevKit speaks English, and Russian in a Russian Revit. To choose, set `"language"` in `%AppData%\RevitDevKit\settings.json` to `"en"` or `"ru"`.
 
 ## What's inside
 
