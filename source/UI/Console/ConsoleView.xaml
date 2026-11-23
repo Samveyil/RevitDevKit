@@ -38,8 +38,8 @@
                     </Button>
 
                     <!-- When a run from Add-in Explorer or Repeat Last opens the console pane: a bell that shows the choice,
-                         with its menu. Only in the pane (HasPaneOpening): Script Editor's console has no use for it. -->
-                    <materialDesign:PopupBox x:Name="PaneOpening" StaysOpen="True" Margin="8 0 0 0" VerticalAlignment="Center"
+                         with its menu, which closes on a choice. Only in the pane (HasPaneOpening): Script Editor's console has no use for it. -->
+                    <materialDesign:PopupBox x:Name="PaneOpening" Margin="8 0 0 0" VerticalAlignment="Center"
                                              ToolTip="{Binding OpenPaneToolTip}">
                         <materialDesign:PopupBox.ToggleContent>
                             <StackPanel Orientation="Horizontal">
