@@ -11,11 +11,9 @@ A toolbox for people who write Revit add-ins. Try an idea as a C# script without
 
 ![Script Editor](assets/script-editor.png)
 
-> DevKit is in English, or in Russian if Revit is Russian. To choose, set `"language"` in `%AppData%\RevitDevKit\settings.json` to `"en"` or `"ru"`.
-
 ## What's inside
 
-- **Script Editor**: write a few lines of C#, press F5, and they run in the open model. IntelliSense with Revit API docs, Visual Studio debugging, ready-made samples.
+- **Script Editor**: write a few lines of C#, press F5, and they run in the open model. IntelliSense with Revit API docs, Visual Studio debugging, ready-made examples.
 - **Help from AI**: one click copies instructions for ChatGPT, Claude or any other chat, so it writes scripts in the right format. Another click sends your script and its errors along.
 - **Add-in Explorer**: run `IExternalCommand`s from a DLL that isn't locked, so you rebuild and run again without closing Revit. It can also refresh your add-in's ribbon buttons in place.
 - **Startup add-ins**: turn `.addin` files off and on without digging through folders.

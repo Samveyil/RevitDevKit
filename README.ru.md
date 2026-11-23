@@ -11,8 +11,6 @@
 
 ![Script Editor](assets/ru/script-editor.png)
 
-> DevKit на русском, если Revit русский, иначе на английском. Чтобы выбрать язык самому, укажите `"language"` в `%AppData%\RevitDevKit\settings.json`: `"ru"` или `"en"`.
-
 ## Что внутри
 
 - **Script Editor**: пишете пару строк на C#, жмёте F5, и они выполняются в открытой модели. Подсказки с документацией Revit API, отладка в Visual Studio, готовые примеры.
