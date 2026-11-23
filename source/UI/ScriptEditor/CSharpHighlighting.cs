@@ -1,8 +1,5 @@
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
-using RevitDevKit.Core.Output;
-using System;
-using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Xml;
 
@@ -10,7 +7,7 @@ namespace RevitDevKit.UI.ScriptEditor
 {
     // AvalonEdit's C# highlighting marks a name as a method call only when '(' follows it, so a generic call such as
     // .Cast<Element>() or All<Wall>() stays plain. The editor uses its own copy of that definition with one more rule
-    // for "Name<...>(": the shared definition is left alone, other add-ins in Revit may use the same AvalonEdit.
+    // for "Name<...>(": AvalonEdit's registered definition is left as it is.
     internal static class CSharpHighlighting
     {
         private const string Resource = "ICSharpCode.AvalonEdit.Highlighting.Resources.CSharp-Mode.xshd";
@@ -25,22 +22,8 @@ namespace RevitDevKit.UI.ScriptEditor
 
         public static IHighlightingDefinition Definition => _definition ?? (_definition = Load());
 
-        // Revit may have an older AvalonEdit loaded (4.3 from Dynamo): whatever goes wrong there, even a missing
-        // member, which fails when Create is compiled, leaves the editor with the usual highlighting.
-        private static IHighlightingDefinition Load()
-        {
-            try
-            {
-                return Create() ?? Shared();
-            }
-            catch (Exception ex)
-            {
-                ConsoleOutput.Debug("Подсветка обобщённых вызовов недоступна: " + ex.Message);
-                return Shared();
-            }
-        }
+        private static IHighlightingDefinition Load() => Create() ?? Shared();
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
         private static IHighlightingDefinition Create()
         {
             IHighlightingDefinition definition;

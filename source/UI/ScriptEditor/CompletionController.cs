@@ -23,7 +23,6 @@ namespace RevitDevKit.UI.ScriptEditor
     // After '(' and ',' and a space after them (or on Ctrl+Shift+Space) the overloads of the call show above the line, and when variables
     // of the argument's type are in scope, the completion list opens below with them on top.
     // After '<' of a generic (All<, walls.OfType<) the '<' gets its '>' and the list holds the types that fit.
-    // Only members available in AvalonEdit 4.3 are used, as Revit may have that one loaded (see EditorFactory).
     internal sealed class CompletionController
     {
         private static int _warmed;
