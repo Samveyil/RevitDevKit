@@ -141,12 +141,41 @@ namespace RevitDevKit.ScriptApi
         /// <exception cref="InvalidOperationException">There is no active document.</exception>
         public void Tx(string name, Action action)
         {
-            if (action == null)
-                throw new ArgumentNullException("action");
-
             var doc = Doc;
             if (doc == null)
                 throw new InvalidOperationException(ScriptEditorStrings.NoDocumentForTransaction);
+
+            Tx(doc, name, action);
+        }
+
+        /// <summary>Runs a function that modifies the model in a transaction of the active document and returns its result.</summary>
+        /// <typeparam name="TResult">The type of the result.</typeparam>
+        /// <param name="name">The name of the transaction, as it appears in the Undo list.</param>
+        /// <param name="func">The function that modifies the model, such as () =&gt; Wall.Create(...).</param>
+        /// <returns>The result of the function.</returns>
+        /// <remarks>The transaction is committed when the function completes and rolled back if it throws.</remarks>
+        public TResult Tx<TResult>(string name, Func<TResult> func)
+        {
+            var result = default(TResult);
+            Tx(name, () => { result = func(); });
+            return result;
+        }
+
+        /// <summary>Runs an action that modifies the model in a transaction of the given document.</summary>
+        /// <param name="doc">The document to modify, such as one opened with Application.OpenDocumentFile or a family opened with EditFamily. Linked documents are read-only and cannot be modified.</param>
+        /// <param name="name">The name of the transaction, as it appears in the Undo list.</param>
+        /// <param name="action">The action that modifies the model.</param>
+        /// <remarks>
+        /// The transaction is committed when the action completes and rolled back if it throws.
+        /// Auto transaction covers only the active document, so changes to another one need this even when it is on.
+        /// </remarks>
+        /// <exception cref="ArgumentNullException">doc or action is <see langword="null"/>.</exception>
+        public void Tx(Document doc, string name, Action action)
+        {
+            if (doc == null)
+                throw new ArgumentNullException("doc");
+            if (action == null)
+                throw new ArgumentNullException("action");
 
             using (var t = new Transaction(doc, name))
             {
@@ -165,16 +194,17 @@ namespace RevitDevKit.ScriptApi
             }
         }
 
-        /// <summary>Runs a function that modifies the model in a transaction of the active document and returns its result.</summary>
+        /// <summary>Runs a function that modifies the model in a transaction of the given document and returns its result.</summary>
         /// <typeparam name="TResult">The type of the result.</typeparam>
+        /// <param name="doc">The document to modify.</param>
         /// <param name="name">The name of the transaction, as it appears in the Undo list.</param>
-        /// <param name="func">The function that modifies the model, such as () =&gt; Wall.Create(...).</param>
+        /// <param name="func">The function that modifies the model.</param>
         /// <returns>The result of the function.</returns>
         /// <remarks>The transaction is committed when the function completes and rolled back if it throws.</remarks>
-        public TResult Tx<TResult>(string name, Func<TResult> func)
+        public TResult Tx<TResult>(Document doc, string name, Func<TResult> func)
         {
             var result = default(TResult);
-            Tx(name, () => { result = func(); });
+            Tx(doc, name, () => { result = func(); });
             return result;
         }
 

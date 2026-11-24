@@ -32,6 +32,30 @@ namespace RevitDevKit.UI.ScriptEditor
 
         partial void OnIsAutoTransactionChanged(bool value) => DevKitSettings.AutoTransaction = value;
 
+        // Undo and Redo of the toolbar and of Ctrl+Z, Ctrl+Y and Ctrl+Shift+Z: the current tab's own history, the one
+        // the editor keeps, so the buttons and the keys undo the same steps. Available while there is something to undo.
+        private bool CanUndo() => SelectedTab?.Document.UndoStack.CanUndo == true;
+        private bool CanRedo() => SelectedTab?.Document.UndoStack.CanRedo == true;
+
+        [RelayCommand(CanExecute = nameof(CanUndo))]
+        private void Undo() => SelectedTab.Document.UndoStack.Undo();
+
+        [RelayCommand(CanExecute = nameof(CanRedo))]
+        private void Redo() => SelectedTab.Document.UndoStack.Redo();
+
+        partial void OnSelectedTabChanged(ScriptTabVM oldValue, ScriptTabVM newValue)
+        {
+            if (oldValue != null) oldValue.Document.UndoStack.PropertyChanged -= OnUndoStackChanged;
+            if (newValue != null) newValue.Document.UndoStack.PropertyChanged += OnUndoStackChanged;
+            OnUndoStackChanged(null, null);
+        }
+
+        private void OnUndoStackChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            UndoCommand.NotifyCanExecuteChanged();
+            RedoCommand.NotifyCanExecuteChanged();
+        }
+
         [ObservableProperty] private ScriptTabVM _selectedTab;
 
         [ObservableProperty] private string _txtStatus = ScriptEditorStrings.Ready;
@@ -146,6 +170,7 @@ namespace RevitDevKit.UI.ScriptEditor
                 File.WriteAllText(path, tab.Document.Text);
                 tab.FilePath = path;
                 tab.Title = Path.GetFileName(path);
+                tab.Document.UndoStack.MarkAsOriginalFile();
                 tab.IsDirty = false;
 
                 TxtStatus = string.Format(ScriptEditorStrings.Saved, path);
@@ -479,11 +504,17 @@ namespace RevitDevKit.UI.ScriptEditor
 
         public ScriptTabVM(string code, string title, string filePath = null)
         {
-            Document = new TextDocument { Text = code ?? string.Empty };
+            // Through the constructor, so the starting text is not a step Undo would take back to an empty tab.
+            Document = new TextDocument(code ?? string.Empty);
             _title = title;
             _filePath = filePath;
 
-            Document.TextChanged += (s, e) => IsDirty = true;
+            // Changed while the text differs from the saved one (or the starting one): undoing every edit takes the mark off.
+            Document.UndoStack.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(UndoStack.IsOriginalFile))
+                    IsDirty = !Document.UndoStack.IsOriginalFile;
+            };
         }
 
         public void NavigateTo(int line, int column)

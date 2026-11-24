@@ -78,20 +78,42 @@ Table(walls,
                 Title = "4. Изменение модели в транзакции",
                 Code =
 @"// Транзакцию открываем сами — галочку «Автотранзакция» держите выключенной.
+// Каждый Tx — один шаг в списке отмены. Если код внутри упадёт, весь шаг откатится.
 var walls = All<Wall>();
 if (walls.Count == 0) { Warn(""В модели нет стен.""); return; }
 
-Tx(""Пометить стены комментарием"", () =>
+// Несколько действий пишем в фигурных скобках. Если код вернёт значение, его вернёт и Tx.
+var marked = Tx(""Пометить стены комментарием"", () =>
 {
+    var count = 0;
     foreach (var wall in walls)
-    {
-        var p = wall.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS);
-        if (p != null && !p.IsReadOnly)
-            p.Set(""проверено скриптом"");
-    }
+        if (SetComment(wall, ""проверено скриптом"")) count++;
+    return count;
 });
+Ok($""Обновлено стен: {marked}"");
 
-Ok($""Обновлено стен: {walls.Count}"");
+// Одно действие можно писать без скобок.
+Tx(""Комментарий первой стене"", () => SetComment(walls[0], ""первая стена""));
+
+// Метод без параметров можно передать по имени.
+Tx(""Очистить комментарий последней стены"", ClearLast);
+
+// Другой документ передаём первым. Автотранзакция открывается только в активном документе,
+// так что это нужно и с включённой галочкой. Связанные файлы изменить нельзя.
+// var other = App.OpenDocumentFile(@""C:\Projects\Other.rvt"");
+// Tx(other, ""Пометить стены"", () => SetComment(other.ToElements<Wall>().First(), ""проверено""));
+// other.Save();
+// other.Close(false);
+
+bool SetComment(Element element, string text)
+{
+    var p = element.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS);
+    if (p == null || p.IsReadOnly) return false;
+    p.Set(text);
+    return true;
+}
+
+void ClearLast() => SetComment(walls[walls.Count - 1], """");
 "
             },
 

@@ -31,6 +31,10 @@
         <KeyBinding Key="S" Modifiers="Control+Shift" Command="{Binding SaveFileAsCommand}"/>
         <KeyBinding Key="W" Modifiers="Control" Command="{Binding CloseTabCommand}"/>
         <KeyBinding Key="L" Modifiers="Control" Command="{Binding Output.ClearCommand}"/>
+        <!-- In the editor AvalonEdit takes Ctrl+Z and Ctrl+Y itself; these work with the focus elsewhere in the window. -->
+        <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoCommand}"/>
+        <KeyBinding Key="Y" Modifiers="Control" Command="{Binding RedoCommand}"/>
+        <KeyBinding Key="Z" Modifiers="Control+Shift" Command="{Binding RedoCommand}"/>
     </Window.InputBindings>
 
     <DockPanel>
@@ -70,6 +74,19 @@
             <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding SaveFileAsCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}" ToolTip="{x:Static loc:ScriptEditorStrings.SaveAsToolTip}">
                 <materialDesign:PackIcon Kind="ContentSaveEditOutline" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+
+            <Border Style="{StaticResource ToolbarSeparator}"/>
+
+            <!-- Not focusable, so a click leaves the focus, and the caret, in the editor. Greyed out with nothing to undo. -->
+            <Button Width="25" Height="25" Padding="0" Command="{Binding UndoCommand}" Focusable="False"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="{x:Static loc:ScriptEditorStrings.UndoToolTip}">
+                <materialDesign:PackIcon Kind="ArrowULeftTop" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
+            </Button>
+
+            <Button Width="25" Height="25" Margin="8 0 0 0" Padding="0" Command="{Binding RedoCommand}" Focusable="False"
+                    Style="{StaticResource MaterialDesignFlatButton}" ToolTip="{x:Static loc:ScriptEditorStrings.RedoToolTip}">
+                <materialDesign:PackIcon Kind="ArrowURightTop" Width="25" Height="25" Foreground="{StaticResource IconBrush}"/>
             </Button>
 
             <Border Style="{StaticResource ToolbarSeparator}"/>

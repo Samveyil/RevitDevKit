@@ -306,4 +306,10 @@
   <data name="OverloadIndex" xml:space="preserve">
     <value>{0} из {1}</value>
   </data>
+  <data name="UndoToolTip" xml:space="preserve">
+    <value>Отменить (Ctrl+Z)</value>
+  </data>
+  <data name="RedoToolTip" xml:space="preserve">
+    <value>Повторить (Ctrl+Y)</value>
+  </data>
 </root>

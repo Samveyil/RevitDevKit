@@ -67,9 +67,9 @@ namespace RevitDevKit.Core.Ai
 
             text.AppendLine("## Transactions");
             text.AppendLine(autoTransaction
-                ? "- The " + AutoTransactionName + " option is on: the whole script already runs in a transaction. Do not create a `Transaction` or call `Tx`."
+                ? "- The " + AutoTransactionName + " option is on: the whole script already runs in a transaction of the active document. Do not create a `Transaction` or call `Tx` for it; a change to another document goes in `Tx(otherDoc, \"Name\", () => { ... })`."
                 : "- The " + AutoTransactionName + " option is off. Reading the model needs no transaction. Wrap every change " +
-                  "(`SetValue`, `Doc.Delete`, `Create`, moving) in `Tx(\"Name\", () => { ... })` or `var x = Tx(\"Name\", () => ...)`; " +
+                  "(`SetValue`, `Doc.Delete`, `Create`, moving) in `Tx(\"Name\", () => { ... })` or `var x = Tx(\"Name\", () => ...)`, and a change to another document in `Tx(otherDoc, \"Name\", () => { ... })`; " +
                   "never create a `Transaction` yourself. Without one Revit throws \"Modification of the document is forbidden\".");
             text.AppendLine();
 
