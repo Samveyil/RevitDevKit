@@ -170,6 +170,7 @@ namespace RevitDevKit.UI.ScriptEditor
                 File.WriteAllText(path, tab.Document.Text);
                 tab.FilePath = path;
                 tab.Title = Path.GetFileName(path);
+                tab.Document.UndoStack.MarkAsOriginalFile();
                 tab.IsDirty = false;
 
                 TxtStatus = string.Format(ScriptEditorStrings.Saved, path);
@@ -508,7 +509,12 @@ namespace RevitDevKit.UI.ScriptEditor
             _title = title;
             _filePath = filePath;
 
-            Document.TextChanged += (s, e) => IsDirty = true;
+            // Changed while the text differs from the saved one (or the starting one): undoing every edit takes the mark off.
+            Document.UndoStack.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(UndoStack.IsOriginalFile))
+                    IsDirty = !Document.UndoStack.IsOriginalFile;
+            };
         }
 
         public void NavigateTo(int line, int column)
