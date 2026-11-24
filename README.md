@@ -37,7 +37,7 @@ Table(walls, w => w.Id, w => w.Name, w => w.Width.ToMillimeters());
 Show(walls, Red, "walls in view");
 ```
 
-You get a table of the walls in the console, and the walls are highlighted in red in the view. No class, no `Execute`, no transaction for reading: the editor adds all of that.
+You get a table of the walls in the console, and the walls are highlighted in red in the view. You don't need a class, `Execute` or a transaction for reading. The editor adds them.
 
 More in the wiki:
 
