@@ -347,4 +347,10 @@
     <value>{0} of {1}</value>
     <comment>{0}: the overload shown, {1}: how many</comment>
   </data>
+  <data name="UndoToolTip" xml:space="preserve">
+    <value>Undo (Ctrl+Z)</value>
+  </data>
+  <data name="RedoToolTip" xml:space="preserve">
+    <value>Redo (Ctrl+Y)</value>
+  </data>
 </root>
