@@ -92,20 +92,42 @@ Table(walls,
                 Title = "4. Changing the model in a transaction",
                 Code =
 @"// The transaction is opened here, so keep the Auto-transaction checkbox off.
+// Each Tx is one step in the Undo list. If the code inside throws, the whole step is rolled back.
 var walls = All<Wall>();
 if (walls.Count == 0) { Warn(""There are no walls in the model.""); return; }
 
-Tx(""Mark walls with a comment"", () =>
+// Several actions go in braces. If the code returns a value, Tx returns it too.
+var marked = Tx(""Mark walls with a comment"", () =>
 {
+    var count = 0;
     foreach (var wall in walls)
-    {
-        var p = wall.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS);
-        if (p != null && !p.IsReadOnly)
-            p.Set(""checked by a script"");
-    }
+        if (SetComment(wall, ""checked by a script"")) count++;
+    return count;
 });
+Ok($""Walls updated: {marked}"");
 
-Ok($""Walls updated: {walls.Count}"");
+// A single action needs no braces.
+Tx(""Comment the first wall"", () => SetComment(walls[0], ""first wall""));
+
+// A method without parameters can be passed by name.
+Tx(""Clear the comment of the last wall"", ClearLast);
+
+// For another document, pass it first. Auto transaction covers only the active document,
+// so this is needed even with the checkbox on. Linked documents are read-only.
+// var other = App.OpenDocumentFile(@""C:\Projects\Other.rvt"");
+// Tx(other, ""Mark walls"", () => SetComment(other.ToElements<Wall>().First(), ""checked""));
+// other.Save();
+// other.Close(false);
+
+bool SetComment(Element element, string text)
+{
+    var p = element.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS);
+    if (p == null || p.IsReadOnly) return false;
+    p.Set(text);
+    return true;
+}
+
+void ClearLast() => SetComment(walls[walls.Count - 1], """");
 "
             },
 
