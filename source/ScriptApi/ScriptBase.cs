@@ -162,7 +162,7 @@ namespace RevitDevKit.ScriptApi
         }
 
         /// <summary>Runs an action that modifies the model in a transaction of the given document.</summary>
-        /// <param name="doc">The document to modify, such as a linked or a background one opened with Application.OpenDocumentFile.</param>
+        /// <param name="doc">The document to modify, such as one opened with Application.OpenDocumentFile or a family opened with EditFamily. Linked documents are read-only and cannot be modified.</param>
         /// <param name="name">The name of the transaction, as it appears in the Undo list.</param>
         /// <param name="action">The action that modifies the model.</param>
         /// <remarks>
