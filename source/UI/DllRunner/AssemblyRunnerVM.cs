@@ -105,7 +105,8 @@ namespace RevitDevKit.UI.DllRunner
             if (command != null && command.CanExecute(null)) command.Execute(null);
         }
 
-        private AssemblyNodeVM TargetAssembly(AssemblyNodeVM node) => node ?? (SelectedNode as TargetNodeVM)?.Owner;
+        // The DLL given (from its context menu), else the selected one, or the one the selected command is in.
+        private AssemblyNodeVM TargetAssembly(AssemblyNodeVM node) => node ?? SelectedNode as AssemblyNodeVM ?? (SelectedNode as TargetNodeVM)?.Owner;
 
         [RelayCommand]
         private void AddAssembly()
@@ -141,7 +142,7 @@ namespace RevitDevKit.UI.DllRunner
 
             CachedAssemblyLoader.Forget(node.FilePath);
             Assemblies.Remove(node);
-            if ((SelectedNode as TargetNodeVM)?.Owner == node)
+            if (SelectedNode == node || (SelectedNode as TargetNodeVM)?.Owner == node)
                 SelectedNode = null;
             
             Save();
@@ -166,6 +167,7 @@ namespace RevitDevKit.UI.DllRunner
 
                 var previous = FindAssembly(loaded.OriginalPath);
                 var selected = SelectedNode as TargetNodeVM;
+                var assemblySelected = previous != null && SelectedNode == previous;
 
                 if (previous == null)
                     Assemblies.Add(node);
@@ -180,6 +182,9 @@ namespace RevitDevKit.UI.DllRunner
                     else
                         SelectedNode = null;
                 }
+
+                if (assemblySelected)
+                    node.IsSelected = true;
 
                 Save();
                 ApplySearch();

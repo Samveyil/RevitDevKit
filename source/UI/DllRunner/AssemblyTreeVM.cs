@@ -63,6 +63,9 @@ namespace RevitDevKit.UI.DllRunner
         public IReadOnlyList<TargetNodeVM> Targets { get; }
         public IReadOnlyList<AssemblyTreeNodeVM> Children { get; }
 
+        // A DLL can be selected, for the toolbar and hotkeys that act on a whole DLL; namespace folders cannot.
+        public override bool IsSelectable => true;
+
         public string DisplayName => Path.GetFileName(FilePath);
         public bool HasTargets => Targets.Count > 0;
 

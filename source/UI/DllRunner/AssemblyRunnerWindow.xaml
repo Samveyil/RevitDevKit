@@ -279,7 +279,8 @@
                         </DockPanel>
 
                         <Grid>
-                            <TreeView ItemsSource="{Binding Assemblies}" ItemsPanel="{StaticResource TreeFromEdge}" TabIndex="0">
+                            <TreeView ItemsSource="{Binding Assemblies}" ItemsPanel="{StaticResource TreeFromEdge}" TabIndex="0"
+                                      PreviewMouseRightButtonDown="SelectOnRightClick">
                                 <TreeView.Resources>
                                     <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
                                         <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}"/>
@@ -671,7 +672,7 @@
 
                     <Grid>
                         <TreeView ItemsSource="{Binding Dependencies.Sections}" Grid.IsSharedSizeScope="True" TabIndex="0"
-                                  ItemsPanel="{StaticResource TreeFromEdge}">
+                                  ItemsPanel="{StaticResource TreeFromEdge}" PreviewMouseRightButtonDown="SelectOnRightClick">
                             <TreeView.Resources>
                                 <!-- Compact: a small expander (it is also the indent of each level) and no padding. -->
                                 <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
